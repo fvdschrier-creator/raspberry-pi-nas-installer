@@ -1,0 +1,13 @@
+[Unit]
+Description=Seagate Web Controller
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /home/pi/seagate_web.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

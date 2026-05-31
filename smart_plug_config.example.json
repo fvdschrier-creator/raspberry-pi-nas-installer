@@ -1,0 +1,14 @@
+{
+    "type": "hue",
+    "hue": {
+        "bridge_ip": "UW_HUE_BRIDGE_IP",
+        "api_key": "UW_HUE_API_KEY",
+        "plug_id": "UW_PLUG_ID"
+    },
+    "tapo": {
+        "ip": "UW_TAPO_IP",
+        "email": "UW_TAPO_EMAIL",
+        "password": "UW_TAPO_WACHTWOORD"
+    },
+    "seagate_mount": "/mnt/backup"
+}
