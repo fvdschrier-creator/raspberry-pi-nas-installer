@@ -1,4 +1,4 @@
-﻿# Pi NAS Suite
+# Pi NAS Suite
 
 Een complete thuisserver-oplossing op basis van een Raspberry Pi 5 - bestanden opslaan,
 automatisch backuppen, en volledig beheren vanuit Windows, zonder technische kennis.
@@ -54,6 +54,21 @@ zie de [handleiding](Publicatie/PiNAS_Suite_Handleiding.pdf), hoofdstuk 2.
 | `Gedeeld/` | Gedeelde hulpmodules |
 | `Publicatie/` | Handleiding en presentatie |
 | `Installatie/` | LEESMIJ + downloadlinks voor installers |
+
+## Bekende beperkingen & roadmap
+
+Dit is een solo-onderhouden project - vooral gericht op functionaliteit en
+documentatie. Een paar dingen om te weten voordat je begint:
+
+- De Windows-installatiekant draait nu op .bat-scripts; migratie naar Python
+  staat op de planning voor meer robuustheid.
+- Nog geen geautomatiseerde CI-pipeline - tests draaien lokaal via
+  `test_suite.py`, niet automatisch bij elke commit.
+- "Op mijn iPhone" (de Bestanden-app) is niet doorbladerbaar via de
+  iPhone-functies - een vaste iOS/libimobiledevice-beperking, geen bug
+  (zie hoofdstuk over iPhone Back-up in de handleiding).
+- Issues en bijdragen zijn welkom, maar dit is een nevenproject - reactietijd
+  kan wisselen.
 
 ## Licentie
 
