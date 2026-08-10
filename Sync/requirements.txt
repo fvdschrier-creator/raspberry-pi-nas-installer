@@ -1,0 +1,15 @@
+PiNAS Sync (opvolger van PiBackup main.py)
+==========================================
+
+Dit programma gebruikt UITSLUITEND de Python-standaardbibliotheek.
+Er zijn GEEN externe pakketten meer nodig (geen Kivy, smbprotocol of
+paramiko zoals bij de oude main.py).
+
+Vereiste:
+  - Python 3.9 of hoger
+  - Tkinter (zit standaard bij de officiele Python-installer voor Windows)
+
+Controleren of Tkinter aanwezig is:
+  python -m tkinter
+
+Als daar een klein testvenster verschijnt, is alles in orde.

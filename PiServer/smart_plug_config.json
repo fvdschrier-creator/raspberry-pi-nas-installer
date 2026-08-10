@@ -1,0 +1,14 @@
+﻿{
+    "type": "hue",
+    "hue": {
+        "bridge_ip": "UW_PI_IP_ADRES",
+        "api_key": "YOnttVsuqihjaeU7SScIGXeOUkbVOXzNxU9V5rtV",
+        "plug_id": "7"
+    },
+    "tapo": {
+        "ip": "",
+        "email": "",
+        "password": ""
+    },
+    "seagate_mount": "/mnt/backup"
+}
