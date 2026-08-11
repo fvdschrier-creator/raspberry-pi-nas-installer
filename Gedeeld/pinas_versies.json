@@ -1,6 +1,6 @@
 {
   "_uitleg": "Bijgehouden per bestand: TIJDSTIP (niet alleen datum) waarop de laatst geleverde versie is gemaakt (YYYY-MM-DD HH:MM). Structuurcheck vergelijkt dit met de werkelijke wijzigingstijd van het bestand op schijf. Is het bestand op schijf OUDER dan hier genoemd, dan is de laatste versie nog niet overgezet. Gebruik als tijd altijd 00:01 (begin van de dag) - nooit een tijd later op de dag, want dan lijkt een bestand dat je diezelfde dag overzet ten onrechte 'ouder' totdat de klok voorbij dat tijdstip is.",
-  "Beheer\\Pi_NAS_Menu.pyw": "2026-08-10 00:09",
+  "Beheer\\Pi_NAS_Menu.pyw": "2026-08-11 00:01",
   "Beheer\\NAS_Map_Beheer.pyw": "2026-08-10 00:22",
   "Beheer\\pinas_kleuren_kiezer.pyw": "2026-08-08 00:01",
   "Beheer\\pinas_backup_beheer.pyw": "2026-08-11 00:01",

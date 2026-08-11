@@ -318,17 +318,27 @@ def check_share(share_naam, terugval_letter, ip=None):
     return check_schijf(letter)
 
 
-def _opruim_losse_verbindingen(share_namen):
+def _opruim_losse_verbindingen(share_namen, ip=None):
     """Verwijdert ALLE bestaande 'net use'-verbindingen (met of zonder
-    stationsletter) die naar een share met een van de gegeven namen
-    wijzen, ongeacht via welk IP-adres (lokaal netwerk of via ZeroTier).
+    stationsletter) die conflicteren met een verse koppeling: zowel
+    verbindingen naar een share met een van de gegeven namen (ongeacht
+    IP - lokaal netwerk of ZeroTier), als - als 'ip' is meegegeven -
+    ALLE verbindingen naar diezelfde server, ongeacht sharenaam.
 
     Nodig omdat _verbind_schijven() voorheen alleen de eigen letters
     (Y:/Z:) opruimde. Een losse testverbinding zoals \\\\10.90.69.2\\Opslag
     (bijv. na het uitproberen van de VPN) bleef dan liggen en gaf de
     Windows-fout 'meerdere verbindingen met een server die meerdere
     gebruikersnamen gebruikt' zodra de vaste Y:/Z:-koppeling naar het
-    lokale IP opnieuw werd opgezet."""
+    lokale IP opnieuw werd opgezet.
+
+    (11 augustus 2026, tweede keer dat dit conflict opdook: Systeemfout 1219
+    op Y:/H:/Z: bleek te komen van een verweesde \\\\<pi-ip>\\iPhone-koppeling
+    (van 'iPhone Doorbladeren', die na een Pi-reboot niet netjes opgeruimd
+    was). Windows' 'meerdere gebruikersnamen'-conflict is een SERVER-conflict,
+    geen share-conflict - filteren op alleen bekende sharenamen (Opslag/
+    Backup/SpiegelBackup) mist dus elke andere share op dezelfde Pi, zoals
+    iPhone. Vandaar nu ook filteren op IP, ongeacht sharenaam.)"""
     try:
         r = subprocess.run(["net", "use"], capture_output=True, text=True,
             creationflags=subprocess.CREATE_NO_WINDOW, timeout=8)
@@ -345,14 +355,45 @@ def _opruim_losse_verbindingen(share_namen):
         pad = rest.split()[0] if rest.split() else ""
         if not pad:
             continue
+        zonder_prefix = pad[2:]  # "UW_PI_IP_ADRES\iPhone"
+        server_hier = zonder_prefix.split("\\", 1)[0] if "\\" in zonder_prefix else zonder_prefix
         share_hier = pad.rsplit("\\", 1)[-1]
-        if share_hier in share_namen:
+        treft = share_hier in share_namen or (ip and server_hier == ip)
+        if treft:
             try:
                 subprocess.run(["net", "use", pad, "/delete", "/y"],
                     capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW,
                     timeout=8)
             except Exception:
                 pass
+
+
+def _herstart_smb_client_verhoogd():
+    """Herstart de Workstation-service (LanmanWorkstation, de SMB-cliënt-
+    dienst) via een verhoogd (UAC) commando.
+
+    (11 augustus 2026, met Frans live uitgezocht) Nodig als laatste redmiddel
+    tegen Systeemfout 1219 ('meerdere gebruikersnamen'): soms bestaat er een
+    SMB-sessie naar dezelfde Pi die WEL zichtbaar is in PowerShell's
+    'Get-SmbConnection' maar NIET in 'net use' (bijv. opgezet door Verkenner
+    onder een ander sessietoken) - zo'n sessie is niet met 'net use /delete'
+    weg te krijgen. Een herstart van de Workstation-service breekt alle
+    SMB-cliëntsessies op deze pc af, zichtbaar of niet, en loste het bij
+    Frans meteen op. Vereist Administrator-rechten; vraagt daarom eenmalig
+    een UAC-bevestiging - dat kan Windows niet stil doen. Geeft True terug
+    als het commando is uitgevoerd (niet per se dat het onderliggende
+    probleem is opgelost - dat blijkt pas uit de nieuwe verbindingspoging)."""
+    try:
+        proc = subprocess.Popen(
+            ["powershell", "-NoProfile", "-Command",
+             "Start-Process cmd -ArgumentList "
+             "'/c \"net stop lanmanworkstation /y && net start lanmanworkstation\"' "
+             "-Verb RunAs -Wait -WindowStyle Hidden"],
+            creationflags=subprocess.CREATE_NO_WINDOW)
+        proc.wait(timeout=60)
+        return True
+    except Exception:
+        return False
 
 
 def _schijf_config():
@@ -1164,8 +1205,12 @@ class Menu(tk.Tk):
         """Koppelt de NAS-netwerkschijven schoon opnieuw: eerst een eventuele
         kapotte koppeling weg (net use /delete), dan een verse koppeling ZONDER
         /persistent (die veroorzaakt juist de 'onthouden maar dode' koppelingen).
-        Gebruikt het opgeslagen NAS-wachtwoord; geen register/UAC nodig. Draait
-        in de achtergrond zodat het venster niet bevriest."""
+        Gebruikt het opgeslagen NAS-wachtwoord. Draait in de achtergrond zodat
+        het venster niet bevriest.
+
+        Meestal geen UAC nodig. Alleen bij aanhoudende Systeemfout 1219 (zie
+        _herstart_smb_client_verhoogd) wordt eenmalig een Administrator-
+        bevestiging gevraagd om de SMB-cliëntdienst te herstarten."""
         if getattr(self, '_verbind_bezig', False):
             return
         paren = _schijf_config()
@@ -1189,13 +1234,32 @@ class Menu(tk.Tk):
         except Exception:
             pass
 
-        def _werk():
+        def _poging():
+            """Eén volledige opruim-en-verbind-poging. Teruggegeven als dict
+            {gebruikte_letter: (ok, melding)}."""
             resultaat = {}
-            # Eerst ALLE losse verbindingen naar dezelfde shares opruimen,
-            # ongeacht IP (lokaal of ZeroTier) - voorkomt het 'meerdere
-            # gebruikersnamen'-conflict als er nog een losse testverbinding
-            # openstaat naast de vaste Y:/Z:-koppeling.
-            _opruim_losse_verbindingen(set(paren.values()))
+            # Eerst ALLE losse verbindingen opruimen die kunnen conflicteren:
+            # zowel naar dezelfde shares (ongeacht IP - lokaal of ZeroTier),
+            # als naar dezelfde Pi (PI_IP) ongeacht sharenaam - dat laatste
+            # vangt bijv. een verweesde iPhone-Doorbladeren-koppeling die
+            # anders niet als "Opslag"/"Backup" herkend wordt maar wel
+            # hetzelfde 1219-conflict veroorzaakt.
+            _opruim_losse_verbindingen(set(paren.values()), ip=PI_IP)
+            # cmdkey-record altijd verwijderen en met het HUIDIGE wachtwoord
+            # opnieuw aanmaken, zodat het nooit kan afwijken van wat hieronder
+            # expliciet wordt meegegeven (set_wachtwoord doet dit ook al bij
+            # het wijzigen van het wachtwoord, maar dit is een goedkope
+            # extra zekerheid vlak voor het verbinden).
+            try:
+                subprocess.run(["cmdkey", f"/delete:{PI_IP}"],
+                    capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW, timeout=8)
+            except Exception:
+                pass
+            try:
+                subprocess.run(["cmdkey", f"/add:{PI_IP}", "/user:pi", f"/pass:{ww}"],
+                    capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW, timeout=8)
+            except Exception:
+                pass
             for letter, share in paren.items():
                 try:
                     subprocess.run(["net", "use", f"{letter}:", "/delete", "/y"],
@@ -1238,6 +1302,35 @@ class Menu(tk.Tk):
                             continue
 
                 resultaat[gebruikte_letter] = (ok, melding)
+            return resultaat
+
+        def _werk():
+            resultaat = _poging()
+
+            # (11 augustus 2026, met Frans live uitgezocht) Systeemfout 1219
+            # kan ook blijven optreden als zowel 'net use' als cmdkey al
+            # schoon zijn: Verkenner (of iets anders) kan een SMB-sessie naar
+            # dezelfde Pi opzetten die WEL in 'Get-SmbConnection' zichtbaar is
+            # maar NIET in 'net use' - zo'n sessie is met een gewone 'net use
+            # /delete' niet weg te krijgen, alleen door de Workstation-service
+            # (LanmanWorkstation, de SMB-cliëntdienst) zelf te herstarten.
+            # Dat vereist Administrator-rechten (één UAC-bevestiging - dat
+            # kan Windows niet stil doen), dus dit alleen proberen als de
+            # normale opruiming (hierboven) niet genoeg bleek: alleen bij een
+            # 1219-foutmelding, en maar één keer per klik.
+            heeft_1219 = any(
+                (not ok) and "1219" in (melding or "")
+                for ok, melding in resultaat.values())
+            if heeft_1219:
+                try:
+                    self.after(0, lambda: self.lbl_ping.config(
+                        text="● Systeemfout 1219 - dieper opruimen (SMB-dienst herstarten, "
+                             "vraagt om Administrator-bevestiging)…", fg=WARN))
+                except Exception:
+                    pass
+                if _herstart_smb_client_verhoogd():
+                    time.sleep(2)
+                    resultaat = _poging()
 
             def _klaar():
                 self._verbind_bezig = False

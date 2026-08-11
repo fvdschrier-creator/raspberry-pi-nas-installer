@@ -383,7 +383,17 @@ def _iphone_koppelen_en_opruimen(proc):
     venster open staat: koppelt de tijdelijke share aan een schijfletter
     zodra hij actief is (tot 90 sec. wachten - het kan even duren als de
     iPhone eerst 'Vertrouw deze computer' moet bevestigen), opent Verkenner,
-    en koppelt weer los zodra het venster sluit."""
+    en koppelt weer los zodra het venster sluit.
+
+    (11 augustus 2026, bug gevonden na een live-run: Frans kreeg Systeemfout
+    1219 ('meerdere gebruikersnamen') op Y:/H:/Z: na een Pi-reboot. Oorzaak:
+    deze functie ruimde de tijdelijke I:-koppeling alleen op ALS 'gekoppeld'
+    nog True was op het moment dat proc.wait() terugkeerde - stierf de
+    ssh-sessie halverwege door bijv. een Pi-reboot terwijl het venster nog
+    open stond, dan bleef de I:-koppeling naar dezelfde Pi (\\<ip>\\iPhone)
+    verweesd achter, en blokkeerde die daarna ELKE nieuwe verbinding naar
+    diezelfde server met een ander wachtwoord - ook Y:/Z:/H:. Nu: opruimen
+    gebeurt altijd in een finally-blok, ongeacht wat er misgaat.)"""
     letter = _iphone_vrije_letter()
     if not letter:
         proc.wait()
@@ -391,32 +401,37 @@ def _iphone_koppelen_en_opruimen(proc):
     doel = r"\\" + PI_IP + r"\iPhone"
     gekoppeld = False
     venster_nog_open = True
-    for _ in range(45):
-        if proc.poll() is not None:
-            venster_nog_open = False
-            break  # venster al gesloten voordat de share actief werd
-        r = subprocess.run(["net", "use", letter + ":", doel],
-                            capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-        if r.returncode == 0:
-            gekoppeld = True
+    try:
+        for _ in range(45):
+            if proc.poll() is not None:
+                venster_nog_open = False
+                break  # venster al gesloten voordat de share actief werd
+            r = subprocess.run(["net", "use", letter + ":", doel],
+                                capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            if r.returncode == 0:
+                gekoppeld = True
+                try:
+                    os.startfile(letter + ":\\")
+                except Exception:
+                    pass
+                break
+            time.sleep(2)
+        if not gekoppeld and venster_nog_open:
+            # Terugval: 'net use' is binnen 90 sec. niet gelukt (bijv. cmdkey
+            # ontbreekt op deze pc). Probeer het rechtstreekse pad alsnog te
+            # openen - dan kan Windows zelf om een wachtwoord vragen in plaats
+            # van dat er niets gebeurt.
             try:
-                os.startfile(letter + ":\\")
+                os.startfile(doel)
             except Exception:
                 pass
-            break
-        time.sleep(2)
-    if not gekoppeld and venster_nog_open:
-        # Terugval: 'net use' is binnen 90 sec. niet gelukt (bijv. cmdkey
-        # ontbreekt op deze pc). Probeer het rechtstreekse pad alsnog te
-        # openen - dan kan Windows zelf om een wachtwoord vragen in plaats
-        # van dat er niets gebeurt.
-        try:
-            os.startfile(doel)
-        except Exception:
-            pass
-    proc.wait()
-    if gekoppeld:
-        subprocess.run(["net", "use", letter + ":", "/delete", "/yes"],
+        proc.wait()
+    finally:
+        # ALTIJD opruimen, ook als hierboven iets faalde/de ssh-sessie
+        # afbrak - anders blijft deze letter/verbinding haken (zie bug
+        # hierboven). Een 'net use /delete' op een letter die niet
+        # (meer) gekoppeld is, faalt gewoon stil - geen probleem.
+        subprocess.run(["net", "use", letter + ":", "/delete", "/y"],
                         capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
