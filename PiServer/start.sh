@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Start virtueel scherm en VNC server
 Xvfb :1 -screen 0 1280x800x24 &
 sleep 2

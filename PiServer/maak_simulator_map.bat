@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 :: ============================================================
 :: Maakt NAS_Simulator map met alle benodigde bestanden
 :: Werkt automatisch vanuit elke map - geen pad instellen nodig

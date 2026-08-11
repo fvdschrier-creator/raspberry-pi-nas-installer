@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite — Test Suite
 Staat in: C:/PiNAS/Gedeeld/
 Gebruik:   python test_suite.py  (of via Pi NAS Menu → Beheer → Geavanceerd)

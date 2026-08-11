@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite - generieke sync-engine.
 
 Herbouwd vanuit de sync-engine van een eerdere, losse sync-tool die nog

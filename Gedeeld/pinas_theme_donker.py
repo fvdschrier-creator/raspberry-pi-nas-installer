@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite - Kleurenthema (Donkere modus) - VEROUDERD, niet meer gebruikt.
 
 16 juli 2026: dit bestand deed voorheen dienst als "override" die stilletjes

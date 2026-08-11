@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Sync - kleuren
 
 Pi NAS Sync leunt op het centrale suite-thema (Gedeeld/pinas_theme.py), zodat

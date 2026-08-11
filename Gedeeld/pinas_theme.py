@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite - Centraal kleurenthema
 Importeer in elk programma met: from pinas_theme import *
 

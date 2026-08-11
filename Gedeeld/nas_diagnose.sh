@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Raspberry Pi NAS Installer v1.0.0
 # -----------------------------------------------------------------------------
 # Pi NAS Diagnose - controleert alles en rapporteert fouten

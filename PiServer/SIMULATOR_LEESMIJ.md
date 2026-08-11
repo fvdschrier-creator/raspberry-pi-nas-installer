@@ -1,4 +1,4 @@
-﻿# Pi NAS Installer Simulator
+# Pi NAS Installer Simulator
 
 Test de NAS installer op je Windows PC — geen Raspberry Pi nodig.
 

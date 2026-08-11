@@ -1,4 +1,4 @@
-﻿# Installatie-map
+# Installatie-map
 
 Deze map is in de GitHub-versie bewust LEEG. De installers zelf zijn te
 groot voor een publieke GitHub-repository (Docker Desktop Installer.exe

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Pi NAS Suite - PC Image Backup (volledige systeemkopie)
 

@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Simuleert twee schijven: SSD (120GB) en Seagate (500GB)
 
 # Maak loop image bestanden

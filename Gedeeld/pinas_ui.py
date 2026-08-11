@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite - Gedeelde UI-bouwstenen
 Importeer met: from pinas_ui import *  (of losse namen zoals hieronder)
 

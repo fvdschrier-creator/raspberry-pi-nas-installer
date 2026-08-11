@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # Raspberry Pi NAS Installer v1.0.0
 """
 Pi NAS Smart Plug Controller

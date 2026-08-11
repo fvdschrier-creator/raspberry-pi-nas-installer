@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite — Initiële installatie GUI
 Begeleidt de gebruiker van lege SD-kaart tot werkende NAS.
 Staat in: C:\PiNAS\Beheer\

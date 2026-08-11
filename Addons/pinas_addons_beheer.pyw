@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # pinas_addons_beheer.pyw - Pi NAS Suite - Addons
 #
 # Addons Beheer: de ENE centrale plek om de 7 add-ons (Nextcloud, Pi-hole,

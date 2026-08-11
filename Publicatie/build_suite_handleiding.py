@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite — Handleiding builder
 Genereert: PiNAS_Suite_Handleiding.pdf
 Gebruik:   python build_suite_handleiding.py
@@ -952,10 +952,11 @@ def bouw_handleiding():
         [
             ["Synchronisatie", "Start PiNAS Sync voor het synchroniseren van bestanden (zie hoofdstuk 5)"],
             ["PC Image Backup", "Volledige kopie van schijf C: naar de Backup-schijf via wbAdmin - nu een eigen programma, los van PiNAS Sync"],
-            ["iPhone Back-up", "Foto's, app-bestanden en (best effort) WhatsApp van een iPhone naar de Backup-schijf - iPhone moet aan de Pi hangen, niet aan de pc"],
+            ["iPhone Back-up", "Foto's, Downloads, Boeken, app-bestanden en (best effort) WhatsApp van een iPhone naar de Backup-schijf - iPhone moet aan de Pi hangen, niet aan de pc"],
             ["Archief Backup Bewaking", "Controle en veilige spiegeling van een vaste backup-relatie (Archief Backup op de Backup-schijf naar de Spiegel Backup op H:)"],
             ["Systeem-image maken (SD-kaart)", "Volledige, gecomprimeerde kopie van de actieve Pi SD-kaart naar de Backup-schijf (destructieve/zware actie, geel gemarkeerd)"],
             ["Backup-HDD controleren/herstellen", "Veilige bestandssysteemcontrole (e2fsck) op de backup-HDD via SSH (destructieve/zware actie, geel gemarkeerd)"],
+            ["Rechten backup-HDD herstellen", "Zet alle bestanden/mappen op de backup-HDD terug naar gebruiker 'pi' (chown/chmod via SSH), zodat Verkenner nooit meer 'Toegang geweigerd' geeft - bijvoorbeeld bij oudere back-ups die als root zijn aangemaakt (destructieve/zware actie, geel gemarkeerd)"],
         ],
         [5*cm, BREEDTE - 5*cm]))
     story.append(Spacer(1, 0.2*cm))
@@ -977,6 +978,10 @@ def bouw_handleiding():
         ["Onderdeel", "Status"],
         [
             ["Foto's en video's (camerarol)", "Altijd - gewone, leesbare bestanden"],
+            ["Downloads en Boeken (Books)", "Altijd, indien aanwezig - de rest van de Media-koppeling "
+             "naast de camerarol (11 augustus 2026: hiervóór werd dit stilzwijgend overgeslagen). "
+             "Onbekende overige mappen onder Media komen mee in 'Overig'; de interne PhotoData-cache "
+             "van de Foto's-app wordt bewust nooit meegenomen (geen gebruikersbestanden)."],
             ["'Op mijn iPhone' (lokale opslag Bestanden-app)", "Bekende beperking (10 augustus "
              "2026, met pinas_iphone_diagnose.sh uitgezocht): NIET mogelijk via deze methode - "
              "Apple's installatie-proxy behandelt de systeem-Bestanden-app niet als een gewone "
@@ -988,7 +993,17 @@ def bouw_handleiding():
              "automatisch overgeslagen - aan te passen in het script zelf (OVERSLAAN_APPS)."],
             ["WhatsApp-chats", "Best effort - via een tijdelijke volledige back-up + een los "
              "hulpprogramma dat er een leesbare HTML-export van maakt. Kan mislukken (bijv. als "
-             "'Codeer lokale back-up' aanstaat op de iPhone) zonder de rest van de back-up te breken."],
+             "'Codeer lokale back-up' aanstaat op de iPhone) zonder de rest van de back-up te breken. "
+             "(11 augustus 2026) Dit is een instelling van het toestel zelf, niet van dit script: "
+             "als een keer een back-up via Finder/iTunes met encryptie is gemaakt, onthoudt de "
+             "iPhone dat blijvend, en heeft idevicebackup2 (het onderliggende hulpprogramma) een "
+             "wachtwoord nodig dat dit script niet heeft - de back-up faalt dan stil, want de "
+             "uitvoer gaat naar een logbestand, niet naar het scherm. Oplossen: sluit de iPhone "
+             "aan op een Windows-pc met iTunes of de 'Apple Devices'-app, open het toestel, ga naar "
+             "Back-ups, en vink 'Codeer lokale back-up' UIT (het huidige back-upwachtwoord is dan "
+             "nodig - dit is NIET de Apple ID of de toestelcode). Is dat wachtwoord kwijt, dan is er "
+             "geen manier om de instelling te verwijderen zonder het toestel te wissen. Zodra "
+             "encryptie uitstaat, werkt de WhatsApp-stap voortaan zonder wachtwoord."],
             ["Notities", "Bewust NIET meegenomen - Apple Notities synct standaard via iCloud, "
              "niet lokaal op het toestel, dus hier is geen leesbare kopie van te maken."],
         ],
@@ -996,7 +1011,8 @@ def bouw_handleiding():
     story.append(Spacer(1, 0.15*cm))
     story.append(Paragraph(
         "Komt op de Backup-schijf te staan in de map 'PiNAS iPhone Backup\\iPhone_&lt;datum&gt;\\', "
-        "met submappen Fotos, 'Op mijn iPhone', Bestanden en WhatsApp.", s["body"]))
+        "met submappen Fotos, Downloads, Boeken, Overig, 'Op mijn iPhone', Bestanden en WhatsApp "
+        "(submappen die niets bevatten worden overgeslagen).", s["body"]))
     story.append(Spacer(1, 0.2*cm))
 
     story.append(Paragraph("iPhone Doorbladeren", s["h3"]))

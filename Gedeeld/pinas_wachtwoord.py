@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite — Centraal wachtwoordbeheer
 Slaat wachtwoorden op als verborgen bestanden in C:\\PiNAS\\Logs\\
 Gebruikt ook cmdkey voor Windows netwerk authenticatie.

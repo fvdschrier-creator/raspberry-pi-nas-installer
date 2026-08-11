@@ -1,4 +1,4 @@
-﻿"""
+"""
 Gedeeld/pinas_launcher.py
 Centrale hulp om een suite-programma te openen zonder dat er per ongeluk
 een tweede exemplaar naast een al openstaand venster verschijnt. Elk

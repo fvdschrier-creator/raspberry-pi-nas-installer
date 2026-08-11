@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite - generieke bron/doel-kiezer (Tkinter).
 
 Vervangt het Kivy-stuk uit main.py (FileTreePanel + SourceMappingPanel)

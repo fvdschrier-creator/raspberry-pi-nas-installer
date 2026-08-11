@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 :: ============================================================
 :: Maakt schone publieke versie voor GitHub
 :: Staat in: C:\PiNAS\Gedeeld\
@@ -360,6 +360,21 @@ echo ^| `Gedeeld/` ^| Gedeelde hulpmodules ^|
 echo ^| `Publicatie/` ^| Handleiding en presentatie ^|
 echo ^| `Installatie/` ^| LEESMIJ + downloadlinks voor installers ^|
 echo.
+echo ## Bekende beperkingen ^& roadmap
+echo.
+echo Dit is een solo-onderhouden project - vooral gericht op functionaliteit en
+echo documentatie. Een paar dingen om te weten voordat je begint:
+echo.
+echo - De Windows-installatiekant draait nu op .bat-scripts; migratie naar Python
+echo   staat op de planning voor meer robuustheid.
+echo - Nog geen geautomatiseerde CI-pipeline - tests draaien lokaal via
+echo   `test_suite.py`, niet automatisch bij elke commit.
+echo - "Op mijn iPhone" ^(de Bestanden-app^) is niet doorbladerbaar via de
+echo   iPhone-functies - een vaste iOS/libimobiledevice-beperking, geen bug
+echo   ^(zie hoofdstuk over iPhone Back-up in de handleiding^).
+echo - Issues en bijdragen zijn welkom, maar dit is een nevenproject - reactietijd
+echo   kan wisselen.
+echo.
 echo ## Licentie
 echo.
 echo MIT License - vrij te gebruiken, aanpassen en verspreiden. Vermeld de oorsprong als je
@@ -390,7 +405,7 @@ if exist "%WW_CACHE%" (
 echo.
 echo  [Anonimiseren]
 :: 10 augustus 2026 (bug gevonden na een live-run: PowerShell-blok brak af
-:: met "Missing closing '}'"): het regex-patroon 'GEBRUIKER(?!hrier)[a-z]*'
+:: met "Missing closing '}'"): het regex-patroon 'fvdsc(?!hrier)[a-z]*'
 :: hieronder bevat een kale '!' (negative lookahead). Met
 :: enabledelayedexpansion AAN (zie setlocal bovenaan dit bestand) scant
 :: cmd de hele samengevoegde powershell-opdracht op '!...!'-paren, vindt
@@ -398,20 +413,29 @@ echo  [Anonimiseren]
 :: commando in de foutmelding. Delayed expansion is verder nergens in dit
 :: script nodig (geen enkel !VAR!-gebruik), dus hier lokaal uitzetten is
 :: veilig en lost het op zonder de regex zelf aan te passen.
+::
+:: 10 augustus 2026 (2e bug, zelfde live-run): dit bestand kopieert en
+:: anonimiseert ZICHZELF ook mee (het staat in de Gedeeld\-lijst hierboven).
+:: De patronen hieronder (zoals 'fvdsc(?!hrier)[a-z]*' en 'Test1234') zijn
+:: geen echte gebruikersgegevens maar de redactie-patronen zelf - die mogen
+:: dus niet door zichzelf vervangen worden, anders werkt de gekopieerde
+:: versie in NAS_Public niet meer bij een volgende run. Vandaar de
+:: uitzondering hieronder die maak_publieke_versie.bat overslaat.
 setlocal disabledelayedexpansion
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$pub = '%PUBLIC_MAP%';" ^
     "$ww = '%HUIDIG_WW%';" ^
     "Get-ChildItem $pub -Include *.bat,*.py,*.pyw,*.sh,*.json,*.md,*.ini,*.cfg -Recurse | ForEach-Object {" ^
+    "    if ($_.Name -eq 'maak_publieke_versie.bat') { return };" ^
     "    $c = Get-Content $_.FullName -Raw -Encoding UTF8;" ^
     "    if ($c -eq $null) { return };" ^
     "    $c = $c -replace '192\.168\.\d+\.\d+', 'UW_PI_IP_ADRES';" ^
     "    if ($ww -ne '') { $c = $c -replace [regex]::Escape($ww), 'UW_WACHTWOORD' };" ^
-    "    $c = $c -replace 'UW_WACHTWOORD', 'UW_WACHTWOORD';" ^
-    "    $c = $c -replace 'GEBRUIKER(?!hrier)[a-z]*', 'GEBRUIKER';" ^
-    "    $c = $c -replace 'UW_BACKUP_HDD_UUID', 'UW_BACKUP_HDD_UUID';" ^
-    "    $c = $c -replace 'UW_BACKUP_HDD_UUID', 'UW_BACKUP_HDD_UUID';" ^
-    "    $c = $c -replace 'UW_ZEROTIER_NETWERK_ID', 'UW_ZEROTIER_NETWERK_ID';" ^
+    "    $c = $c -replace 'Test1234', 'UW_WACHTWOORD';" ^
+    "    $c = $c -replace 'fvdsc(?!hrier)[a-z]*', 'GEBRUIKER';" ^
+    "    $c = $c -replace 'f838cf2d-6221-4452-b9df-a0ab36913586', 'UW_BACKUP_HDD_UUID';" ^
+    "    $c = $c -replace 'f838cf2d', 'UW_BACKUP_HDD_UUID';" ^
+    "    $c = $c -replace '166359304e3cacb3', 'UW_ZEROTIER_NETWERK_ID';" ^
     "    Set-Content $_.FullName $c -NoNewline -Encoding UTF8;" ^
     "    Write-Host ('   SCHOON: ' + $_.Name)" ^
     "}"

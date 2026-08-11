@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Gedeeld/controleer_documentatie_consistentie.py
 

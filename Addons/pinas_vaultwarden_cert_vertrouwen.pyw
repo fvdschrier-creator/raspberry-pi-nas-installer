@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # pinas_vaultwarden_cert_vertrouwen.pyw - Pi NAS Suite
 #
 # Haalt het PiNAS root-certificaat op van de Pi (via SSH/scp) en vertrouwt

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # pinas_backup_beheer.pyw - Pi NAS Suite
 #
 # Backup Beheer: de ENE centrale plek voor alle backup-gerelateerde acties.
@@ -188,10 +188,17 @@ def _maak_systeem_image():
     # Voorheen heette deze map gewoon "PiNAS", maar die naam is vrijgemaakt
     # voor het Toegangsoverzicht (Z:\PiNAS Toegang) - zie pinas_versies.json
     # (16 juli 2026).
+    # 11 augustus 2026 (met Frans afgesproken): sudo tee maakt het
+    # image-bestand eigendom van root, waardoor Verkenner het later niet
+    # kan verwijderen ("Toegang geweigerd"). Daarom hier meteen chown naar
+    # pi na het schrijven - zelfde aanpak als Stap 8 in
+    # pinas_iphone_backup.sh. (Zie ook de aparte knop "Rechten backup-HDD
+    # herstellen" voor bestaande, al vastzittende bestanden.)
     remote_cmd = (
         'mkdir -p \\"/mnt/backup/PiNAS Images\\" && '
         "sudo dd if=/dev/mmcblk0 bs=4M status=progress | gzip | "
         f'sudo tee \\"/mnt/backup/PiNAS Images/{bestand}\\" > /dev/null && '
+        f'sudo chown pi:pi \\"/mnt/backup/PiNAS Images/{bestand}\\" && '
         f'echo === Klaar: \\"/mnt/backup/PiNAS Images/{bestand}\\" ==='
     )
     bat = os.path.join(tempfile.gettempdir(), "pinas_systeem_image.bat")
@@ -241,6 +248,8 @@ def _open_iphone_backup():
         f"{_backup_letter()}:\\PiNAS iPhone Backup\\iPhone_<datum>\\\n\n"
         "Wat wordt meegenomen:\n"
         "  - Foto's en video's (camerarol)\n"
+        "  - Downloads en Boeken (Books) van het toestel\n"
+        "  - Eventuele overige mappen onder Media (in 'Overig')\n"
         "  - Bestanden van apps met bestandsdeling\n"
         "  - WhatsApp-chats (best effort, kan mislukken - de rest van de "
         "back-up gaat dan gewoon door)\n"
@@ -471,6 +480,53 @@ def _herstel_backup_hdd():
     subprocess.Popen('start cmd /k "' + bat + '"', shell=True)
 
 
+def _herstel_rechten_backup():
+    """Zet alle bestanden/mappen op de hele backup-HDD terug naar
+    gebruiker 'pi', zodat alles altijd via Verkenner (Samba) te
+    verwijderen/wijzigen is.
+
+    11 augustus 2026 (met Frans afgesproken): sommige acties schrijven op
+    de Pi met sudo (bijv. het systeem-image via dd/tee, of oudere
+    iPhone-back-ups van voor de eigen chown-stap in
+    pinas_iphone_backup.sh), waardoor die bestanden eigendom van root
+    worden. Windows/Samba draait als gebruiker 'pi' en kan zulke
+    root-bestanden dan niet verwijderen ('Toegang geweigerd' in
+    Verkenner, ook al ben je gewoon ingelogd) - de enige uitweg was tot nu
+    toe handmatig via SSH. In plaats van daarvoor een apart
+    bestandsbeheertje op de Pi te bouwen, is dit een herbruikbare
+    reparatieknop: draai 'm gewoon opnieuw zodra Verkenner een keer
+    weigert, en het probleem is meteen voor de HELE backup-HDD verholpen -
+    geen eenmalige actie per map nodig."""
+    akkoord = messagebox.askyesno(
+        "Rechten backup-HDD herstellen",
+        "Zet alle bestanden en mappen op de hele backup-HDD "
+        f"({_backup_letter()}:) terug naar gebruiker 'pi', zodat je ze "
+        "altijd via Verkenner kunt verwijderen of wijzigen - ook oudere "
+        "back-ups die nog als root zijn aangemaakt.\n\n"
+        "Raakt alleen eigenaar/rechten aan, nooit de inhoud.\n\n"
+        "Gebruik dit als Verkenner 'Toegang geweigerd' geeft bij iets "
+        f"op {_backup_letter()}:.\n\n"
+        "Doorgaan?")
+    if not akkoord:
+        return
+
+    bat = os.path.join(tempfile.gettempdir(), "pinas_rechten_herstel.bat")
+    regels = [
+        "@echo off",
+        "echo Rechten op de backup-HDD herstellen...",
+        "echo.",
+        'ssh -t pi@' + PI_IP +
+        ' "sudo chown -R pi:pi /mnt/backup '
+        '&& sudo chmod -R u+rwX,g+rX /mnt/backup '
+        '&& echo === Klaar - alles weer eigendom van pi ==="',
+        "echo.",
+        "pause",
+    ]
+    with open(bat, "w", newline="") as f:
+        f.write("\r\n".join(regels) + "\r\n")
+    subprocess.Popen('start cmd /k "' + bat + '"', shell=True)
+
+
 HELP_HOOFDSTUKKEN = [
     ("Synchronisatie",
      "Kopieert je bestanden (documenten, foto's, enzovoort) van deze pc naar "
@@ -487,7 +543,8 @@ HELP_HOOFDSTUKKEN = [
     ("iPhone Back-up",
      "BELANGRIJK: hang de iPhone aan een usb-poort VAN DE PI, niet aan deze "
      "Windows-pc - dit draait op de Pi zelf en heeft daar rechtstreeks "
-     "usb-toegang voor nodig. Kopieert foto's/video's en bestanden van apps "
+     "usb-toegang voor nodig. Kopieert foto's/video's (camerarol), Downloads, "
+     "Boeken en eventuele overige mappen onder Media, plus bestanden van apps "
      "met bestandsdeling altijd; WhatsApp-chats als 'best effort' extra "
      "stap (kan mislukken zonder de rest van de back-up te breken). "
      "Notities worden bewust NIET meegenomen - die zitten standaard in "
@@ -525,6 +582,14 @@ HELP_HOOFDSTUKKEN = [
      "zelf - dus niet op de inhoud, maar op de schijf als geheel. Gebruik dit "
      "als de backup-HDD raar doet (fouten geeft, niet meer bereikbaar is, "
      "traag is) om te checken of de schijf zelf technisch in orde is."),
+    ("Rechten backup-HDD herstellen",
+     f"Zet alle bestanden en mappen op de hele backup-HDD ({_backup_letter()}:) terug "
+     "naar gebruiker 'pi', zodat je ze altijd via Verkenner kunt verwijderen "
+     "of wijzigen. Sommige acties (zoals het systeem-image, of oudere "
+     "iPhone-back-ups) schrijven op de Pi met sudo, waardoor bestanden "
+     "eigendom van root kunnen worden - Verkenner geeft dan 'Toegang "
+     "geweigerd' ondanks dat je gewoon bent ingelogd. Gebruik deze knop "
+     "in dat geval; raakt nooit de inhoud aan, alleen eigenaar/rechten."),
 ]
 
 
@@ -566,7 +631,7 @@ def start():
                _open_sync, "primair", None)
     _bouw_item(win, "PC Image Backup", "Volledige kopie van C: (wbAdmin)",
                _open_image_backup, "primair", None)
-    _bouw_item(win, "iPhone Back-up", "Foto's, bestanden en WhatsApp (iPhone MOET aan de Pi hangen)",
+    _bouw_item(win, "iPhone Back-up", "Foto's, Downloads, Boeken, bestanden en WhatsApp (iPhone MOET aan de Pi hangen)",
                _open_iphone_backup, "primair", None)
     _bouw_item(win, "iPhone Doorbladeren", "Live, alleen-lezen in Verkenner - geen back-up (iPhone MOET aan de Pi hangen)",
                _open_iphone_verkennen, "primair", None)
@@ -576,6 +641,8 @@ def start():
                _maak_systeem_image, "destructief", None)
     _bouw_item(win, "Backup-HDD controleren/herstellen", f"e2fsck op de backup-HDD ({_backup_letter()}:)",
                _herstel_backup_hdd, "destructief", None)
+    _bouw_item(win, "Rechten backup-HDD herstellen", "Verhelpt 'Toegang geweigerd' in Verkenner (chown/chmod)",
+               _herstel_rechten_backup, "destructief", None)
 
     legenda_frame = tk.Frame(win, bg=BG)
     legenda_frame.pack(fill="x", padx=16, pady=(8, 14))

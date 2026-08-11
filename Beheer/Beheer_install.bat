@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 :: Pi NAS Suite Installer v1.1.2
 setlocal enabledelayedexpansion
 chcp 65001 >nul

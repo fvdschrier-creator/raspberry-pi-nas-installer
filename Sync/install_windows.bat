@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 title PiNAS Sync - Installatie
 cd /d "%~dp0"
 

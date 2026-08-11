@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # Raspberry Pi NAS Installer v1.1.0
 NAS_VERSION = "1.1.0"
 """

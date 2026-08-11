@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite — Centrale logging module
 Importeer in elk programma met: from pinas_logging import get_logger
 

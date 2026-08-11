@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # Pi NAS Menu - datum uit Gedeeld/version.py (BIJGEWERKT)
 # Twee lagen: Dagelijks beheer + Setup wizard
 import tkinter as tk

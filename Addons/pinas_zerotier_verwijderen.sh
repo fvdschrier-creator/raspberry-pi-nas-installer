@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 ###############################################################################
 # PiNAS - VPN (ZeroTier) DE-INSTALLATIE (terug naar schoon)
 #

@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # ============================================================================
 # Pi NAS - iPhone Back-up
 # ----------------------------------------------------------------------------
@@ -128,19 +128,79 @@ ok "Toestel is vertrouwd."
 mkdir -p "$RUN_MAP/Fotos" "$RUN_MAP/Bestanden"
 FOTOS_OK=0; BESTANDEN_OK=0; WHATSAPP_OK=0
 
-# --- Stap 5: foto's/video's ---------------------------------------------------
-kop "Stap 5: Foto's en video's"
+# --- Stap 5: foto's/video's + de rest van de Media-koppeling -----------------
+# 11 augustus 2026 (Frans, na vergelijking met "iPhone Doorbladeren"): de
+# gewone AFC-koppeling (hier "Media" genoemd in pinas_iphone_verkennen.sh)
+# bevat naast DCIM (camerarol) ook Downloads en Books, en eventueel andere
+# mappen. Voorheen werd alleen DCIM gekopieerd - de rest verdween stilzwijgend.
+# Nu: DCIM blijft apart naar Fotos/ (voor compatibiliteit met oudere back-ups),
+# en ALLES ANDERS onder Media gaat naar Downloads/ (expliciet genoemd door
+# Frans) resp. Boeken/ voor Books, en een generieke Overig/<mapnaam>/ voor wat
+# er verder nog gevonden wordt. PhotoData wordt bewust OVERGESLAGEN: dat is
+# geen gebruikersbestanden maar Apple's eigen interne cache/database voor de
+# Foto's-app (thumbnails, sqlite-bestanden) - onbruikbaar buiten het toestel
+# en kan fors groot zijn.
+kop "Stap 5: Foto's, Downloads, Boeken en overige Media-inhoud"
 FOTO_MNT="$(mktemp -d)"
-if timeout 20 ifuse -u "$UDID" "$FOTO_MNT" >/dev/null 2>&1 && [ -d "$FOTO_MNT/DCIM" ]; then
-    rsync -a --info=progress2 "$FOTO_MNT/DCIM/" "$RUN_MAP/Fotos/" && FOTOS_OK=1
-    fusermount -u "$FOTO_MNT" 2>/dev/null || umount "$FOTO_MNT" 2>/dev/null
-    if [ "$FOTOS_OK" -eq 1 ]; then
-        ok "Foto's/video's gekopieerd naar: $RUN_MAP/Fotos"
+if timeout 20 ifuse -u "$UDID" "$FOTO_MNT" >/dev/null 2>&1; then
+    if [ -d "$FOTO_MNT/DCIM" ]; then
+        rsync -a --info=progress2 "$FOTO_MNT/DCIM/" "$RUN_MAP/Fotos/" && FOTOS_OK=1
+        if [ "$FOTOS_OK" -eq 1 ]; then
+            ok "Foto's/video's gekopieerd naar: $RUN_MAP/Fotos"
+        else
+            err "Kopieren van foto's is mislukt."
+        fi
     else
-        err "Kopieren van foto's is mislukt."
+        warn "Geen DCIM (camerarol) gevonden - overgeslagen."
     fi
+
+    if [ -d "$FOTO_MNT/Downloads" ] && [ -n "$(ls -A "$FOTO_MNT/Downloads" 2>/dev/null)" ]; then
+        mkdir -p "$RUN_MAP/Downloads"
+        if rsync -a "$FOTO_MNT/Downloads/" "$RUN_MAP/Downloads/"; then
+            ok "Downloads gekopieerd naar: $RUN_MAP/Downloads"
+        else
+            err "Kopieren van Downloads is mislukt."
+        fi
+    else
+        warn "Geen Downloads gevonden (kan normaal zijn)."
+    fi
+
+    if [ -d "$FOTO_MNT/Books" ] && [ -n "$(ls -A "$FOTO_MNT/Books" 2>/dev/null)" ]; then
+        mkdir -p "$RUN_MAP/Boeken"
+        if rsync -a "$FOTO_MNT/Books/" "$RUN_MAP/Boeken/"; then
+            ok "Boeken gekopieerd naar: $RUN_MAP/Boeken"
+        else
+            err "Kopieren van Boeken is mislukt."
+        fi
+    else
+        warn "Geen Books gevonden (kan normaal zijn)."
+    fi
+
+    # Overige, onverwachte mappen (niet DCIM/Downloads/Books/PhotoData) -
+    # 1-op-1 meenemen zodat niets stilzwijgend verdwijnt. Uitzondering: een paar
+    # mappen die Frans op 11 augustus 2026 heeft gecontroleerd (WinDirStat-export
+    # van een echte back-up) en die altijd leeg/intern housekeeping bleken:
+    # Deferred, MediaAnalysis, Vibrations. iTunes_Control blijft WEL meegenomen -
+    # die bevat in de praktijk echte inhoud (bijv. een aangepaste ringtone onder
+    # Ringtones/), dus die is niet automatisch uit te sluiten zoals PhotoData.
+    for map in "$FOTO_MNT"/*/; do
+        naam="$(basename "$map")"
+        case "$naam" in
+            DCIM|Downloads|Books|PhotoData|Deferred|MediaAnalysis|Vibrations) continue ;;
+        esac
+        if [ -n "$(ls -A "$map" 2>/dev/null)" ]; then
+            mkdir -p "$RUN_MAP/Overig/$naam"
+            if rsync -a "$map" "$RUN_MAP/Overig/$naam/"; then
+                ok "Overig '$naam' gekopieerd naar: $RUN_MAP/Overig/$naam"
+            else
+                err "Kopieren van '$naam' is mislukt."
+            fi
+        fi
+    done
+
+    fusermount -u "$FOTO_MNT" 2>/dev/null || umount "$FOTO_MNT" 2>/dev/null
 else
-    err "Kon de camerarol niet koppelen (ifuse). Foto's overgeslagen."
+    err "Kon de Media-koppeling niet maken (ifuse). Foto's/Downloads/Boeken overgeslagen."
     fusermount -u "$FOTO_MNT" 2>/dev/null || umount "$FOTO_MNT" 2>/dev/null
 fi
 rmdir "$FOTO_MNT" 2>/dev/null

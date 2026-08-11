@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Wrapper voor desktop shortcuts — vraagt wachtwoord via GUI
 # Gebruik: nas_start.sh [installer|config|diagnose]
 case "$1" in

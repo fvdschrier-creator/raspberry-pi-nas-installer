@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # Raspberry Pi NAS Installer v1.0.0
 # Seagate Web Controller - mini webserver voor aan/uitzetten Seagate
 # Draait normaal als systemd-service (User=pi) - zie seagate-web.service.

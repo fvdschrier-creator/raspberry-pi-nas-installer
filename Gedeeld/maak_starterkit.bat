@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 :: ============================================================
 :: Pi NAS Suite - Maak Starter Kit ZIP
 :: Staat in: C:\PiNAS\Gedeeld\

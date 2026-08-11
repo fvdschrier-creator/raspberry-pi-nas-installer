@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 :: Pi NAS - Upload scripts naar de Pi
 :: Staat in: C:\PiNAS\Gedeeld\
 :: Haalt elk bestand op uit de juiste submap

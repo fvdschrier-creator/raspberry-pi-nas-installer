@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Hue diagnose — controleert of de geconfigureerde plug_id in
 smart_plug_config.json daadwerkelijk bij de juiste Hue-stekker

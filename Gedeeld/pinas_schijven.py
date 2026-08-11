@@ -1,4 +1,4 @@
-﻿"""
+"""
 Gedeeld/pinas_schijven.py
 Vindt de Windows-stationsletter die bij een Samba-share hoort, in plaats
 van een vaste letter (Y:/Z:) aan te nemen. Nodig omdat Y:/Z: op een

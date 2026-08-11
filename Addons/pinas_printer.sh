@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 ###############################################################################
 # pinas_printer.sh - Pi NAS Suite - Addon: Printserver (CUPS + AirPrint)
 #

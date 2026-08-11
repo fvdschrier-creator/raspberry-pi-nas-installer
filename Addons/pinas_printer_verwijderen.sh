@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 ###############################################################################
 # pinas_printer_verwijderen.sh - Pi NAS Suite - Addon: Printserver VERWIJDEREN
 #

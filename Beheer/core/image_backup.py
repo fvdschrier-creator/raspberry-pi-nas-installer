@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pi NAS Suite - PC Image Backup (wbAdmin).
 
 Losgetrokken uit main.py (PiBackup/Kivy) zodat dezelfde kernlogica

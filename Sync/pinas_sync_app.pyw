@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Pi NAS Suite - Sync (generieke opvolger van een oudere, NAS-specifieke sync-tool)
 

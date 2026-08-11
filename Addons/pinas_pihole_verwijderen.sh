@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 ###############################################################################
 # PiNAS - Adblock (Pi-hole) + versleutelde DNS DE-INSTALLATIE (terug naar schoon)
 #

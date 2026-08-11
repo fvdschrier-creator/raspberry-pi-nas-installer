@@ -1,4 +1,4 @@
-﻿"""
+"""
 Gedeeld/pinas_pi_status.py
 
 Centrale, ENIGE plek voor de SSH-statuscheck van alle Pi-diensten en de

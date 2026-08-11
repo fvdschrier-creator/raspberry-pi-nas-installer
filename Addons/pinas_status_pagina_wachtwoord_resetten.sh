@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 ###############################################################################
 # PiNAS - Mobiele statuspagina: wachtwoord opnieuw instellen
 #

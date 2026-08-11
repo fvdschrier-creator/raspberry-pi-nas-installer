@@ -1,4 +1,4 @@
-﻿"""
+"""
 Gedeeld/version.py
 
 Twee losse dingen die voorheen door elkaar liepen en niet synchroon
