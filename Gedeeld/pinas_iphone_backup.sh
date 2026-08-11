@@ -19,9 +19,13 @@
 #  - WhatsApp: BEST EFFORT. Vereist een volledige (tijdelijke) apparaat-
 #    back-up plus een los hulpprogramma (whatsapp-chat-exporter) om daar een
 #    leesbare HTML-export van chats+media uit te halen. Kwetsbaarder dan de
-#    andere twee stappen (kan breken bij een WhatsApp/iOS-update, of vraagt
-#    om een back-up-wachtwoord als "Codeer lokale back-up" op het toestel
-#    aanstaat) - een mislukte WhatsApp-stap stopt de rest van de back-up niet.
+#    andere twee stappen (kan breken bij een WhatsApp/iOS-update, vraagt om
+#    een back-up-wachtwoord als "Codeer lokale back-up" op het toestel
+#    aanstaat, en - de meest voorkomende oorzaak (11 augustus 2026, bevestigd
+#    via het logbestand: "ErrorCode 208: Device locked") - mislukt als de
+#    iPhone vergrendeld is op het moment dat deze stap draait. HOUD DE IPHONE
+#    ONTGRENDELD zolang de back-up loopt, anders stopt de volledige back-up
+#    hier stil) - een mislukte WhatsApp-stap stopt de rest van de back-up niet.
 #  - Notities: BEWUST NIET meegenomen. Apple Notities synct standaard via
 #    iCloud, niet lokaal op het toestel - daar is met deze methode geen
 #    leesbare kopie van te maken. (Frans, 10 augustus 2026: "zo niet dan
@@ -341,8 +345,22 @@ else
         fi
     else
         err "Volledige back-up (nodig voor WhatsApp) is mislukt of vroegtijdig gestopt."
-        echo "  Mogelijke oorzaak: 'Codeer lokale back-up' staat aan op de iPhone en vraagt"
-        echo "  om een wachtwoord dat dit script niet kent."
+        # (11 augustus 2026) Echte logregel gelezen na een mislukte run: "ErrorCode 208:
+        # Device locked" - idevicebackup2 vraagt om de toestelcode op het scherm van de
+        # iPhone zelf en wacht daarop; is het toestel op dat moment vergrendeld (bijv.
+        # doordat het scherm tijdens de eerdere stappen is uitgegaan), dan stopt de
+        # volledige back-up hiermee. Dit is de meest voorkomende oorzaak, vaker dan
+        # "Codeer lokale back-up".
+        if grep -qi "device locked\|waiting for passcode" /tmp/pinas_iphone_backup.log 2>/dev/null; then
+            echo "  Oorzaak: de iPhone was vergrendeld op het moment dat deze stap draaide"
+            echo "  (ErrorCode 208 - Device locked). Ontgrendel de iPhone en houd 'm ontgrendeld"
+            echo "  zolang de back-up loopt (zet tijdelijk de automatische vergrendeling uit via"
+            echo "  Instellingen > Beeldscherm en helderheid > Automatische vergrendeling), en"
+            echo "  draai de back-up dan opnieuw."
+        else
+            echo "  Mogelijke oorzaak: 'Codeer lokale back-up' staat aan op de iPhone en vraagt"
+            echo "  om een wachtwoord dat dit script niet kent."
+        fi
     fi
     rm -rf "$TIJDELIJK"
 fi
