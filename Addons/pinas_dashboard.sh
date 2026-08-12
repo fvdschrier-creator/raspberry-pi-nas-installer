@@ -3,23 +3,32 @@
 # PiNAS - Dashboard installer
 #
 # Installeert een eigen, met wachtwoord beveiligde webpagina op de Pi
-# (poort 8095) die het statusoverzicht (hardware, schijfruimte, diensten -
-# zelfde als de mobiele statuspagina) EN het addon-overzicht (installeren/
-# openen, zelfde als Addons Beheer) samenbrengt in 1 pagina - bereikbaar
-# vanaf elk apparaat, thuis en via ZeroTier ook onderweg.
+# (poort 8095) die het statusoverzicht (hardware, schijfruimte, diensten),
+# het addon-overzicht (installeren/openen, zelfde als Addons Beheer), en
+# de Vaultwarden-certificaat- en AirPrint-profiel-download samenbrengt in
+# 1 pagina - mobielvriendelijk, dus multifunctioneel voor zowel pc als
+# telefoon/tablet. Bereikbaar vanaf elk apparaat, thuis en via ZeroTier
+# ook onderweg.
 #
-# Zevende add-on naast Nextcloud, Pi-hole, ZeroTier, Vaultwarden, Mobiele
-# statuspagina en Printserver. Zelfde installatiepatroon als die 6:
-# wachtwoord eenmalig getoond, idempotent (opnieuw draaien wijzigt een
-# bestaand wachtwoord niet), eigen systemd-dienst, eigen versie-afdruk
-# voor Addons Beheer's "Bijgewerkt"-check.
+# (12 augustus 2026, wens Frans) Vervangt sindsdien de losse mobiele
+# statuspagina (pinas_status_pagina.sh, poort 8090) volledig - die was er
+# inhoudelijk een subset van. Alles wat de statuspagina kon, kan hier nu
+# ook: het "toevoegen aan beginscherm"-icoon, de Vaultwarden-root-
+# certificaat-download, en het AirPrint-profiel voor de Printserver.
+#
+# Zesde add-on naast Nextcloud, Pi-hole, ZeroTier, Vaultwarden en
+# Printserver. Zelfde installatiepatroon als die 5: wachtwoord eenmalig
+# getoond, idempotent (opnieuw draaien wijzigt een bestaand wachtwoord
+# niet), eigen systemd-dienst, eigen versie-afdruk voor Addons Beheer's
+# "Bijgewerkt"-check. Wachtwoord kwijt? Zie
+# pinas_dashboard_wachtwoord_resetten.sh.
 #
 # Gebruik:  sudo bash pinas_dashboard.sh
 ###############################################################################
 
 set -Eeuo pipefail
 
-readonly VERSION="1.0"
+readonly VERSION="2.0"
 readonly LOGFILE="/var/log/pinas_dashboard.log"
 readonly PORT="8095"
 readonly APP_DIR="/opt/pinas-dashboard"
@@ -52,13 +61,17 @@ cat <<EOF
 =====================================================================
 
   Installeert een eigen, met wachtwoord beveiligde webpagina op de Pi
-  (poort ${PORT}) die status EN addons samenbrengt in 1 overzicht:
-    - Raspberry Pi hardware, schijfruimte, diensten (zoals de mobiele
-      statuspagina)
+  (poort ${PORT}), mobielvriendelijk en multifunctioneel voor pc EN
+  telefoon/tablet:
+    - Raspberry Pi hardware, schijfruimte, diensten
     - Addon-overzicht met openen/installeren (zoals Addons Beheer)
+    - Vaultwarden-rootcertificaat en AirPrint-profiel downloaden
 
     Thuis     : http://<ip-van-de-pi>:${PORT}
     Onderweg  : via ZeroTier (als geinstalleerd)
+
+  Tip: voeg de pagina op je telefoon toe aan het beginscherm (via het
+  deel-menu van de browser) voor een eigen "app-icoon".
 
   Aan het einde krijg je een EENMALIG getoond wachtwoord - schrijf dat
   op. Er wordt alleen een hash van opgeslagen, nooit het wachtwoord zelf.
@@ -164,23 +177,35 @@ maak_app() {
 Combineert het statusoverzicht (Pi-hardware, schijfruimte, diensten) en
 het addon-overzicht (installeren/openen) in 1 webpagina, rechtstreeks op
 de Pi zelf - bereikbaar vanaf elk apparaat (thuis en, via ZeroTier, ook
-onderweg), net als de mobiele statuspagina.
+onderweg).
 
-Hergebruikt bewust dezelfde detectielogica als pinas_status_pagina.sh en
-pinas_addons_beheer.pyw - geen nieuwe checks verzonnen.
+Hergebruikt bewust dezelfde detectielogica als pinas_addons_beheer.pyw -
+geen nieuwe checks verzonnen.
+
+(12 augustus 2026, wens Frans) Neemt sindsdien ALLES over van de losse
+mobiele statuspagina (pinas_status_pagina.sh, poort 8090), die daarmee is
+komen te vervallen - de statuspagina was er inhoudelijk een subset van
+(zelfde hardware/schijven/diensten-overzicht), met alleen een paar
+mobiel-specifieke extra's die hier nu ook zitten: het "toevoegen aan
+beginscherm"-icoon/manifest, de Vaultwarden-rootcertificaat-download, en
+het AirPrint-profiel voor de Printserver. 1 pagina, multifunctioneel voor
+zowel pc als telefoon/tablet.
 
 Draait als systemd-dienst pinas-dashboard.service (gebruiker pi), wordt
 neergezet door pinas_dashboard.sh. Hoort NIET in de Windows-suite-boom,
 dit bestand leeft alleen op de Pi zelf (/opt/pinas-dashboard).
 """
+import base64
+import datetime
 import os
+import plistlib
 import shutil
 import subprocess
 import time
 from datetime import timedelta
 from pathlib import Path
 
-from flask import Flask, request, session, redirect, url_for, render_template_string
+from flask import Flask, request, session, redirect, url_for, render_template_string, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 
 APP_DIR = Path(__file__).resolve().parent
@@ -191,9 +216,137 @@ PORT = 8095
 # via SSH zijn geupload (zie _draai_script_op_pi in pinas_addons_beheer.pyw).
 ADDON_SCRIPT_DIR = Path("/home/pi")
 
+# 19 juli 2026: root-certificaat van Vaultwarden's eigen mini-CA - dit is
+# het bestand dat je maar EENMALIG per apparaat hoeft te vertrouwen, zie
+# pinas_vaultwarden.sh. (Overgenomen van pinas_status_pagina.sh, 12
+# augustus 2026.)
+VAULTWARDEN_CA = Path("/etc/pinas-ca/ca.crt")
+VAULTWARDEN_SERVER_CERT = Path("/etc/pinas-ca/server.crt")
+
 app = Flask(__name__)
 app.secret_key = SECRET_FILE.read_text().strip()
 app.permanent_session_lifetime = timedelta(days=30)
+
+
+# ── Icoon voor "Zet op beginscherm" (iOS + Android) ─────────────────────────
+# PiNAS-logo, ingebakken als base64 zodat er geen los bestand nodig is op de
+# Pi. iOS gebruikt apple-touch-icon; Android/Chrome gebruikt manifest.json.
+# (12 augustus 2026, overgenomen van pinas_status_pagina.sh - was daar 18
+# juli 2026 toegevoegd, wens Frans.)
+ICOON_PNG_B64 = (
+    "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"
+    "RK5CYII="
+)
+
+
+@app.route("/apple-touch-icon.png")
+@app.route("/apple-touch-icon-precomposed.png")
+@app.route("/icon.png")
+@app.route("/favicon.ico")
+def icoon():
+    return Response(base64.b64decode(ICOON_PNG_B64), mimetype="image/png")
+
+
+@app.route("/manifest.json")
+def manifest():
+    return {
+        "name": "PiNAS Dashboard",
+        "short_name": "PiNAS",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#1565c0",
+        "theme_color": "#1565c0",
+        "icons": [
+            {"src": "/icon.png", "sizes": "180x180", "type": "image/png"},
+        ],
+    }
 
 
 # -- Hergebruikte hulpfuncties (letterlijk overgenomen uit  -----------------
@@ -215,6 +368,46 @@ def _op_pad(commando):
     return False
 
 
+def _commando_pad(commando):
+    """Zoekt het volledige pad van een commando (zerotier-cli/ip staan vaak
+    in /usr/sbin, buiten het beperkte PATH van de achtergronddienst)."""
+    pad = shutil.which(commando)
+    if pad:
+        return pad
+    for basis in ("/usr/sbin", "/usr/local/sbin", "/sbin", "/usr/local/bin"):
+        kandidaat = os.path.join(basis, commando)
+        if os.path.exists(kandidaat):
+            return kandidaat
+    return commando
+
+
+def _zerotier_cli_pad():
+    return _commando_pad("zerotier-cli")
+
+
+def _zerotier_ip():
+    for regel in _run(["sudo", "-n", _zerotier_cli_pad(), "listnetworks"]).splitlines():
+        delen = regel.split()
+        if not delen:
+            continue
+        kandidaat = delen[-1].split(",")[0].split("/")[0]
+        if kandidaat.count(".") == 3:
+            return kandidaat
+    return None
+
+
+def _lan_ip():
+    """Lokale LAN-IP van de Pi zelf, los van request.host - nodig omdat het
+    AirPrint-profiel BEIDE adressen (thuis + onderweg) tegelijk moet
+    bevatten, ongeacht vanaf welk netwerk je deze pagina nu toevallig
+    bekijkt."""
+    for regel in _run([_commando_pad("ip"), "route", "get", "1.1.1.1"]).splitlines():
+        delen = regel.split()
+        if "src" in delen:
+            return delen[delen.index("src") + 1]
+    return None
+
+
 def _actief(unit):
     return _run(["systemctl", "is-active", unit]) == "active"
 
@@ -234,13 +427,30 @@ def _cups_printer_namen():
 
 
 def _vaultwarden_status():
+    """Container-status + resterende geldigheid van het servercertificaat
+    (overgenomen van pinas_status_pagina.sh, 12 augustus 2026), zodat je
+    hier ook ruim van tevoren ziet aankomen wanneer het (jaarlijks,
+    automatisch) vernieuwd wordt."""
     namen = _run(["docker", "ps", "-a", "--format", "{{.Names}}"]).splitlines()
     aanwezig = "vaultwarden" in namen
     actief = False
     if aanwezig:
         actieve_namen = _run(["docker", "ps", "--format", "{{.Names}}"]).splitlines()
         actief = "vaultwarden" in actieve_namen
-    return {"aanwezig": aanwezig, "actief": actief}
+
+    dagen_geldig = None
+    if VAULTWARDEN_SERVER_CERT.exists():
+        einddatum = _run(["openssl", "x509", "-enddate", "-noout",
+                           "-in", str(VAULTWARDEN_SERVER_CERT)])
+        if einddatum.startswith("notAfter="):
+            try:
+                eind = datetime.datetime.strptime(
+                    einddatum.split("=", 1)[1].strip(), "%b %d %H:%M:%S %Y %Z")
+                dagen_geldig = (eind - datetime.datetime.utcnow()).days
+            except Exception:
+                dagen_geldig = None
+
+    return {"aanwezig": aanwezig, "actief": actief, "dagen_geldig": dagen_geldig}
 
 
 def _schijf(pad):
@@ -266,8 +476,6 @@ ADDONS = {
                       "poort_pad": None, "poort": None, "https": False},
     "vaultwarden":  {"naam": "Vaultwarden",         "script": "pinas_vaultwarden.sh",
                       "poort_pad": None, "poort": 8443, "https": True},
-    "statuspagina": {"naam": "Mobiele statuspagina", "script": "pinas_status_pagina.sh",
-                      "poort_pad": None, "poort": 8090, "https": False},
     "printer":      {"naam": "Printserver (CUPS)",  "script": "pinas_printer.sh",
                       "poort_pad": "/admin", "poort": 631, "https": False},
 }
@@ -293,8 +501,6 @@ def _addon_geinstalleerd(key):
             return "afwezig"
         actief = _run(["docker", "ps", "--format", "{{.Names}}"])
         return "actief" if "vaultwarden" in actief.splitlines() else "gestopt"
-    if key == "statuspagina":
-        return "actief" if _actief("pinas-status") else "afwezig"
     if key == "printer":
         aanwezig = (_run(["systemctl", "cat", "cups"]) != "" or _op_pad("cupsd"))
         if not aanwezig:
@@ -354,11 +560,9 @@ def verzamel_status(host):
     diensten.append(("Vaultwarden", vw["actief"], "__docker_vaultwarden__" if vw["aanwezig"] else None,
                       f"https://{host}:8443" if vw["actief"] else None))
     cups_actief = _actief("cups") or _op_pad("cupsd")
+    cups_printers = _cups_printer_namen() if cups_actief else []
     diensten.append(("Printserver", cups_actief, "cups" if cups_actief else None,
                       f"http://{host}:631/admin" if cups_actief else None))
-    statuspagina_actief = _actief("pinas-status")
-    diensten.append(("PiNAS Status (mobiel)", statuspagina_actief, "pinas-status",
-                      f"http://{host}:8090" if statuspagina_actief else None))
     diensten.append(("PiNAS Dashboard (dit scherm)", True, "pinas-dashboard", None))
 
     model = _run(["cat", "/proc/device-tree/model"]).split("\x00")[0].strip() or "onbekend"
@@ -372,6 +576,15 @@ def verzamel_status(host):
         "diensten": diensten,
         "model": model, "ram": ram, "sd_grootte": sd_grootte, "temp": temp, "uptime": uptime,
         "schijven": {"Opslag (SSD)": _schijf("/mnt/opslag"), "Backup (HDD)": _schijf("/mnt/backup")},
+        # (12 augustus 2026) Overgenomen van pinas_status_pagina.sh: ZeroTier-
+        # adres voor de Bereikbaarheid-kaart, Vaultwarden-certificaatstatus
+        # voor de downloadkaart, en CUPS-printernamen voor het AirPrint-
+        # profiel.
+        "zt_ip": _zerotier_ip() if zt_aanwezig else None,
+        "vw_cert_beschikbaar": VAULTWARDEN_CA.exists(),
+        "vw_dagen_geldig": vw["dagen_geldig"],
+        "printer_profiel_beschikbaar": len(cups_printers) > 0,
+        "printer_namen": ", ".join(cups_printers),
         "tijd": time.strftime("%d-%m-%Y %H:%M"),
     }
 
@@ -384,6 +597,10 @@ LOGIN_HTML = """
 <!doctype html><html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PiNAS Dashboard</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1565c0">
 <style>
 body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#eef1f5;margin:0;
      display:flex;align-items:center;justify-content:center;height:100vh}
@@ -411,6 +628,10 @@ DASHBOARD_HTML = """
 <!doctype html><html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PiNAS Dashboard</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1565c0">
 <style>
 body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#eef1f5;margin:0;
      padding:16px;color:#222}
@@ -476,6 +697,52 @@ function toonCommando(id){
 </div>
 {% endfor %}
 
+<h2>Bereikbaarheid</h2>
+<div class="kaart">
+  <span class="naam">Thuis (LAN)</span>
+  <span style="font-size:13px;color:#5f6b7a">{{ host }}</span>
+</div>
+{% if status.zt_ip %}
+<div class="kaart">
+  <span class="naam">Onderweg (ZeroTier)</span>
+  <a class="knop" href="http://{{ status.zt_ip }}:8095" target="_blank">{{ status.zt_ip }}:8095</a>
+</div>
+{% endif %}
+
+{% if status.vw_cert_beschikbaar %}
+<div class="kaart" style="display:block">
+  <details>
+    <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#0d3d75">Vaultwarden - root-certificaat</summary>
+    <div style="margin-top:10px;font-size:13px;color:#5f6b7a;line-height:1.5">
+      Dit certificaat hoef je maar <b>eenmalig per apparaat</b> te vertrouwen - het
+      onderliggende servercertificaat wordt daarna automatisch elk jaar vernieuwd,
+      zonder dat je dit opnieuw hoeft te doen.
+      {% if status.vw_dagen_geldig is not none %}
+      <br>Huidig servercertificaat nog geldig: <b>{{ status.vw_dagen_geldig }} dagen</b>.
+      {% endif %}
+    </div>
+    <a class="knop" style="display:inline-block;margin-top:10px" href="{{ url_for('vaultwarden_ca') }}"
+       download="pinas-ca.crt">&#8681; Root-certificaat downloaden</a>
+  </details>
+</div>
+{% endif %}
+
+{% if status.printer_profiel_beschikbaar %}
+<div class="kaart" style="display:block">
+  <details>
+    <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#0d3d75">Printserver - AirPrint (thuis en onderweg)</summary>
+    <div style="margin-top:10px;font-size:13px;color:#5f6b7a;line-height:1.5">
+      Thuis verschijnt de printer ({{ status.printer_namen }}) vanzelf in het
+      print-menu - geen verdere actie nodig. Onderweg zonder wifi via ZeroTier:
+      zie de Suite Handleiding voor de volledige opzet (2e wachtrij in CUPS +
+      Epson Smart Panel-koppeling).
+    </div>
+    <a class="knop" style="display:inline-block;margin-top:10px"
+       href="{{ url_for('printer_airprint_profiel') }}">&#8681; AirPrint-profiel downloaden</a>
+  </details>
+</div>
+{% endif %}
+
 <h2>Addons</h2>
 {% for a in addons %}
 <div class="kaart">
@@ -539,8 +806,94 @@ def uitloggen():
     return redirect(url_for("login"))
 
 
+# -- Vaultwarden-certificaat en AirPrint-profiel (overgenomen van --------
+# -- pinas_status_pagina.sh, 12 augustus 2026) ----------------------------
+@app.route("/vaultwarden-ca.crt")
+def vaultwarden_ca():
+    if not ingelogd():
+        return redirect(url_for("login"))
+    if not VAULTWARDEN_CA.exists():
+        return "Certificaat niet gevonden - is Vaultwarden geinstalleerd?", 404
+    return Response(
+        VAULTWARDEN_CA.read_bytes(),
+        mimetype="application/x-x509-ca-cert",
+        headers={"Content-Disposition": 'attachment; filename="pinas-ca.crt"'})
+
+
+def _airprint_entries_voor(naam, lan_ip, zt_ip):
+    """Kiest per printernaam BEWUST een enkel adres i.p.v. beide tegelijk
+    onder dezelfde naam - werkte niet betrouwbaar op iOS. Voeg in CUPS een
+    2e wachtrij toe voor dezelfde fysieke printer met een naam die eindigt
+    op '_onderweg' of '_zerotier' - die koppelt aan het ZeroTier-adres.
+    Elke andere naam krijgt het lokale (thuis-)adres."""
+    is_onderweg = naam.lower().endswith(("_onderweg", "_zerotier"))
+    ip = zt_ip if is_onderweg else lan_ip
+    if not ip:
+        return []
+    return [{"IPAddress": ip, "Port": 631, "ResourcePath": f"printers/{naam}"}]
+
+
+# Vaste PayloadUUID's (niet elke keer opnieuw gegenereerd!) - eigen UUID's
+# t.o.v. pinas_status_pagina.sh, zodat een download hier geen bestaand
+# statuspagina-profiel op een toestel overschrijft (die twee kunnen naast
+# elkaar hebben bestaan tijdens de overgang).
+_AIRPRINT_PROFIEL_UUID = "6C9F0A2E-6C7E-4C0F-9C6E-6B6E7E3F9A11"
+_AIRPRINT_PAYLOAD_UUID = "3B7C1E9D-2A4F-4E8B-9D3C-1F5A8E2C7B44"
+
+
+@app.route("/pinas-printer-airprint.mobileconfig")
+def printer_airprint_profiel():
+    geen_cache = {"Cache-Control": "no-store"}
+    if not ingelogd():
+        return redirect(url_for("login"))
+    printers = _cups_printer_namen()
+    if not printers:
+        return Response(
+            "Geen printer gevonden in CUPS - voeg eerst een printer toe "
+            "via http://<Pi-IP>:631 (Administration -> Add Printer).",
+            status=404, headers=geen_cache)
+
+    lan_ip = _lan_ip()
+    zt_ip = _zerotier_ip()
+    entries = []
+    for naam in printers:
+        entries.extend(_airprint_entries_voor(naam, lan_ip, zt_ip))
+    if not entries:
+        return Response("Kon geen LAN- of ZeroTier-adres bepalen voor de Pi.",
+                         status=404, headers=geen_cache)
+
+    profiel = {
+        "PayloadContent": [{
+            "AirPrint": entries,
+            "PayloadDescription": "Voegt de PiNAS-printer(s) toe aan AirPrint - "
+                                   "thuis via het lokale netwerk, onderweg via ZeroTier.",
+            "PayloadDisplayName": "PiNAS Printserver",
+            "PayloadIdentifier": "nl.pinas.airprint.printserver",
+            "PayloadOrganization": "PiNAS",
+            "PayloadType": "com.apple.airprint",
+            "PayloadUUID": _AIRPRINT_PAYLOAD_UUID,
+            "PayloadVersion": 1,
+        }],
+        "PayloadDescription": "PiNAS Printserver toevoegen aan AirPrint (thuis en onderweg via ZeroTier).",
+        "PayloadDisplayName": "PiNAS Printserver - AirPrint",
+        "PayloadIdentifier": "nl.pinas.airprint.profile",
+        "PayloadOrganization": "PiNAS",
+        "PayloadRemovalDisallowed": False,
+        "PayloadType": "Configuration",
+        "PayloadUUID": _AIRPRINT_PROFIEL_UUID,
+        "PayloadVersion": 1,
+    }
+    return Response(
+        plistlib.dumps(profiel, fmt=plistlib.FMT_XML),
+        mimetype="application/x-apple-aspen-config",
+        headers={"Content-Disposition": 'inline; filename="PiNAS_Printserver_AirPrint.mobileconfig"',
+                 "Cache-Control": "no-store"})
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=PORT, debug=False)
+    if not HASH_FILE.exists() or not SECRET_FILE.exists():
+        raise SystemExit("Wachtwoord/sessiesleutel ontbreekt - draai eerst pinas_dashboard.sh")
+    app.run(host="0.0.0.0", port=PORT, debug=False, threaded=True)
 APP_EOF
     success "Webapp weggeschreven."
 }
@@ -614,6 +967,10 @@ cat <<EOF
 
   Wachtwoord    : ${WACHTWOORD_TONEN}
   (schrijf dit op - het wordt niet opnieuw getoond)
+
+  Tip: open de link op je telefoon en voeg de pagina toe aan je
+  beginscherm (browser-deelmenu -> "Zet op beginscherm") voor een
+  eigen app-icoon, zonder dat er een echte app voor nodig is.
 
   Log: ${LOGFILE}
 =====================================================================

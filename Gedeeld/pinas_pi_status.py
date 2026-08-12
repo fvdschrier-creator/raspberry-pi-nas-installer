@@ -92,12 +92,6 @@ _SSH_COMMANDO = (
     "  if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx vaultwarden; "
     "  then echo vaultwarden:active; else echo vaultwarden:stopped; fi; "
     "else echo vaultwarden:absent; fi; "
-    # Mobiele statuspagina
-    "if [ -f /etc/systemd/system/pinas-status.service ]; then "
-    "  st=$(systemctl is-active pinas-status 2>/dev/null); "
-    "  if [ \"$st\" = \"active\" ]; then echo statuspagina:active; "
-    "  else echo statuspagina:stopped; fi; "
-    "else echo statuspagina:absent; fi; "
     # Printserver (CUPS)
     "if systemctl cat cups >/dev/null 2>&1; then "
     "  st=$(systemctl is-active cups 2>/dev/null); "
@@ -111,7 +105,7 @@ _SSH_COMMANDO = (
     # Versie-afdruk van elke add-on (zie schrijf_versie_marker() in elk
     # .sh-script) - om te kunnen waarschuwen als een lokaal bijgewerkt
     # bestand nog niet naar de Pi geupload/geinstalleerd is.
-    "for k in nextcloud pihole zerotier vaultwarden statuspagina printer dashboard; do "
+    "for k in nextcloud pihole zerotier vaultwarden printer dashboard; do "
     "  if [ -f /etc/pinas-addon-versies/$k.sha256 ]; then "
     "    echo \"hash_$k:$(cat /etc/pinas-addon-versies/$k.sha256 2>/dev/null)\"; "
     "  else echo \"hash_$k:geen\"; fi; "
@@ -123,11 +117,11 @@ _BOOLEAN_DIENSTEN = ("smbd", "nextcloud", "filebrowser", "cockpit",
                       "seagate-web", "backup_mount")
 
 # Diensten met 3-standen-status ("active"/"stopped"/"absent").
-_DRIESTANDEN_DIENSTEN = ("pihole", "zerotier", "vaultwarden", "statuspagina",
+_DRIESTANDEN_DIENSTEN = ("pihole", "zerotier", "vaultwarden",
                          "printer", "dashboard")
 
 _ADDON_SLEUTELS = ("nextcloud", "pihole", "zerotier", "vaultwarden",
-                    "statuspagina", "printer", "dashboard")
+                    "printer", "dashboard")
 
 
 def _lege_resultaat():

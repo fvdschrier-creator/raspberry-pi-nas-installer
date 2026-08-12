@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 ###############################################################################
-# PiNAS - Mobiele statuspagina: wachtwoord opnieuw instellen
+# PiNAS - PiNAS Dashboard: wachtwoord opnieuw instellen
 #
-# Voor als je het wachtwoord van de mobiele statuspagina kwijt bent. Maakt een
-# NIEUW wachtwoord aan (het oude werkt daarna niet meer) en herstart de dienst.
-# De statuspagina zelf hoeft NIET opnieuw geinstalleerd te worden.
+# Voor als je het wachtwoord van PiNAS Dashboard kwijt bent. Maakt een NIEUW
+# wachtwoord aan (het oude werkt daarna niet meer) en herstart de dienst.
+# Het Dashboard zelf hoeft NIET opnieuw geinstalleerd te worden.
 #
-# Gebruik:  sudo bash pinas_status_pagina_wachtwoord_resetten.sh
+# (12 augustus 2026) Nieuw als onderdeel van het samenvoegen van de mobiele
+# statuspagina in PiNAS Dashboard - vervangt
+# pinas_status_pagina_wachtwoord_resetten.sh, zelfde opzet.
+#
+# Gebruik:  sudo bash pinas_dashboard_wachtwoord_resetten.sh
 ###############################################################################
 
 set -Eeuo pipefail
 
-readonly LOGFILE="/var/log/pinas_status_pagina_wachtwoord.log"
-readonly APP_DIR="/opt/pinas-status"
+readonly LOGFILE="/var/log/pinas_dashboard_wachtwoord.log"
+readonly APP_DIR="/opt/pinas-dashboard"
 readonly HASH_FILE="${APP_DIR}/wachtwoord.hash"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
@@ -27,20 +31,20 @@ error()   { echo -e "${RED}FOUT: $1${NC}"; }
 on_error(){ error "Afgebroken op regel $1. Log: $LOGFILE"; exit 1; }
 trap 'on_error $LINENO' ERR
 
-[[ $EUID -eq 0 ]] || { error "Start met: sudo bash pinas_status_pagina_wachtwoord_resetten.sh"; exit 1; }
+[[ $EUID -eq 0 ]] || { error "Start met: sudo bash pinas_dashboard_wachtwoord_resetten.sh"; exit 1; }
 
 if [[ ! -d "$APP_DIR" ]]; then
-    error "Mobiele statuspagina is niet geinstalleerd (${APP_DIR} ontbreekt). Installeer eerst pinas_status_pagina.sh."
+    error "PiNAS Dashboard is niet geinstalleerd (${APP_DIR} ontbreekt). Installeer eerst pinas_dashboard.sh."
     exit 1
 fi
 
 python3 -c "import flask, werkzeug" 2>/dev/null \
-    || { error "python3-flask ontbreekt. Installeer eerst pinas_status_pagina.sh."; exit 1; }
+    || { error "python3-flask ontbreekt. Installeer eerst pinas_dashboard.sh."; exit 1; }
 
 cat <<EOF
 
 =====================================================================
-  Wachtwoord opnieuw instellen - Mobiele statuspagina
+  Wachtwoord opnieuw instellen - PiNAS Dashboard
 =====================================================================
   Dit maakt een NIEUW wachtwoord aan. Het oude wachtwoord werkt daarna
   niet meer - je hoeft verder nergens iets aan te passen.
@@ -67,12 +71,12 @@ chown pi:pi "$HASH_FILE"
 success "Nieuw wachtwoord ingesteld."
 
 log "Dienst herstarten..."
-systemctl restart pinas-status 2>/dev/null || true
+systemctl restart pinas-dashboard 2>/dev/null || true
 sleep 2
-if systemctl is-active --quiet pinas-status; then
-    success "Statuspagina draait weer."
+if systemctl is-active --quiet pinas-dashboard; then
+    success "Dashboard draait weer."
 else
-    warn "Dienst lijkt niet (meer) te draaien - controleer: journalctl -u pinas-status"
+    warn "Dienst lijkt niet (meer) te draaien - controleer: journalctl -u pinas-dashboard"
 fi
 
 cat <<EOF

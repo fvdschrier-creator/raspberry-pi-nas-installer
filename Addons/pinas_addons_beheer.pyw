@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # pinas_addons_beheer.pyw - Pi NAS Suite - Addons
 #
-# Addons Beheer: de ENE centrale plek om de 7 add-ons (Nextcloud, Pi-hole,
-# ZeroTier, Vaultwarden, Mobiele statuspagina, Printserver, PiNAS Dashboard)
-# te installeren of verwijderen.
+# Addons Beheer: de ENE centrale plek om de 6 add-ons (Nextcloud, Pi-hole,
+# ZeroTier, Vaultwarden, Printserver, PiNAS Dashboard) te installeren of
+# verwijderen.
 #
 # PiNAS Dashboard toegevoegd (4 augustus 2026, wens Frans): 1 webpagina op
 # de Pi zelf (poort 8095) die het statusoverzicht (hardware, schijfruimte,
@@ -11,16 +11,19 @@
 # bereikbaar vanaf elk apparaat. Zie Addons\pinas_dashboard.sh.
 # Zelfde opzet als Beheer\pinas_backup_beheer.pyw (16 juli 2026).
 #
+# (12 augustus 2026, wens Frans) De losse mobiele statuspagina (17 juli
+# 2026 toegevoegd, poort 8090) is VERVALLEN: bood inhoudelijk dezelfde
+# hardware/schijven/diensten-info als PiNAS Dashboard, alleen zonder
+# addon-beheer erbij - puur redundant. Alle mobiel-specifieke extra's
+# (beginscherm-icoon, Vaultwarden-certificaat-download, AirPrint-profiel)
+# zijn overgezet naar PiNAS Dashboard, dat nu de enige, multifunctionele
+# pagina is voor zowel pc als telefoon/tablet.
+#
 # VAULTWARDEN - 19 juli 2026, herbouwd na het iOS-connectieprobleem: gebruikt
 # nu een eigen root-certificaat (kleine eigen "certificaatinstantie") i.p.v.
 # een los zelf-ondertekend certificaat. Dat root-certificaat vertrouw je nog
 # maar EENMALIG per apparaat; het servercertificaat wordt daarna automatisch
 # elk jaar vernieuwd op de Pi zelf. Zie Addons\pinas_vaultwarden.sh.
-#
-# Mobiele statuspagina toegevoegd (17 juli 2026, wens Frans): een met
-# wachtwoord beveiligde webpagina die op de Pi zelf draait (poort 8090) en
-# een mobielvriendelijk overzicht toont - thuis en, via ZeroTier, ook
-# onderweg. Zie Addons\pinas_status_pagina.sh voor de details.
 #
 # Printserver toegevoegd (wens Frans): CUPS + AirPrint op de Pi, zodat een
 # USB-printer aan de Pi (of een netwerkprinter) gedeeld wordt met alle
@@ -106,7 +109,7 @@ ZT_IP = _cfg.get("pi", "zt_ip", fallback="10.90.69.2")
 
 
 def _haal_addon_status():
-    """Eenmalige check die voor alle 7 add-ons tegelijk opvraagt of ze
+    """Eenmalige check die voor alle 6 add-ons tegelijk opvraagt of ze
     al geinstalleerd zijn - zodat je niet per ongeluk 'Installeren' klikt
     op iets dat al draait. Installeren blijft daarna gewoon veilig (de
     scripts zijn idempotent), dit is puur een duidelijke vingerwijzing
@@ -124,27 +127,27 @@ def _haal_addon_status():
     'onbekend' i.p.v. een fout verzinnen)."""
     import pinas_pi_status
     leeg = {"nextcloud": None, "pihole": None, "zerotier": None, "vaultwarden": None,
-            "statuspagina": None, "printer": None, "dashboard": None,
+            "printer": None, "dashboard": None,
             "hash_nextcloud": None, "hash_pihole": None, "hash_zerotier": None,
-            "hash_vaultwarden": None, "hash_statuspagina": None, "hash_printer": None,
+            "hash_vaultwarden": None, "hash_printer": None,
             "hash_dashboard": None}
     r = pinas_pi_status.haal_pi_status(PI_IP, timeout=8)
     if not r["bereikbaar"]:
         return leeg
     resultaat = dict(leeg)
-    # nextcloud/pihole/zerotier/statuspagina kennen hier bewust geen
-    # actief/gestopt-onderscheid (net als voorheen, zelfde gedrag als
-    # het oude losse SSH-commando had) - alleen vaultwarden/printer/
-    # dashboard hebben hier al langer een Starten/Stoppen-knop en dus
-    # 3 standen nodig. 'active'/'stopped' worden hier allebei "aanwezig".
+    # nextcloud/pihole/zerotier kennen hier bewust geen actief/gestopt-
+    # onderscheid (net als voorheen, zelfde gedrag als het oude losse
+    # SSH-commando had) - alleen vaultwarden/printer/dashboard hebben hier
+    # al langer een Starten/Stoppen-knop en dus 3 standen nodig.
+    # 'active'/'stopped' worden hier allebei "aanwezig".
     resultaat["nextcloud"] = "aanwezig" if r["nextcloud"] else "afwezig"
-    for key in ("pihole", "zerotier", "statuspagina"):
+    for key in ("pihole", "zerotier"):
         resultaat[key] = "aanwezig" if r[key] in ("active", "stopped") else "afwezig"
     for key in ("vaultwarden", "printer", "dashboard"):
         vertaald = pinas_pi_status.vertaal_naar_nederlands(r[key])
         resultaat[key] = vertaald if vertaald is not None else None
     for key in ("nextcloud", "pihole", "zerotier", "vaultwarden",
-                "statuspagina", "printer", "dashboard"):
+                "printer", "dashboard"):
         resultaat[f"hash_{key}"] = r[f"hash_{key}"]
     return resultaat
 
@@ -173,7 +176,6 @@ _ADDON_SCRIPT = {
     "pihole": "pinas_pihole.sh",
     "zerotier": "pinas_zerotier.sh",
     "vaultwarden": "pinas_vaultwarden.sh",
-    "statuspagina": "pinas_status_pagina.sh",
     "printer": "pinas_printer.sh",
     "dashboard": "pinas_dashboard.sh",
 }
@@ -241,28 +243,11 @@ HELP_HOOFDSTUKKEN = [
      "ZeroTier al geinstalleerd is op het moment van installeren, wordt "
      "het ZeroTier-adres automatisch in hetzelfde certificaat opgenomen "
      "- dan werkt de kluis ook onderweg zonder certificaatwaarschuwing. "
-     "Telefoon/tablet: het root-certificaat download je via de mobiele "
-     "statuspagina en moet je daar zelf eenmalig vertrouwen (installeren "
+     "Telefoon/tablet: het root-certificaat download je via PiNAS "
+     "Dashboard en moet je daar zelf eenmalig vertrouwen (installeren "
      "als profiel + 'Certificaatvertrouwen' aanzetten op iPhone; als "
      "CA-certificaat installeren op Android) - zie de Suite Handleiding "
      "voor de exacte stappen."),
-    ("Mobiele statuspagina",
-     "Een met wachtwoord beveiligde webpagina die op de Pi zelf draait "
-     "(poort 8090) met een mobielvriendelijk overzicht: diensten, "
-     "hardware (temperatuur, RAM, uptime) en schijfruimte. Thuis "
-     "bereikbaar via het IP van de Pi; onderweg via het ZeroTier-IP "
-     "(als ZeroTier geinstalleerd is) - net als Nextcloud nu al onderweg "
-     "werkt. Bij 'Diensten' staat per actieve dienst (Nextcloud, "
-     "FileBrowser, Cockpit, Vaultwarden, Pi-hole, Externe HDD svc) een "
-     "directe 'Openen'-link - die kiest automatisch het juiste adres: "
-     "lokaal thuis, ZeroTier-adres onderweg (18 juli 2026). Het "
-     "wachtwoord wordt bij installatie eenmalig getoond in het venster "
-     "- schrijf het op, of typ bij installatie/resetten je eigen "
-     "wachtwoord in i.p.v. het automatisch gegenereerde. Voeg de pagina "
-     "op je telefoon toe aan het beginscherm voor een eigen 'app-icoon'. "
-     "Wachtwoord kwijt? Gebruik de knop 'Wachtwoord resetten' - maakt "
-     "een nieuw wachtwoord aan zonder dat je de hele pagina opnieuw "
-     "hoeft te installeren."),
     ("Printserver",
      "Maakt van de Pi een netwerk-printserver met CUPS + AirPrint. Een "
      "USB-printer die aan de Pi hangt (of een bestaande netwerkprinter) "
@@ -281,11 +266,31 @@ HELP_HOOFDSTUKKEN = [
      "TIP - printen op iPhone/iPad onderweg ZONDER wifi (bevestigd "
      "werkend, 27 juli 2026): (1) voeg dezelfde printer nog een keer toe "
      "met een naam die eindigt op '_onderweg', (2) installeer het "
-     "AirPrint-profiel via de mobiele statuspagina, (3) koppel de printer "
+     "AirPrint-profiel via PiNAS Dashboard, (3) koppel de printer "
      "EEN KEER met de gratis Epson Smart Panel-app (Wi-Fi Direct/QR-code, "
      "thuis op wifi) - zonder deze koppeling bleek printen zonder wifi "
      "consequent te mislukken. Zie de Suite Handleiding voor de volledige "
      "uitleg."),
+    ("PiNAS Dashboard",
+     "Een met wachtwoord beveiligde webpagina die op de Pi zelf draait "
+     "(poort 8095), mobielvriendelijk en multifunctioneel voor zowel pc "
+     "als telefoon/tablet - brengt alles samen in 1 pagina:\n"
+     "- Statusoverzicht: diensten, hardware (temperatuur, RAM, uptime) en "
+     "schijfruimte.\n"
+     "- Addon-overzicht met Installeren/Openen, zoals hierboven.\n"
+     "- Vaultwarden-rootcertificaat downloaden (voor telefoon/tablet).\n"
+     "- AirPrint-profiel downloaden (voor de Printserver-add-on).\n"
+     "Thuis bereikbaar via het IP van de Pi; onderweg via het ZeroTier-IP "
+     "(als ZeroTier geinstalleerd is). Het wachtwoord wordt bij installatie "
+     "eenmalig getoond in het venster - schrijf het op, of typ bij "
+     "installatie/resetten je eigen wachtwoord in i.p.v. het automatisch "
+     "gegenereerde. Voeg de pagina op je telefoon toe aan het beginscherm "
+     "voor een eigen 'app-icoon'. Wachtwoord kwijt? Gebruik de knop "
+     "'Wachtwoord resetten' - maakt een nieuw wachtwoord aan zonder dat je "
+     "het Dashboard opnieuw hoeft te installeren.\n\n"
+     "(12 augustus 2026) Vervangt de losse mobiele statuspagina volledig - "
+     "die bood inhoudelijk hetzelfde statusoverzicht, alleen zonder "
+     "addon-beheer erbij."),
     ("Installeren / Verwijderen - hoe werkt dat?",
      "Elke knop uploadt het bijbehorende script naar de Pi en draait het "
      "daar met sudo, in een apart venster dat je de voortgang laat zien "
@@ -866,13 +871,6 @@ def start():
         status_labels, "vaultwarden", bijgewerkt_labels)
 
     _bouw_addon_item(
-        body, "Mobiele statuspagina", "Statusoverzicht op je telefoon - thuis en onderweg (via ZeroTier)",
-        [("Installeren", lambda: _draai_script_op_pi("pinas_status_pagina.sh", "Mobiele statuspagina installeren"), "primair"),
-         ("Verwijderen", lambda: _draai_script_op_pi("pinas_status_pagina_verwijderen.sh", "Mobiele statuspagina verwijderen"), "destructief"),
-         ("Wachtwoord resetten", lambda: _draai_script_op_pi("pinas_status_pagina_wachtwoord_resetten.sh", "Wachtwoord resetten"), "secundair")],
-        status_labels, "statuspagina", bijgewerkt_labels)
-
-    _bouw_addon_item(
         body, "Printserver", "Print via de Pi - USB- of netwerkprinter delen (AirPrint, ook onderweg via ZeroTier)",
         [("Installeren", lambda: _draai_script_op_pi("pinas_printer.sh", "Printserver installeren"), "primair"),
          ("Verwijderen", lambda: _draai_script_op_pi("pinas_printer_verwijderen.sh", "Printserver verwijderen"), "destructief"),
@@ -882,10 +880,11 @@ def start():
         status_labels, "printer", bijgewerkt_labels, aan_uit_knoppen)
 
     _bouw_addon_item(
-        body, "PiNAS Dashboard", "Status + addons in 1 pagina - bereikbaar vanaf elk apparaat (thuis en onderweg via ZeroTier)",
+        body, "PiNAS Dashboard", "Status + addons + mobiel in 1 pagina - bereikbaar vanaf elk apparaat (thuis en onderweg via ZeroTier), incl. beginscherm-icoon, Vaultwarden-certificaat en AirPrint-profiel",
         [("Installeren", lambda: _draai_script_op_pi("pinas_dashboard.sh", "Dashboard installeren"), "primair"),
          ("Verwijderen", lambda: _draai_script_op_pi("pinas_dashboard_verwijderen.sh", "Dashboard verwijderen"), "destructief"),
          ("Openen (8095)", _open_dashboard, "secundair"),
+         ("Wachtwoord resetten", lambda: _draai_script_op_pi("pinas_dashboard_wachtwoord_resetten.sh", "Wachtwoord resetten"), "secundair"),
          ("Starten", lambda: _actie_en_ververs(lambda: _start_dienst_op_pi("pinas-dashboard", "Dashboard starten"), "dashboard"), "primair"),
          ("Stoppen", lambda: _actie_en_ververs(lambda: _stop_dienst_op_pi("pinas-dashboard", "Dashboard stoppen"), "dashboard"), "destructief")],
         status_labels, "dashboard", bijgewerkt_labels, aan_uit_knoppen)

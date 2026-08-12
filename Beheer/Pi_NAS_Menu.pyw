@@ -52,7 +52,6 @@ _ADDON_SCRIPT = {
     "pihole": "pinas_pihole.sh",
     "zerotier": "pinas_zerotier.sh",
     "vaultwarden": "pinas_vaultwarden.sh",
-    "statuspagina": "pinas_status_pagina.sh",
     "printer": "pinas_printer.sh",
 }
 
@@ -1052,8 +1051,8 @@ class Menu(tk.Tk):
                     "✅ Alle scripts zijn up-to-date.\n\n"
                     "Alle 16 bestanden die nas_upload.py naar de Pi zet zijn "
                     "gecheckt (MD5-vergelijking lokaal vs Pi).\n\n"
-                    "Let op - dit dekt NIET de Addons-scripts (Mobiele "
-                    "statuspagina, Pi-hole, Nextcloud, ZeroTier, Vaultwarden): die "
+                    "Let op - dit dekt NIET de Addons-scripts (PiNAS "
+                    "Dashboard, Pi-hole, Nextcloud, ZeroTier, Vaultwarden): die "
                     "gebruiken nas_upload.py niet en worden hier dus ook niet "
                     "gecheckt. Addons Beheer uploadt de laatste lokale versie "
                     "automatisch elke keer dat je op 'Installeren' klikt - "
@@ -1360,7 +1359,6 @@ class Menu(tk.Tk):
     def _bouw_pi_status_leeg(self):
         self._pi_statussen = []
         self._pi_status_ok = None
-        self._sp_status = "onbekend"
         self._pihole_status = "onbekend"
         self._zerotier_status = "onbekend"
         self._vw_status = "onbekend"
@@ -1399,9 +1397,8 @@ class Menu(tk.Tk):
                         "backup_mount": r["backup_mount"],
                     }
                     for k in ("nextcloud", "pihole", "zerotier", "vaultwarden",
-                              "statuspagina", "printer", "dashboard"):
+                              "printer", "dashboard"):
                         addon_hashes[k] = r[f"hash_{k}"]
-                sp_status = r["statuspagina"] if r["bereikbaar"] else "onbekend"
                 pihole_status = r["pihole"] if r["bereikbaar"] else "onbekend"
                 zerotier_status = r["zerotier"] if r["bereikbaar"] else "onbekend"
                 vw_status = r["vaultwarden"] if r["bereikbaar"] else "onbekend"
@@ -1411,7 +1408,6 @@ class Menu(tk.Tk):
                 # de Pi wel bereikbaar was maar deze ene regel niet in de
                 # uitvoer stond) -> "onbekend", zelfde Nederlandse label
                 # als voorheen.
-                if sp_status == "unknown": sp_status = "onbekend"
                 if pihole_status == "unknown": pihole_status = "onbekend"
                 if zerotier_status == "unknown": zerotier_status = "onbekend"
                 if vw_status == "unknown": vw_status = "onbekend"
@@ -1431,7 +1427,6 @@ class Menu(tk.Tk):
             except Exception:
                 resultaten = []   # SSH mislukt: status ONBEKEND, niet "alles uit"
                 addon_hashes = {}
-                sp_status = "onbekend"
                 pihole_status = "onbekend"
                 zerotier_status = "onbekend"
                 vw_status = "onbekend"
@@ -1447,7 +1442,6 @@ class Menu(tk.Tk):
                 "pihole": pihole_status in ("active", "stopped"),
                 "zerotier": zerotier_status in ("active", "stopped"),
                 "vaultwarden": vw_status in ("active", "stopped"),
-                "statuspagina": sp_status in ("active", "stopped"),
                 "printer": printer_status in ("active", "stopped"),
                 "dashboard": dashboard_status in ("active", "stopped"),
             }
@@ -1455,7 +1449,7 @@ class Menu(tk.Tk):
             for key, naam in [
                 ("nextcloud", "Nextcloud"), ("pihole", "Pi-hole"),
                 ("zerotier", "ZeroTier"), ("vaultwarden", "Vaultwarden"),
-                ("statuspagina", "Mobiele statuspagina"), ("printer", "Printserver"),
+                ("printer", "Printserver"),
                 ("dashboard", "PiNAS Dashboard"),
             ]:
                 if not addon_geinstalleerd.get(key):
@@ -1467,7 +1461,6 @@ class Menu(tk.Tk):
                 if lokaal_hash and pi_hash != lokaal_hash:
                     verouderd.append(naam)
 
-            self._sp_status = sp_status
             self._pihole_status = pihole_status
             self._zerotier_status = zerotier_status
             self._vw_status = vw_status
@@ -2131,8 +2124,8 @@ class Menu(tk.Tk):
                  bg=BG, fg=DIM).pack(anchor="w")
         self._rbtn(frame, "🔑  NAS wachtwoord instellen / wijzigen",
                    lambda: self._wachtwoord_instellen(), ACCENT)
-        self._rbtn(frame, "📱  Mobiele statuspagina - wachtwoord resetten",
-                   self._reset_statuspagina_wachtwoord, ACCENT)
+        self._rbtn(frame, "📱  PiNAS Dashboard - wachtwoord resetten",
+                   self._reset_dashboard_wachtwoord, ACCENT)
 
     def _open_kleuren_kiezer(self):
         """Opent Kleuren kiezen - los venster om pinas_theme.py aan te passen
@@ -2189,36 +2182,40 @@ class Menu(tk.Tk):
             f_bat.write("\r\n".join(regels_bat) + "\r\n")
         subprocess.Popen('start cmd /k "' + bat + '"', shell=True)
 
-    def _reset_statuspagina_wachtwoord(self):
-        """Wachtwoord van de mobiele statuspagina resetten - zelfde script
-        als de knop in Addons Beheer, hier ook beschikbaar onder
-        Beveiliging (Frans, 17 juli 2026: wachtwoord-acties horen bij
-        elkaar), zodat je niet apart naar Addons Beheer hoeft als je
-        alleen het wachtwoord kwijt bent."""
-        script_naam = "pinas_status_pagina_wachtwoord_resetten.sh"
+    def _reset_dashboard_wachtwoord(self):
+        """Wachtwoord van PiNAS Dashboard resetten - zelfde script als de
+        knop in Addons Beheer, hier ook beschikbaar onder Beveiliging
+        (Frans, 17 juli 2026: wachtwoord-acties horen bij elkaar), zodat
+        je niet apart naar Addons Beheer hoeft als je alleen het
+        wachtwoord kwijt bent.
+
+        (12 augustus 2026) Bijgewerkt van de mobiele statuspagina naar
+        PiNAS Dashboard - die nam alle functionaliteit van de statuspagina
+        over, inclusief deze wachtwoord-resetknop."""
+        script_naam = "pinas_dashboard_wachtwoord_resetten.sh"
         script_pad = os.path.join(_nas_root(), "Addons", script_naam)
         if not os.path.exists(script_pad):
             script_pad = os.path.join(_c_pinas(), "Addons", script_naam)
         if not os.path.exists(script_pad):
             messagebox.showerror("Niet gevonden",
-                f"{script_naam} niet gevonden.\n\nInstalleer eerst de mobiele "
-                "statuspagina via Addons Beheer als dat nog niet is gebeurd.")
+                f"{script_naam} niet gevonden.\n\nInstalleer eerst PiNAS "
+                "Dashboard via Addons Beheer als dat nog niet is gebeurd.")
             return
 
         akkoord = messagebox.askyesno(
-            "Mobiele statuspagina - wachtwoord resetten",
-            "Dit maakt een NIEUW wachtwoord aan voor de mobiele statuspagina "
-            "(poort 8090). Het oude wachtwoord werkt daarna niet meer.\n\n"
-            "Vereist dat de statuspagina al geinstalleerd is (via Addons "
+            "PiNAS Dashboard - wachtwoord resetten",
+            "Dit maakt een NIEUW wachtwoord aan voor PiNAS Dashboard "
+            "(poort 8095). Het oude wachtwoord werkt daarna niet meer.\n\n"
+            "Vereist dat het Dashboard al geinstalleerd is (via Addons "
             "Beheer). Volg het venster dat opent voor het nieuwe wachtwoord.\n\n"
             "Doorgaan?")
         if not akkoord:
             return
 
-        bat = os.path.join(tempfile.gettempdir(), "pinas_statuspagina_ww_reset.bat")
+        bat = os.path.join(tempfile.gettempdir(), "pinas_dashboard_ww_reset.bat")
         regels = [
             "@echo off",
-            "echo Mobiele statuspagina - wachtwoord resetten...",
+            "echo PiNAS Dashboard - wachtwoord resetten...",
             "echo.",
             "echo Stap 1: script uploaden...",
             f'scp "{script_pad}" pi@{PI_IP}:/home/pi/{script_naam}',
@@ -2845,9 +2842,10 @@ class Menu(tk.Tk):
                                "programma apart - niets wordt samengevoegd of automatisch na elkaar gestart.")
 
         h("ADDONS")
-        item("Addons Beheer", "Centrale plek voor de 7 add-ons: Nextcloud, Pi-hole, ZeroTier, "
-                               "Vaultwarden, de mobiele statuspagina, de Printserver en het "
-                               "PiNAS Dashboard. Per add-on Installeren/Verwijderen.")
+        item("Addons Beheer", "Centrale plek voor de 6 add-ons: Nextcloud, Pi-hole, ZeroTier, "
+                               "Vaultwarden, de Printserver en PiNAS Dashboard (mobielvriendelijk "
+                               "statusoverzicht + addon-beheer in 1 pagina). Per add-on "
+                               "Installeren/Verwijderen.")
 
         h("BEHEER")
         # 16 juli 2026: Herstel & Acties en Onderhoud gepromoveerd
@@ -3320,10 +3318,6 @@ class Menu(tk.Tk):
                 tekst = "onbekend - Pi niet bereikbaar?"
             return (("na", naam, tekst), ("na", f"{naam} (ZeroTier)", tekst))
 
-        sp_status_snel = getattr(self, '_sp_status', 'onbekend')
-        sp_item, sp_item_zt = _status_naar_items(
-            sp_status_snel, "PiNAS Status (mobiel)", lambda ip: f"http://{ip}:8090")
-
         pihole_status_snel = getattr(self, '_pihole_status', 'onbekend')
         pihole_item, pihole_item_zt = _status_naar_items(
             pihole_status_snel, "Pi-hole", lambda ip: f"http://{ip}:8081/admin")
@@ -3360,7 +3354,6 @@ class Menu(tk.Tk):
             ("link", "Cockpit",      f"http://{PI_IP}:9090"),
             ("link", "Cockpit (ZeroTier)", f"http://{ZT_IP}:9090"),
             pihole_item, pihole_item_zt,
-            sp_item, sp_item_zt,
             ("pad",  f"Opslag ({_opslag_letter()}:, SSD)", fr"\\{PI_IP}\Opslag"),
             ("pad",  f"Opslag ({_opslag_letter()}:, SSD, ZeroTier)", fr"\\{ZT_IP}\Opslag"),
             ("pad",  f"Backup ({_backup_letter()}:, HDD)", fr"\\{PI_IP}\Backup"),
@@ -3507,9 +3500,6 @@ class Menu(tk.Tk):
 
         vw_status = getattr(self, '_vw_status', 'onbekend')
         dienst_rij(frame, "Vaultwarden", vw_status)
-
-        sp_status = getattr(self, '_sp_status', 'onbekend')
-        dienst_rij(frame, "PiNAS Status (mobiel)", sp_status)
 
         dashboard_status = getattr(self, '_dashboard_status', 'onbekend')
         dienst_rij(frame, "PiNAS Dashboard", dashboard_status)

@@ -804,8 +804,8 @@ def bouw_handleiding():
          "Backup-schijven in Windows - geen van beide is een aparte, latere actie.",
          "3. Windows onderdelen (Onderhoud) - OPTIONEEL, als je bij Beheer_install.bat iets hebt "
          "overgeslagen of later nog iets wilt toevoegen/herstellen.",
-         "4. Addons (Addons Beheer) - OPTIONEEL. Nextcloud, Pi-hole, ZeroTier, Vaultwarden, Mobiele "
-         "statuspagina, Printserver, PiNAS Dashboard - kies zelf wat je installeert."]))
+         "4. Addons (Addons Beheer) - OPTIONEEL. Nextcloud, Pi-hole, ZeroTier, Vaultwarden, "
+         "Printserver, PiNAS Dashboard - kies zelf wat je installeert."]))
     story.append(Spacer(1, 0.2*cm))
 
     # 9 augustus 2026 (Frans: "je heb niets, wel een Pi, en een lege SD
@@ -1083,9 +1083,8 @@ def bouw_handleiding():
             ["Pi-hole",     "Advertentieblokkering en versleutelde DNS voor het hele netwerk."],
             ["ZeroTier",    "VPN - veilig bij de NAS komen van onderweg, zonder poorten open te zetten op de router."],
             ["Vaultwarden", "Eigen wachtwoordkluis (Bitwarden-compatibel). Gebruikt een eigen root-certificaat - zie 'Certificaat vertrouwen' hieronder."],
-            ["Mobiele statuspagina", "Met wachtwoord beveiligde webpagina op de Pi zelf (poort 8090) met een mobielvriendelijk overzicht: diensten, hardware en schijfruimte. Thuis en, via ZeroTier, ook onderweg bereikbaar."],
             ["Printserver", "Maakt van de Pi een netwerk-printserver (CUPS + AirPrint): een USB-printer aan de Pi of een netwerkprinter wordt door alle apparaten te gebruiken. Thuis via AirPrint/IPP, onderweg via ZeroTier. Beheer via de webinterface op poort 631."],
-            ["PiNAS Dashboard", "Met wachtwoord beveiligde webpagina op de Pi zelf (poort 8095) die het statusoverzicht en het addon-overzicht (installeren/openen) samenbrengt in 1 pagina. Thuis en, via ZeroTier, ook onderweg bereikbaar."],
+            ["PiNAS Dashboard", "Met wachtwoord beveiligde webpagina op de Pi zelf (poort 8095), mobielvriendelijk en multifunctioneel: statusoverzicht (diensten, hardware, schijfruimte), addon-overzicht (installeren/openen), Vaultwarden-certificaat- en AirPrint-profiel-download - allemaal in 1 pagina. Thuis en, via ZeroTier, ook onderweg bereikbaar. (12 augustus 2026: vervangt de losse mobiele statuspagina, die er inhoudelijk een subset van was.)"],
         ],
         [3*cm, BREEDTE - 3*cm]))
     story.append(Spacer(1, 0.2*cm))
@@ -1101,12 +1100,12 @@ def bouw_handleiding():
         "EENMALIG in Windows via deze knop, anders waarschuwt de browser bij elk bezoek. "
         "Het onderliggende servercertificaat wordt daarna automatisch elk jaar vernieuwd "
         "op de Pi zelf, zonder dat je ooit opnieuw hoeft te vertrouwen. Voor iPhone en "
-        "Android download je hetzelfde root-certificaat via de mobiele statuspagina en "
-        "vertrouw je het daar zelf eenmalig - zie paragraaf 3.9 hieronder. De mobiele "
-        "statuspagina heeft daarnaast een 'Wachtwoord "
-        "resetten'-knop: het toegangswachtwoord wordt bij installatie eenmalig getoond "
+        "Android download je hetzelfde root-certificaat via PiNAS Dashboard en "
+        "vertrouw je het daar zelf eenmalig - zie paragraaf 3.8 hieronder. PiNAS "
+        "Dashboard heeft daarnaast een eigen 'Wachtwoord resetten'-knop: het "
+        "toegangswachtwoord van het Dashboard wordt bij installatie eenmalig getoond "
         "(schrijf het op) - ben je het toch kwijt, dan maakt deze knop een nieuw "
-        "wachtwoord aan zonder de pagina opnieuw te hoeven installeren.", s["body"]))
+        "wachtwoord aan zonder het Dashboard opnieuw te hoeven installeren.", s["body"]))
     story.append(Spacer(1, 0.2*cm))
     story.append(Paragraph(
         "Printserver - een printer toevoegen: open na installeren "
@@ -1142,10 +1141,10 @@ def bouw_handleiding():
         "voor DEZELFDE fysieke printer, met een naam die eindigt op '_onderweg' (bijv. "
         "Epson_ET8550_onderweg) - 1 naam met 2 adressen bleek niet betrouwbaar op iOS, "
         "vandaar 2 losse wachtrijen.<br/>"
-        "<b>2. Het AirPrint-profiel installeren.</b> Op de mobiele statuspagina (add-on "
+        "<b>2. Het AirPrint-profiel installeren.</b> Op PiNAS Dashboard (add-on "
         "hierboven) staat bij 'Printserver' een downloadknop voor een AirPrint-profiel - "
-        "dat wordt live opgebouwd uit de wachtrijen die echt in CUPS staan. Open de "
-        "statuspagina rechtstreeks in Safari op het toestel zelf, tik op de knop, en "
+        "dat wordt live opgebouwd uit de wachtrijen die echt in CUPS staan. Open het "
+        "Dashboard rechtstreeks in Safari op het toestel zelf, tik op de knop, en "
         "installeer (Instellingen -> Profiel gedownload -> Installeren; de gele 'Niet "
         "geverifieerd'-waarschuwing is normaal bij een zelfgemaakt profiel).<br/>"
         "<b>3. De printer koppelen met Epson Smart Panel.</b> Installeer de gratis "
@@ -1209,8 +1208,8 @@ def bouw_handleiding():
     story.append(Spacer(1, 0.15*cm))
     story.append(Paragraph("<b>iPhone:</b>", s["body"]))
     story.append(Paragraph(
-        "1. Download het root-certificaat via de mobiele statuspagina "
-        "(http://&lt;ip-van-de-pi&gt;:8090) op je iPhone.<br/>"
+        "1. Download het root-certificaat via PiNAS Dashboard "
+        "(http://&lt;ip-van-de-pi&gt;:8095) op je iPhone.<br/>"
         "2. Instellingen → Algemeen → VPN en apparaatbeheer → tik op het gedownloade "
         "profiel → Installeren.<br/>"
         "3. Instellingen → Algemeen → Info → Certificaatvertrouwen-instellingen → zet het "
@@ -1222,7 +1221,7 @@ def bouw_handleiding():
     story.append(Spacer(1, 0.15*cm))
     story.append(Paragraph("<b>Android:</b>", s["body"]))
     story.append(Paragraph(
-        "1. Download het root-certificaat via de mobiele statuspagina.<br/>"
+        "1. Download het root-certificaat via PiNAS Dashboard.<br/>"
         "2. Instellingen → Beveiliging → Versleuteling en inloggegevens → Certificaat "
         "installeren → CA-certificaat → kies het gedownloade bestand (de waarschuwing over "
         "gemonitord netwerkverkeer is normaal bij een zelf toegevoegd certificaat).<br/>"
@@ -1920,10 +1919,9 @@ def bouw_handleiding():
         ["pinas_vaultwarden.sh / _verwijderen.sh", "Installeert/verwijdert Vaultwarden (Bitwarden-compatibele wachtwoordkluis), inclusief een eigen root-certificaat."],
         ["pinas_vaultwarden_cert_vertrouwen.pyw", "Maakt het Vaultwarden-certificaat vertrouwd op deze Windows-pc."],
         ["pinas_vaultwarden_cert_import.ps1", "PowerShell-script dat het certificaat daadwerkelijk importeert (met verhoogde/elevated rechten)."],
-        ["pinas_status_pagina.sh / _verwijderen.sh", "Installeert/verwijdert de mobiele statuspagina (overzicht van de NAS op je telefoon)."],
-        ["pinas_status_pagina_wachtwoord_resetten.sh", "Zet het wachtwoord van de mobiele statuspagina opnieuw."],
         ["pinas_printer.sh / _verwijderen.sh", "Installeert/verwijdert de netwerk-printserver (CUPS + AirPrint)."],
-        ["pinas_dashboard.sh / _verwijderen.sh", "Installeert/verwijdert het PiNAS Dashboard (overzicht van alle add-ons op één webpagina)."],
+        ["pinas_dashboard.sh / _verwijderen.sh", "Installeert/verwijdert PiNAS Dashboard: statusoverzicht + addon-beheer + Vaultwarden-certificaat/AirPrint-profiel-download, mobielvriendelijk (12 augustus 2026: vervangt de losse mobiele statuspagina)."],
+        ["pinas_dashboard_wachtwoord_resetten.sh", "Zet het wachtwoord van PiNAS Dashboard opnieuw."],
     ], kol_breedte_bestanden))
     story.append(Spacer(1, 0.3*cm))
 

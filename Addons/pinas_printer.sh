@@ -9,12 +9,12 @@
 #
 # Toegang:
 #   - Thuis          : http://<Pi-IP>:631  (beheer) en direct printen
-#   - Onderweg       : via ZeroTier (zelfde als Nextcloud/statuspagina) -
+#   - Onderweg       : via ZeroTier (zelfde als Nextcloud/PiNAS Dashboard) -
 #                      GEEN open poort naar internet. Je telefoon moet dan
 #                      met het ZeroTier-netwerk verbonden zijn.
 #
 # Veilig naast de NAS: poort 631 is niet in gebruik door iets anders op de Pi
-# (Samba 445, Nextcloud/Apache 80, Pi-hole-web 8081, statuspagina 8090).
+# (Samba 445, Nextcloud/Apache 80, Pi-hole-web 8081, PiNAS Dashboard 8095).
 #
 # Idempotent-vriendelijk: nogmaals draaien is veilig (herconfigureert alleen).
 #
@@ -110,7 +110,7 @@ schrijf_versie_marker() {
     # draait, of dat het lokale bestand in C:\PiNAS\Addons ondertussen is
     # bijgewerkt en opnieuw geinstalleerd moet worden (30 juli 2026, wens
     # Frans: "waarom geeft de suite nergens aan dat dit een wijziging is").
-    # Map moet 755 zijn (niet 700) - anders kan de mobiele-statuspagina/
+    # Map moet 755 zijn (niet 700) - anders kan PiNAS Dashboard/
     # Addons Beheer-check (die als gebruiker 'pi' leest, niet als root) de
     # marker niet lezen, zelfde les als eerder bij Vaultwarden's CA_DIR.
     local marker_dir="/etc/pinas-addon-versies"
@@ -157,8 +157,8 @@ cat <<EOF
         b) Installeer de gratis Epson Smart Panel-app en koppel de
            printer er EEN KEER mee (via Wi-Fi Direct/QR-code op het
            display van de printer, terwijl je gewoon thuis op wifi zit).
-      Download daarna het AirPrint-profiel via de mobiele statuspagina
-      (Addons Beheer -> Mobiele statuspagina moet geinstalleerd zijn) en
+      Download daarna het AirPrint-profiel via PiNAS Dashboard
+      (Addons Beheer -> PiNAS Dashboard moet geinstalleerd zijn) en
       installeer het op je iPhone/iPad. Zonder de Smart Panel-koppeling
       bleek printen zonder wifi consequent te mislukken ("Geen
       AirPrint-printers gevonden"), ook met een correct profiel - de

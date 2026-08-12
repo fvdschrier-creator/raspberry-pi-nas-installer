@@ -48,7 +48,6 @@ NAAM_MAP = {
     "pihole": "Pi-hole",
     "zerotier": "ZeroTier",
     "vaultwarden": "Vaultwarden",
-    "statuspagina": "Mobiele statuspagina",
     "printer": "Printserver",
     "dashboard": "Dashboard",
 }

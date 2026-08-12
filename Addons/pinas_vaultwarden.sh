@@ -126,7 +126,7 @@ detect_network() {
 maak_root_ca() {
     mkdir -p "$CA_DIR"
     # De map zelf moet doorzoekbaar zijn voor de "pi"-gebruiker (chmod 755,
-    # niet 700) - anders kan scp/de statuspagina (die als "pi" draaien) het
+    # niet 700) - anders kan scp/PiNAS Dashboard (die als "pi" draaien) het
     # publieke ca.crt niet ophalen, ook al is het bestand zelf leesbaar.
     # De PRIVATE sleutels blijven apart op chmod 600 (alleen root), dus dit
     # is veilig: alleen de map-doorgang wordt opengezet, geen sleutels
@@ -363,7 +363,7 @@ cat <<EOF
   ---------------------------------------------------------------
   Gebruik de knop "Certificaat vertrouwen" in Addons Beheer voor
   Windows. Voor iPhone/Android: zie de Suite Handleiding - het
-  root-certificaat is te downloaden via de mobiele statuspagina.
+  root-certificaat is te downloaden via PiNAS Dashboard.
 
   Log: ${LOGFILE}
 =====================================================================

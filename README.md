@@ -24,7 +24,7 @@ De suite bestaat uit drie delen die samenwerken:
 
 Onderdelen: Samba (netwerkschijven), Nextcloud (eigen cloud), FileBrowser (webbeheer),
 Cockpit (Pi-beheer via browser), en optionele add-ons (Pi-hole, ZeroTier, Vaultwarden,
-printserver, statuspagina, dashboard).
+printserver, dashboard).
 
 ## Snel starten - van 0 naar werkend
 

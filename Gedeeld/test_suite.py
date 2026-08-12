@@ -793,8 +793,8 @@ def bouw_checks():
         checks.append(Check("🖥 Pi services", f"{svc} actief", _check_pi_service(svc)))
     checks.append(Check("🖥 Pi services", "seagate-web actief",
                         _check_pi_service("seagate-web"), optioneel=True))
-    checks.append(Check("🖥 Pi services", "pinas-status actief (mobiele statuspagina, optioneel)",
-                        _check_pi_service("pinas-status"), optioneel=True))
+    checks.append(Check("🖥 Pi services", "pinas-dashboard actief (optioneel)",
+                        _check_pi_service("pinas-dashboard"), optioneel=True))
 
     # ── Pi bestanden ──────────────────────────────────────────────────────────
     checks.append(Check("📂 Pi bestanden", "nas_installer.py aanwezig",

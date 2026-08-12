@@ -159,10 +159,9 @@ def main():
         "pinas_zerotier.sh", "pinas_zerotier_verwijderen.sh",
         "pinas_vaultwarden.sh", "pinas_vaultwarden_verwijderen.sh",
         "pinas_vaultwarden_cert_vertrouwen.pyw", "pinas_vaultwarden_cert_import.ps1",
-        "pinas_status_pagina.sh", "pinas_status_pagina_verwijderen.sh",
-        "pinas_status_pagina_wachtwoord_resetten.sh",
         "pinas_printer.sh", "pinas_printer_verwijderen.sh",
         "pinas_dashboard.sh", "pinas_dashboard_verwijderen.sh",
+        "pinas_dashboard_wachtwoord_resetten.sh",
     ):
         _copy(os.path.join(NAS_ROOT, "Addons"), addons_doel, bestand)
 

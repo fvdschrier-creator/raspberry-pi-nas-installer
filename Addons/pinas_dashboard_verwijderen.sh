@@ -33,7 +33,7 @@ cat <<EOF
   Verwijdert de Dashboard-webapp, de systemd-dienst, het wachtwoord en
   de sessiesleutel volledig. Niets blijft achter. Poort 8095 komt weer
   vrij. Andere add-ons (Nextcloud, Pi-hole, ZeroTier, Vaultwarden,
-  Mobiele statuspagina, Printserver) worden niet aangeraakt.
+  Printserver) worden niet aangeraakt.
 =====================================================================
 EOF
 read -rp ">> Typ VERWIJDER om door te gaan: " bevestig

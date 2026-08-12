@@ -90,7 +90,7 @@ De suite bestaat uit drie delen die samenwerken:
 
 Onderdelen: Samba (netwerkschijven), Nextcloud (eigen cloud), FileBrowser (webbeheer),
 Cockpit (Pi-beheer via browser), en optionele add-ons (Pi-hole, ZeroTier, Vaultwarden,
-printserver, statuspagina, dashboard).
+printserver, dashboard).
 
 ## Snel starten - van 0 naar werkend
 
@@ -160,8 +160,13 @@ def _anonimiseer(public_map, wachtwoord, zelf_naam):
                 continue
             pad = os.path.join(dirpad, naam)
             try:
-                with open(pad, "r", encoding="utf-8") as f:
-                    tekst = f.read()
+                # (12 augustus 2026) Binair lezen en newline="" schrijven,
+                # NIET tekst-mode "r" (die vertaalt \r\n stilzwijgend naar
+                # \n bij het lezen) - anders verandert elk Windows-bestand
+                # (CRLF) hier in LF, wat een reuzendiff geeft in git voor
+                # bestanden waar verder niets aan gewijzigd is.
+                with open(pad, "rb") as f:
+                    tekst = f.read().decode("utf-8")
             except UnicodeDecodeError:
                 continue
 
@@ -238,10 +243,9 @@ def main():
         "pinas_zerotier.sh", "pinas_zerotier_verwijderen.sh",
         "pinas_vaultwarden.sh", "pinas_vaultwarden_verwijderen.sh",
         "pinas_vaultwarden_cert_vertrouwen.pyw", "pinas_vaultwarden_cert_import.ps1",
-        "pinas_status_pagina.sh", "pinas_status_pagina_verwijderen.sh",
-        "pinas_status_pagina_wachtwoord_resetten.sh",
         "pinas_printer.sh", "pinas_printer_verwijderen.sh",
         "pinas_dashboard.sh", "pinas_dashboard_verwijderen.sh",
+        "pinas_dashboard_wachtwoord_resetten.sh",
     ):
         _copy(os.path.join(nas_root, "Addons"), addons_doel, bestand, "Addons")
 
@@ -323,7 +327,7 @@ def main():
     installatie_doel = os.path.join(public_map, "Installatie")
     os.makedirs(installatie_doel, exist_ok=True)
     with open(os.path.join(installatie_doel, "LEESMIJ.md"), "w", encoding="utf-8", newline="") as f:
-        f.write(LEESMIJ_INSTALLATIE)
+        f.write(LEESMIJ_INSTALLATIE.replace("\n", "\r\n"))
     download_links_bron = os.path.join(gedeeld_bron, "download_links.ini")
     if os.path.exists(download_links_bron):
         shutil.copy2(download_links_bron, os.path.join(installatie_doel, "download_links.ini"))
@@ -333,7 +337,7 @@ def main():
     print()
     print("  [README]")
     with open(os.path.join(public_map, "README.md"), "w", encoding="utf-8", newline="") as f:
-        f.write(README)
+        f.write(README.replace("\n", "\r\n"))
     print("   OK: README.md")
 
     # -- Beheer_install.bat in root ------------------------------------------------
@@ -341,8 +345,8 @@ def main():
     if os.path.exists(beheer_install_bron):
         shutil.copy2(beheer_install_bron, os.path.join(public_map, "Beheer_install.bat"))
         print("   OK: Beheer_install.bat (root)")
-    with open(os.path.join(public_map, "INSTALL_TYPE.txt"), "w", encoding="utf-8") as f:
-        f.write("minimaal\n")
+    with open(os.path.join(public_map, "INSTALL_TYPE.txt"), "w", encoding="utf-8", newline="") as f:
+        f.write("minimaal\r\n")
 
     # -- Wachtwoord ophalen uit cache -----------------------------------------------
     print()
