@@ -185,22 +185,6 @@ def nieuwste_log_bestand(prefix, fallback):
     except Exception:
         return fallback
 
-def check_simulator_map():
-    """Controleer of NAS_Simulator map bestaat in C:/PiNAS/NAS_Simulator."""
-    nas_sim = os.path.join("C:\\", "PiNAS", "NAS_Simulator")
-    if os.path.isdir(nas_sim):
-        return True
-    # Fallback: bureaublad (legacy)
-    bureau = os.path.join(os.environ.get("USERPROFILE",""), "Desktop", "NAS_Simulator")
-    return os.path.isdir(bureau)
-
-def check_docker_desktop():
-    lad = os.environ.get("LOCALAPPDATA", "")
-    for p in [r"C:\Program Files\Docker\Docker\Docker Desktop.exe",
-              os.path.join(lad, "Docker", "Docker Desktop.exe")]:
-        if os.path.exists(p): return True
-    return False
-
 def _muiswiel_op_focus(win, canvas):
     """Bindt het muiswiel aan canvas, en herbindt het automatisch zodra
     win weer focus krijgt.
@@ -632,6 +616,25 @@ def run_bat(naam):
         cwd=os.path.dirname(pad)
     )
 
+def run_py(naam):
+    """Start een .py bestand in een zichtbaar CMD venster.
+
+    (12 augustus 2026) Toegevoegd tijdens de .bat->.py-migratie als
+    run_bat()'s tegenhanger voor Python-scripts - cmd /k kan een .py niet
+    rechtstreeks starten, dus python.exe (niet pythonw.exe, anders blijft
+    het venster leeg - zie ook _python_actie()) wordt hier expliciet
+    aangeroepen."""
+    pad = bat_pad(naam)
+    if not pad:
+        messagebox.showerror("Bestand niet gevonden",
+            f"{naam} kon niet worden gevonden.\n\n"
+            f"Gezocht in C:\\PiNAS\\Gedeeld\\ en C:\\PiNAS\\Beheer\\\n\n"
+            "Tip: controleer de mappenstructuur via Controles → Structuurcheck & Opruimen")
+        return
+    python_exe = sys.executable.replace("pythonw.exe", "python.exe")
+    subprocess.Popen(["cmd", "/c", "start", "cmd", "/k", python_exe, pad],
+                      cwd=os.path.dirname(pad))
+
 def open_powershell():
     subprocess.Popen(["powershell", "-NoExit", "-Command", f"ssh pi@{PI_IP}"],
                      creationflags=subprocess.CREATE_NEW_CONSOLE)
@@ -906,7 +909,7 @@ class Menu(tk.Tk):
         Voorheen werden bij elke aanroep (elke 20 sec, plus na elke
         achtergrondcheck) ALLE widgets vernietigd en opnieuw aangemaakt.
         Dat gaf zichtbaar knipperen. Nu worden de vaste rijen (PC-status,
-        Pi-status, Simulator, Sync) één keer aangemaakt en bij volgende
+        Pi-status, Sync) één keer aangemaakt en bij volgende
         aanroepen alleen hun tekst/kleur bijgewerkt — geen destroy/rebuild
         meer voor onderdelen die toch blijven bestaan. Alleen de
         conditionele elementen (Nextcloud-rij, upload-knop, herstel-knop)
@@ -924,7 +927,6 @@ class Menu(tk.Tk):
             pc_deels = True          # geel = bezig
             y_ok = z_ok = False
             h_ok = False
-            docker_ok = False
         else:
             pc_items = [checks.get('putty', False), checks.get('vnc', False),
                         checks.get('pibackup', False),
@@ -938,7 +940,6 @@ class Menu(tk.Tk):
             # ontkoppelde spiegel-van-de-backup mag de hoofdstatus niet rood
             # laten lijken, dat is minder kritiek dan Opslag/Backup zelf.
             h_ok = checks.get('h', False)
-            docker_ok = checks.get('docker', False)
         schijf_ok = y_ok and z_ok
 
         # Pi status (gebruik laatste bekende staat)
@@ -1049,11 +1050,11 @@ class Menu(tk.Tk):
             if sync == 'ok':
                 messagebox.showinfo("Pi scripts — sync",
                     "✅ Alle scripts zijn up-to-date.\n\n"
-                    "Alle 16 bestanden die nas_upload.bat naar de Pi zet zijn "
+                    "Alle 16 bestanden die nas_upload.py naar de Pi zet zijn "
                     "gecheckt (MD5-vergelijking lokaal vs Pi).\n\n"
                     "Let op - dit dekt NIET de Addons-scripts (Mobiele "
                     "statuspagina, Pi-hole, Nextcloud, ZeroTier, Vaultwarden): die "
-                    "gebruiken nas_upload.bat niet en worden hier dus ook niet "
+                    "gebruiken nas_upload.py niet en worden hier dus ook niet "
                     "gecheckt. Addons Beheer uploadt de laatste lokale versie "
                     "automatisch elke keer dat je op 'Installeren' klikt - "
                     "daar hoef je dus niets los voor te doen.")
@@ -1065,7 +1066,7 @@ class Menu(tk.Tk):
                     "  Klik op 'Uploaden naar Pi' in het hoofdvenster\n"
                     "  of ga naar Beheer → Geavanceerd → Uploaden naar Pi.\n\n"
                     "(Deze lijst gaat alleen over de 16 bestanden die "
-                    "nas_upload.bat beheert. Addons-scripts staan hier nooit "
+                    "nas_upload.py beheert. Addons-scripts staan hier nooit "
                     "bij - die worden los geupload zodra je op 'Installeren' "
                     "klikt in Addons Beheer.)")
             elif sync == 'bezig':
@@ -1157,7 +1158,7 @@ class Menu(tk.Tk):
             self._herstel_btn_getoond = herstel_moet_tonen
 
         # Setup bolletje bijwerken
-        setup_ok = pc_ok and docker_ok
+        setup_ok = pc_ok
         self.lbl_setup_status.config(
             fg=OK_C if setup_ok else (WARN if pc_deels else ERR_C))
 
@@ -1166,7 +1167,7 @@ class Menu(tk.Tk):
         self.after(20000, self._ververs_pc_checks)
 
     def _ververs_pc_checks(self):
-        """Draait de PC-checks (net use Y:/Z:, PuTTY, VNC, Sync, Docker) in een
+        """Draait de PC-checks (net use Y:/Z:, PuTTY, VNC, Sync) in een
         achtergrondthread en werkt daarna het statuspaneel bij. Zo bevriest het
         venster niet als Z: traag is of ontbreekt."""
         if getattr(self, '_pc_checks_bezig', False):
@@ -1179,7 +1180,6 @@ class Menu(tk.Tk):
                 resultaat['putty']    = check_putty()
                 resultaat['vnc']      = check_tigervnc()
                 resultaat['pibackup'] = check_pibackup()
-                resultaat['docker']   = check_docker_desktop()
                 resultaat['y']        = check_share("Opslag", _opslag_letter(), PI_IP)
                 resultaat['z']        = check_share("Backup", _backup_letter(), PI_IP)
                 if _heeft_spiegel_backup():
@@ -1477,30 +1477,6 @@ class Menu(tk.Tk):
             self.after(0, lambda: self._bouw_pi_status(resultaten))
         threading.Thread(target=check, daemon=True).start()
         self.after(60000, self._ververs_pi_status)
-
-    # -- Sync --────────────────────────────────────────────────────────────
-    def _run_simulator_bat(self, naam):
-        """Zoek simulator bat in PiNAS map — autonoom."""
-        nas_root = _nas_root()
-        up = os.environ.get("USERPROFILE", "")
-        kandidaten = [
-            os.path.join(_script_dir(), naam),
-            os.path.join(nas_root, "PiServer", naam),
-            os.path.join(nas_root, "Gedeeld", naam),
-            os.path.join("C:\\", "PiNAS", "PiServer", naam),
-            os.path.join(up, "OneDrive", "Documenten", "Desktop", "NAS", "PiServer", naam),
-            os.path.join(up, "OneDrive", "Documents", "Desktop", "NAS", "PiServer", naam),
-            bat_pad(naam),
-        ]
-        gevonden = [p for p in kandidaten if p and os.path.exists(p)]
-        if gevonden:
-            subprocess.Popen(["cmd", "/c", gevonden[0]],
-                             creationflags=subprocess.CREATE_NEW_CONSOLE)
-        else:
-            msg = (f"{naam} niet gevonden.\n\n"
-                   f"Gezocht in:\n" +
-                   "\n".join(f"  {p}" for p in kandidaten if p))
-            messagebox.showerror("Niet gevonden", msg)
 
     # ── Setup venster ─────────────────────────────────────────────────────────
 
@@ -1895,7 +1871,6 @@ class Menu(tk.Tk):
         for key, naam in [
             ("putty",     "PuTTY"),
             ("vnc",       "TigerVNC Viewer"),
-            ("docker_pc", "Docker Desktop"),
             ("pibackup",  "Sync & Backup"),
             ("schijven",  "Netwerkschijven (Opslag + Backup)"),
             # Node.js is hier verwijderd (6 augustus 2026, Frans: "als dat
@@ -1950,7 +1925,6 @@ class Menu(tk.Tk):
             try:
                 resultaat["putty"]     = check_putty()
                 resultaat["vnc"]       = check_tigervnc()
-                resultaat["docker_pc"] = check_docker_desktop()
                 resultaat["pibackup"]  = check_pibackup()
                 resultaat["schijven"]  = (check_share("Opslag", _opslag_letter(), PI_IP)
                                            and check_share("Backup", _backup_letter(), PI_IP))
@@ -2125,10 +2099,10 @@ class Menu(tk.Tk):
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
         tk.Label(frame, text="Distributie", font=("Segoe UI", 9, "bold"),
                  bg=BG, fg=ACCENT_PINAS).pack(anchor="w", pady=(4,2))
-        self._rbtn(frame, "📦  Starter Kit ZIP bouwen (maak_starterkit.bat)",
-                   lambda: _bat_actie("maak_starterkit.bat"), ACCENT_PINAS)
-        self._rbtn(frame, "🌐  Publieke versie maken voor GitHub (maak_publieke_versie.bat)",
-                   lambda: _bat_actie("maak_publieke_versie.bat"), ACCENT_PINAS)
+        self._rbtn(frame, "📦  Starter Kit ZIP bouwen (maak_starterkit.py)",
+                   lambda: _python_actie("maak_starterkit.py"), ACCENT_PINAS)
+        self._rbtn(frame, "🌐  Publieke versie maken voor GitHub (maak_publieke_versie.py)",
+                   lambda: _python_actie("maak_publieke_versie.py"), ACCENT_PINAS)
 
         # ── Geavanceerd ──────────────────────────────────────────────────────
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
@@ -2141,8 +2115,8 @@ class Menu(tk.Tk):
                    self._herstart_pi, DESTRUCTIEF)
         self._rbtn(frame, "🔓  LanMan-fix — alleen bij 'Toegang geweigerd' / Systeemfout 5",
                    self._herstel_verbinding, WARN)
-        self._rbtn(frame, "⬆  Scripts uploaden naar Pi (nas_upload.bat)",
-                   lambda: _bat_actie("nas_upload.bat"), ACCENT_PINAS)
+        self._rbtn(frame, "⬆  Scripts uploaden naar Pi (nas_upload.py)",
+                   lambda: _python_actie("nas_upload.py"), ACCENT_PINAS)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         self._rbtn(frame, "🔗  Download links beheren", self._open_download_links, ACCENT_PINAS)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
@@ -2294,20 +2268,26 @@ class Menu(tk.Tk):
         subprocess.Popen('start cmd /k "' + bat + '"', shell=True)
 
     def _open_builder(self):
-        """Start maak_starterkit.bat autonoom."""
+        """Start maak_starterkit.py autonoom.
+
+        (12 augustus 2026) Bijgewerkt naar de .py-versie tijdens de
+        .bat->.py-migratie. Niet aangeroepen vanuit het menu zelf (dat gaat
+        via _python_actie() bij de "Starter Kit ZIP bouwen"-knop) - blijft
+        staan als losse helper, nu wel correct."""
         nas = _nas_root()
         script = _script_dir()
+        python_exe = sys.executable.replace("pythonw.exe", "python.exe")
         for pad in [
-            os.path.join(nas, "Gedeeld", "maak_starterkit.bat"),
-            os.path.join(script, "maak_starterkit.bat"),
-            os.path.join(nas, "Beheer", "maak_starterkit.bat"),
+            os.path.join(nas, "Gedeeld", "maak_starterkit.py"),
+            os.path.join(script, "maak_starterkit.py"),
+            os.path.join(nas, "Beheer", "maak_starterkit.py"),
         ]:
             if os.path.exists(pad):
-                subprocess.Popen(["cmd", "/c", pad],
-                                 creationflags=subprocess.CREATE_NEW_CONSOLE)
+                subprocess.Popen(["cmd", "/c", "start", "cmd", "/k", python_exe, pad],
+                                 cwd=os.path.dirname(pad))
                 return
         messagebox.showerror("Niet gevonden",
-            "maak_starterkit.bat niet gevonden.\n"
+            "maak_starterkit.py niet gevonden.\n"
             "Zet het bestand in C:\\PiNAS\\Gedeeld\\")
 
     def _open_download_links(self):
@@ -2385,7 +2365,6 @@ class Menu(tk.Tk):
 
         secties = [
             ("TigerVNC",  "TigerVNC Viewer"),
-            ("Docker",    "Docker Desktop"),
             ("PiImager",  "Raspberry Pi Imager"),
             ("PuTTY",     "PuTTY SSH client"),
             ("Python",    "Python"),
@@ -2393,7 +2372,6 @@ class Menu(tk.Tk):
 
         standaard_urls = {
             "TigerVNC":  "https://github.com/TigerVNC/tigervnc/releases/download/v1.16.2/tigervnc64-1.16.2.exe",
-            "Docker":    "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
             "PiImager":  "https://downloads.raspberrypi.org/imager/imager_latest.exe",
             "PuTTY":     "https://the.earth.li/~sgtatham/putty/latest/w64/putty-64bit-installer.msi",
             "Python":    "https://www.python.org/ftp/python/3.14.6/python-3.14.6-amd64.exe",
@@ -2436,13 +2414,11 @@ class Menu(tk.Tk):
             nieuw_cfg = _cp.ConfigParser(interpolation=None)
             omschr_map = {
                 "TigerVNC":  "TigerVNC Viewer — grafisch bureaublad naar de Pi",
-                "Docker":    "Docker Desktop — voor de NAS simulator",
                 "PiImager":  "Raspberry Pi Imager — SD-kaart voorbereiden",
                 "PuTTY":     "PuTTY — SSH client voor verbinding met Pi",
             }
             bestand_map = {
                 "TigerVNC": "tigervnc64-installer.exe",
-                "Docker":   "Docker Desktop Installer.exe",
                 "PiImager": "imager_latest.exe",
                 "PuTTY":    "putty-installer.msi",
             }
@@ -2647,10 +2623,6 @@ class Menu(tk.Tk):
         args = []
         if keuzes.get("putty"): args += ["PUTTY=J"]
         if keuzes.get("vnc"):        args += ["VNC=J"]
-        if keuzes.get("docker_pc"):
-            args += ["DOCKER=J"]
-            # Simulator map direct aanmaken na Docker installatie
-            self.after(5000, lambda: self._run_simulator_bat("maak_simulator_map.bat"))
         if keuzes.get("pibackup"):   args += ["PIBACKUP=J"]
         if keuzes.get("schijven"):   args += ["SCHIJVEN=J"]
         if keuzes.get("server"):     args += ["SERVER=J"]
@@ -2835,12 +2807,11 @@ class Menu(tk.Tk):
              "Compacte samenvatting in hoofdvenster. Groen = alles OK, oranje = deels, rood = probleem. "
              "Klik op de regel of open 'Status & details' voor volledig overzicht.")
         item("Status & details",
-             "Volledig statusvenster. Toont: software (PuTTY/TigerVNC/Docker/Sync & Backup), "
+             "Volledig statusvenster. Toont: software (PuTTY/TigerVNC/Sync & Backup), "
              "schijven Opslag/Backup met vrije ruimte, Pi services, Pi hardware (model/RAM/SD/temperatuur), "
              "download links en logbestanden. Vernieuwen knop voor actuele data.")
         item("PuTTY",          "PuTTY SSH client — aanwezig als groen bolletje in Status venster.")
         item("TigerVNC",       "TigerVNC Viewer — aanwezig als groen bolletje in Status venster.")
-        item("Docker Desktop", "Docker Desktop — aanwezig als groen bolletje in Status venster.")
         item("Sync & Backup", "PiNAS Sync (Sync & Backup) - aanwezig als groen bolletje in Status venster.")
         item("Opslag-schijf",      f"SSD gekoppeld via Samba (\\\\{PI_IP}\\Opslag), letter {_opslag_letter()}: op deze pc. Zichtbaar in Status venster.")
         item("Backup-schijf",      f"Externe HDD gekoppeld via Samba (\\\\{PI_IP}\\Backup), letter {_backup_letter()}: op deze pc. Zichtbaar in Status venster.")
@@ -2877,11 +2848,6 @@ class Menu(tk.Tk):
         item("Addons Beheer", "Centrale plek voor de 7 add-ons: Nextcloud, Pi-hole, ZeroTier, "
                                "Vaultwarden, de mobiele statuspagina, de Printserver en het "
                                "PiNAS Dashboard. Per add-on Installeren/Verwijderen.")
-
-        h("SIMULATOR")
-        # NAS Simulator map en Nextcloud-status verhuisd naar Status & details,
-        # niet meer als losse regel op het hoofdscherm.
-        item("Simulator starten",     "Start NAS simulator in Docker (localhost:5901). Knop in Beheer → Geavanceerd.")
 
         h("BEHEER")
         # 16 juli 2026: Herstel & Acties en Onderhoud gepromoveerd
@@ -2952,7 +2918,7 @@ class Menu(tk.Tk):
                                   "Selecteer onderdelen en klik Uitvoeren. Bij een NIEUWE installatie doet "
                                   "Installatie & Herstel dit al automatisch - deze knop is voor een latere "
                                   "reparatie of als je er destijds bewust iets van hebt overgeslagen.")
-        item("Windows onderdelen","Installeert PuTTY, TigerVNC, Docker, Sync & Backup en koppelt "
+        item("Windows onderdelen","Installeert PuTTY, TigerVNC, Sync & Backup en koppelt "
                                   "de Opslag-/Backup-schijven.")
         item("Publicatie",        "Suite handleiding en Topografie herbouwen, en de documentatie-consistentie controleren. Het functieoverzicht staat sinds 10 augustus 2026 als losse pagina in de presentatie, niet meer hier.")
         item("Distributie",       "Starter Kit ZIP bouwen: verpakt de suite geanonimiseerd (zonder jouw "
@@ -3227,9 +3193,6 @@ class Menu(tk.Tk):
         _vnc = tigervnc_exe()
         status_rij(frame, "TigerVNC",      check_tigervnc(),
                    f"OK  {_vnc}" if _vnc else "Niet gevonden")
-        _docker = check_docker_desktop()
-        status_rij(frame, "Docker Desktop", _docker,
-                   "OK" if _docker else "Niet gevonden")
 
         # ZeroTier-Windows-dienst (starten/stoppen) verhuisd naar Addons
         # Beheer (4 augustus 2026, Frans: wil dit consistent met de andere
@@ -3243,9 +3206,6 @@ class Menu(tk.Tk):
         _pb = pibackup_pad("pinas_sync_app.pyw")
         status_rij(frame, "Sync & Backup", check_pibackup(),
                    f"OK  {_pb}" if _pb else "Niet gevonden")
-        sim_ok = check_simulator_map()
-        status_rij(frame, "NAS Simulator",   sim_ok,
-                   r"C:\PiNAS\NAS_Simulator" + "\\" if sim_ok else "Map ontbreekt", deels=not sim_ok)
 
         # Wachtwoord
         try:
@@ -3472,7 +3432,6 @@ class Menu(tk.Tk):
                  justify="left").pack(anchor="w", pady=(2,4))
         for naam, bestand in [
             ("TigerVNC installer-bestand", "tigervnc*.exe"),
-            ("Docker installer-bestand",   "Docker Desktop Installer.exe"),
             ("Python installer-bestand",   "python-3*.exe"),
         ]:
             import glob
@@ -3720,14 +3679,20 @@ class Menu(tk.Tk):
                 info_rij(frame, naam, "Nog geen log", DIM)
 
     def _herstel_verbinding(self):
-        """Roept lanman_fix.bat aan als zichtbaar CMD venster met admin rechten."""
-        pad = bat_pad("lanman_fix.bat")
+        """Roept lanman_fix.py aan als zichtbaar CMD venster met admin rechten.
+
+        (12 augustus 2026) Bijgewerkt van lanman_fix.bat naar lanman_fix.py
+        tijdens de .bat->.py-migratie - cmd start nu expliciet python.exe met
+        het scriptpad in plaats van het .bat-bestand direct, want cmd kan
+        een .py niet zomaar zelf uitvoeren."""
+        pad = bat_pad("lanman_fix.py")
         if pad:
+            python_exe = sys.executable.replace("pythonw.exe", "python.exe")
             def wacht_en_ververs():
                 import time
                 proc = subprocess.Popen(
                     ["powershell", "-Command",
-                     f"Start-Process cmd -ArgumentList '/c \"{pad}\"' -Verb RunAs -Wait"],
+                     f"Start-Process cmd -ArgumentList '/c \"{python_exe}\" \"{pad}\"' -Verb RunAs -Wait"],
                     creationflags=subprocess.CREATE_NO_WINDOW)
                 proc.wait()
                 time.sleep(1)
@@ -3736,11 +3701,11 @@ class Menu(tk.Tk):
             threading.Thread(target=wacht_en_ververs, daemon=True).start()
         else:
             messagebox.showerror("Herstel verbinding — bestand ontbreekt",
-                "lanman_fix.bat niet gevonden.\n\n"
-                "Verwacht in: C:\\PiNAS\\Beheer\\lanman_fix.bat\n\n"
+                "lanman_fix.py niet gevonden.\n\n"
+                "Verwacht in: C:\\PiNAS\\Beheer\\lanman_fix.py\n\n"
                 "Wat te doen:\n"
                 "  Download de Starter Kit opnieuw of kopieer\n"
-                "  lanman_fix.bat naar C:\\PiNAS\\Beheer\\")
+                "  lanman_fix.py naar C:\\PiNAS\\Beheer\\")
 
 
     def _redraw_all_buttons(self):
@@ -3938,10 +3903,10 @@ class Menu(tk.Tk):
 
     # ── Uploaden naar de Pi (canoniek - alle upload-knoppen via deze methode) ──
     def _upload_naar_pi(self):
-        """Zet alle lokale scripts op de Pi via nas_upload.bat en controleer
+        """Zet alle lokale scripts op de Pi via nas_upload.py en controleer
         daarna de sync opnieuw. Een plek voor elke upload-knop, zodat upload
         overal hetzelfde doet (lokaal is de bron)."""
-        run_bat("nas_upload.bat")
+        run_py("nas_upload.py")
         self.after(5000, self._start_sync_check)
 
     # ── Pi scripts sync check ──────────────────────────────────────────────────
@@ -3949,11 +3914,11 @@ class Menu(tk.Tk):
         """MD5 hash vergelijking Pi scripts vs lokaal — onafhankelijk van tijdstempel."""
         import threading, hashlib
 
-        # 16 juli 2026: uitgebreid naar ALLE bestanden die nas_upload.bat
-        # daadwerkelijk uploadt (was eerder maar 8 van de 16 - o.a.
-        # pinas_theme.py stond er niet bij, waardoor een achterstand in
-        # net dat bestand geen signaal gaf, terwijl uploaden het wel
-        # meenam. Nu 1-op-1 met nas_upload.bat.
+        # 16 juli 2026: uitgebreid naar ALLE bestanden die nas_upload.py
+        # (destijds nas_upload.py) daadwerkelijk uploadt (was eerder maar
+        # 8 van de 16 - o.a. pinas_theme.py stond er niet bij, waardoor een
+        # achterstand in net dat bestand geen signaal gaf, terwijl uploaden
+        # het wel meenam. Nu 1-op-1 met nas_upload.py.
         PI_SCRIPTS = [
             ("nas_installer.py",      os.path.join(_nas_root(), "PiServer", "nas_installer.py")),
             ("nas_installer_cli.py",  os.path.join(_nas_root(), "PiServer", "nas_installer_cli.py")),

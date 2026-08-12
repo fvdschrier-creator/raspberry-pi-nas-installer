@@ -577,7 +577,7 @@ def bouw_handleiding():
         "Draai daarin <b>Beheer_install.bat</b> - dit losse bestand staat los in de root van het "
         "uitgepakte geheel",
         "Beheer_install.bat zet de hele suite neer op C:\\PiNAS, installeert de Windows-onderdelen "
-        "(PuTTY, TigerVNC, Docker Desktop) en maakt een bureaubladsnelkoppeling",
+        "(PuTTY, TigerVNC) en maakt een bureaubladsnelkoppeling",
         "Belangrijk: Beheer_install.bat opent zelf NIETS - open daarna zelf de nieuwe "
         "snelkoppeling om Pi NAS Menu voor het eerst te starten",
     ]:
@@ -673,7 +673,7 @@ def bouw_handleiding():
             [r"C:\PiNAS\Gedeeld" + "\\",    "Gedeelde hulpscripts en modules",                "Schaduwkopie"],
             [r"C:\PiNAS\Logs" + "\\",       "Logbestanden en wachtwoordcache",                "Automatisch aangemaakt"],
             [r"C:\PiNAS\Publicatie" + "\\", "Handleiding, topografie, presentatie, GitHub publieke versie",            "Schaduwkopie"],
-            [r"C:\PiNAS\Installatie" + "\\","Installers (TigerVNC, Pi Imager, Docker)",        "Schaduwkopie"],
+            [r"C:\PiNAS\Installatie" + "\\","Installers (TigerVNC, Pi Imager, PuTTY, Python)",  "Schaduwkopie"],
         ],
         [5.5*cm, 6*cm, BREEDTE - 11.5*cm]))
     story.append(PageBreak())
@@ -703,13 +703,12 @@ def bouw_handleiding():
 
     story.append(Paragraph("3.1 Hoofdvenster", s["h2"]))
     story.append(Paragraph(
-        "Het hoofdvenster toont bovenaan vier statusbollen:", s["body"]))
+        "Het hoofdvenster toont bovenaan drie statusbollen:", s["body"]))
     story.append(data_tabel(s,
         ["Bol", "Betekenis"],
         [
             ["PC — software & schijven",  "Groen = PuTTY, TigerVNC, PiNAS Sync en Opslag/Backup allemaal OK"],
             ["Raspberry Pi — services",   "Groen = Samba, Nextcloud, FileBrowser, Cockpit beschikbaar op de Pi"],
-            ["NAS Simulator map",         "Groen = testomgeving aanwezig in C:\\PiNAS\\NAS_Simulator"],
             ["Pi scripts — sync",         "Groen = alle scripts op de Pi zijn up-to-date t.o.v. lokaal"],
             ["Nextcloud URL",              "Verschijnt als Nextcloud actief is — klikbaar, opent browser direct naar Nextcloud"],
         ],
@@ -755,7 +754,7 @@ def bouw_handleiding():
     story.append(Paragraph(
         "De knop 'Status & details' opent een uitgebreid venster met:", s["body"]))
     for item in [
-        "Deze PC — software: PuTTY, TigerVNC, Docker, PiNAS Sync, Opslag/Backup-schijven",
+        "Deze PC — software: PuTTY, TigerVNC, PiNAS Sync, Opslag/Backup-schijven",
         "Raspberry Pi — services: Samba, Nextcloud, FileBrowser, Cockpit, Externe HDD svc",
         "Raspberry Pi — hardware: model, RAM, SD-kaart grootte, CPU temperatuur, uptime",
         "Pi scripts — sync: status per script (up-to-date / verschil / upload nodig) met upload knop",
@@ -877,7 +876,7 @@ def bouw_handleiding():
         ["Sectie", "Functies"],
         [
             ["Pi services",       "Samba, FileBrowser, Cockpit en Externe HDD service installeren of herstellen op de Pi. Status per service wordt live gecheckt. Bij een NIEUWE installatie doet Installatie & Herstel dit al automatisch - deze knop is voor een latere reparatie."],
-            ["Windows onderdelen","PuTTY, TigerVNC, Docker Desktop, Sync & Backup en Netwerkschijven (Opslag/Backup) - elk los aan te vinken en te installeren/herstellen."],
+            ["Windows onderdelen","PuTTY, TigerVNC, Sync & Backup en Netwerkschijven (Opslag/Backup) - elk los aan te vinken en te installeren/herstellen."],
             ["Publicatie",        "Suite handleiding en Topografie herbouwen - elk met een 'Open'-knop ernaast om het resultaat meteen te bekijken. Het functieoverzicht staat sinds 10 augustus 2026 als losse pagina in de presentatie (PiNAS_Suite_Presentatie.pptx), niet meer als apart bestand."],
             ["Distributie",       "Starter Kit ZIP bouwen: verpakt de suite geanonimiseerd (zonder IP/wachtwoorden) in 1 ZIP voor een nieuwe pc; publieke versie maken voor GitHub."],
             ["Geavanceerd",       "Pi OS bijwerken (apt update + upgrade), Python bijwerken naar de laatste versie, Pi NAS herstarten (sudo reboot), LanMan-fix (alleen bij 'Toegang geweigerd' / Systeemfout 5), Scripts uploaden naar Pi, Download links beheren."],
@@ -907,8 +906,8 @@ def bouw_handleiding():
              "helemaal niet op staat", "Elke keer dat de Pi zelf ingesteld/gerepareerd moet worden"],
             ["Waarom", "Er is nog geen Pi NAS Menu om te openen - dit bestand moet de hele suite "
              "eerst neerzetten", "Draait vanuit het al-werkende Pi NAS Menu"],
-            ["Wat het doet", "Kopieert alle suite-bestanden naar C:\\PiNAS, installeert PuTTY/VNC/"
-             "Docker, maakt de bureaubladsnelkoppeling", "Stelt de Pi zelf in (Samba/Cockpit/"
+            ["Wat het doet", "Kopieert alle suite-bestanden naar C:\\PiNAS, installeert PuTTY/VNC, "
+             "maakt de bureaubladsnelkoppeling", "Stelt de Pi zelf in (Samba/Cockpit/"
              "FileBrowser), koppelt de schijven"],
         ],
         [2.6*cm, (BREEDTE-2.6*cm)/2, (BREEDTE-2.6*cm)/2]))
@@ -935,7 +934,7 @@ def bouw_handleiding():
         ["Installeert de nieuwste Python-versie naast je huidige installatie - handig als de "
          "suite een verouderde Python-versie signaleert. Node.js is sinds 6 augustus 2026 niet "
          "meer nodig (was alleen voor de oude, inmiddels vervangen Functieoverzicht-build).",
-         "Wordt net als PuTTY/TigerVNC/Docker eerst gezocht in Installatie\\; ontbreekt het "
+         "Wordt net als PuTTY/TigerVNC eerst gezocht in Installatie\\; ontbreekt het "
          "installatiebestand daar, dan wordt het gedownload."],
         kleur=ACCENT))
     story.append(Spacer(1, 0.3*cm))
@@ -1312,7 +1311,7 @@ def bouw_handleiding():
     story.append(data_tabel(s,
         ["Optie", "Wat wordt gecontroleerd?"],
         [
-            ["PC diagnose",      "PuTTY, TigerVNC, Docker, PiNAS Sync, Opslag/Backup-schijven, wachtwoord in Credential Manager"],
+            ["PC diagnose",      "PuTTY, TigerVNC, PiNAS Sync, Opslag/Backup-schijven, wachtwoord in Credential Manager"],
             ["Pi diagnose (SSH)", "Alle services, schijfmounts, fstab, scripts, Nextcloud, Samba shares — via SSH"],
         ],
         [4*cm, BREEDTE - 4*cm]))
@@ -1660,15 +1659,6 @@ def bouw_handleiding():
             ]
         ),
         (
-            "Simulator start niet",
-            DIM,
-            [
-                "Docker Desktop is vereist voor de NAS simulator.",
-                "Oplossing: Onderhoud → Windows onderdelen → Docker Desktop installeren.",
-                "De simulator map wordt automatisch aangemaakt na Docker installatie.",
-            ]
-        ),
-        (
             "Pi server niet geconfigureerd na nieuwe SD-kaart",
             WARN_C,
             [
@@ -1820,18 +1810,16 @@ def bouw_handleiding():
         "half jaar niet meer weet waar een bestand voor dient, of als iemand anders "
         "(zonder de ontwikkelgeschiedenis te kennen) moet begrijpen wat iets doet. "
         "Gegenereerde/tijdelijke bestanden staan hier bewust niet in: __pycache__ "
-        "(Python-cache), Logs\\ (draait vanzelf vol tijdens gebruik), en "
-        "NAS_Simulator\\ (een gegenereerde kopie van PiServer\\, voor testen zonder "
-        "een echte Pi).", s["body"]))
+        "(Python-cache) en Logs\\ (draait vanzelf vol tijdens gebruik).", s["body"]))
     story.append(Spacer(1, 0.3*cm))
 
     kol_breedte_bestanden = [5.3*cm, BREEDTE - 5.3*cm]
 
-    story.append(Paragraph("11.1 PiServer - installatie- en simulatorbestanden (Pi-kant)", s["h2"]))
+    story.append(Paragraph("11.1 PiServer - installatiebestanden (Pi-kant)", s["h2"]))
     story.append(Paragraph(
-        "Bestanden die NAAR de Pi gekopieerd worden en daar draaien (installatie "
-        "en simulatie) - niet te verwarren met Addons\\, dat zijn add-on-scripts "
-        "voor NA de installatie.", s["body"]))
+        "Bestanden die NAAR de Pi gekopieerd worden en daar draaien - niet te "
+        "verwarren met Addons\\, dat zijn add-on-scripts voor NA de installatie.",
+        s["body"]))
     story.append(data_tabel(s, ["Bestand", "Functie"], [
         ["nas_installer.py", "Grafische (GUI) installatiewizard die op de Pi zelf draait bij een verse installatie: Samba, Nextcloud, Pi-hole enzovoort instellen."],
         ["nas_installer_cli.py", "Tekst-gebaseerde (command line) versie van dezelfde wizard - voor als er geen grafische omgeving beschikbaar is."],
@@ -1842,13 +1830,8 @@ def bouw_handleiding():
         ["hue_diagnose.py", "Diagnosescript voor een eventuele Philips Hue Bridge-koppeling."],
         ["pi_welkom.sh", "Welkomstbericht/samenvatting die getoond wordt bij het inloggen op de Pi via SSH."],
         ["install.sh", "Basis Linux-installatiescript dat de Pi-kant voorbereidt (packages installeren) voordat nas_installer.py draait."],
-        ["maak_simulator_map.bat", "Windows-script dat een lokale kopie (NAS_Simulator\\) van deze PiServer-bestanden maakt, om de installer te testen zonder een echte Pi."],
-        ["Dockerfile", "Bouwinstructie voor een Docker-container die een Raspberry Pi nabootst (de simulator)."],
-        ["nas_start.sh", "Opstartscript binnen de Docker-simulator."],
+        ["nas_start.sh", "Desktop-snelkoppelingen wrapper (pkexec) op de Pi: start installer/config/diagnose-commando's vanuit een snelkoppeling zonder los een terminal te hoeven openen."],
         ["README.md", "Korte technische uitleg over de PiServer-map (Engelstalig/kort, voor ontwikkeling)."],
-        ["sim_setup.sh", "Richt de simulator-omgeving verder in na het starten van de container."],
-        ["SIMULATOR_LEESMIJ.md", "Nederlandstalige uitleg over hoe de simulator werkt en gebruikt wordt."],
-        ["start.sh", "Startscript voor de simulator (niet-Docker variant)."],
     ], kol_breedte_bestanden))
     story.append(Spacer(1, 0.3*cm))
 
@@ -1878,8 +1861,8 @@ def bouw_handleiding():
         ["pi_nas_setup.pyw", "Wizard voor installatie of herstel van de suite (nieuwe pc, of iets stuk)."],
         ["Pi_NAS_Menu.ico", "Icoonbestand voor de vensters/snelkoppelingen van de suite."],
         ["Beheer_install.bat", "Installeert/herstelt de Beheer-map zelf, o.a. bij een Starter Kit-installatie op een nieuwe pc."],
-        ["lanman_fix.bat", "Past een Windows-registerinstelling aan die 'Systeemfout 5/67'-verbindingsproblemen met de Samba-shares oplost."],
-        ["install_vnc_viewer.bat", "Installeert TigerVNC Viewer."],
+        ["lanman_fix.py", "Past een Windows-registerinstelling aan die 'Systeemfout 5/67'-verbindingsproblemen met de Samba-shares oplost, en herstart zo nodig de Workstation-service (Systeemfout 1219)."],
+        ["install_vnc_viewer.py", "Installeert TigerVNC Viewer."],
         ["python_bijwerken.bat", "Download en installeert de nieuwste Python-versie op deze pc (bestandsnaam bevat daardoor een versienummer dat steeds wijzigt)."],
         ["pinas_backup_beheer.pyw", "Centraal overzicht van alle backup-acties (Synchronisatie, PC Image Backup, Archief Backup Bewaking, Systeem-image, Backup-HDD controleren) met korte uitleg per knop."],
         ["pinas_image_backup.pyw", "Maakt een volledige systeemkopie van de Windows-schijf (C:) met wbAdmin - voor als deze pc's schijf ooit crasht."],
@@ -1900,8 +1883,8 @@ def bouw_handleiding():
 
     story.append(Paragraph("11.5 Gedeeld - modules die door meerdere programma's gebruikt worden", s["h2"]))
     story.append(data_tabel(s, ["Bestand", "Functie"], [
-        ["nas_upload.bat", "Uploadt bestanden/scripts vanaf deze pc naar de Pi."],
-        ["nas_diagnose.bat", "Start een diagnose vanaf Windows-kant (roept nas_diagnose.sh op de Pi aan)."],
+        ["nas_upload.py", "Uploadt bestanden/scripts vanaf deze pc naar de Pi."],
+        ["nas_diagnose.py", "Start een diagnose vanaf Windows-kant (roept nas_diagnose.sh op de Pi aan)."],
         ["nas_diagnose.sh", "Het diagnosescript dat op de Pi zelf draait (hardware/diensten controleren)."],
         ["pinas_theme.py", "Het centrale thema (kleuren) waar bijna elk scherm van de suite uit put."],
         ["pinas_theme_donker.py / _licht.py", "De twee concrete kleurensets (donker/licht) waartussen je kunt kiezen via Kleuren kiezen."],
@@ -1913,9 +1896,9 @@ def bouw_handleiding():
         ["controleer_documentatie_consistentie.py", "Controleert of elke add-on ook echt beschreven staat in Topografie, Structuurcheck en Handleiding."],
         ["pinas_schijven.py", "Zoekt de werkelijke stationsletter van een netwerkschijf op via de share-naam, in plaats van een vaste letter aan te nemen."],
         ["pinas_versies.json", "Houdt per bestand bij wanneer de laatst geleverde versie gemaakt is - de basis van Structuurcheck's versiecontrole."],
-        ["maak_publieke_versie.bat", "Bouwt een geanonimiseerde versie van de suite voor GitHub (zonder wachtwoorden/IP-adres)."],
-        ["maak_starterkit.bat", "Bouwt een ZIP-pakket om de suite op een nieuwe pc te installeren."],
-        ["download_links.ini", "Bewaart downloadlinks voor externe software (Docker, PuTTY, enzovoort)."],
+        ["maak_publieke_versie.py", "Bouwt een geanonimiseerde versie van de suite voor GitHub (zonder wachtwoorden/IP-adres)."],
+        ["maak_starterkit.py", "Bouwt een ZIP-pakket om de suite op een nieuwe pc te installeren."],
+        ["download_links.ini", "Bewaart downloadlinks voor externe software (PuTTY, TigerVNC, Python, enzovoort)."],
         ["herstel_backup_hdd.sh", "Herstelscript dat op de Pi draait om de Backup-HDD te repareren/opnieuw te mounten."],
         ["pinas_iphone_backup.sh", "Draait op de Pi (iPhone via usb aangesloten op de Pi): kopieert foto's, 'Op mijn iPhone', app-bestanden en (best effort) WhatsApp naar de Backup-schijf."],
         ["pinas_iphone_verkennen.sh", "Draait op de Pi: maakt de iPhone tijdelijk en alleen-lezen zichtbaar in Verkenner (geen back-up), ruimt zichzelf op bij afsluiten."],
@@ -1971,7 +1954,6 @@ def bouw_handleiding():
         "elke update - Structuurcheck herkent 'm via een patroon (python-3*.exe) "
         "in plaats van een vaste naam.", s["body"]))
     story.append(data_tabel(s, ["Bestand", "Functie"], [
-        ["Docker Desktop Installer.exe", "Installatiebestand voor Docker Desktop (nodig voor de Pi-simulator)."],
         ["imager_2.0.7.exe", "Raspberry Pi Imager - zet het besturingssysteem op de SD-kaart van de Pi."],
         ["tigervnc64-1.16.2.exe", "TigerVNC Viewer - voor het grafisch bureaublad van de Pi bekijken."],
         ["putty-64bit-0.84-installer.msi", "PuTTY - SSH-terminaltoegang tot de Pi."],

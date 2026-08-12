@@ -23,6 +23,7 @@ er zijn en test/herstelt die los van elkaar.
 """
 
 import os
+import sys
 import time
 import hashlib
 import threading
@@ -255,14 +256,20 @@ def test_verbinding(doel: str, max_acceptabele_duur: float = 5.0):
 
 
 def herstelactie_lanmanfix(log_func=None):
-    """Voert lanman_fix.bat uit - hetzelfde script dat Pi NAS Menu
-    gebruikt bij Systeemfout 67/5. Vereist Administrator-rechten."""
-    pad = os.path.join(_nas_root(), "Beheer", "lanman_fix.bat")
+    """Voert lanman_fix.py uit - hetzelfde script dat Pi NAS Menu
+    gebruikt bij Systeemfout 67/5/1219. Vereist Administrator-rechten
+    (het script vraagt zelf om UAC-verhoging als dat nog niet zo is).
+
+    (12 augustus 2026) Bijgewerkt van lanman_fix.bat naar lanman_fix.py
+    tijdens de .bat->.py-migratie - cmd kan een .py niet rechtstreeks
+    starten, dus python.exe wordt hier expliciet aangeroepen."""
+    pad = os.path.join(_nas_root(), "Beheer", "lanman_fix.py")
     if not os.path.exists(pad):
-        return False, f"lanman_fix.bat niet gevonden op {pad}"
+        return False, f"lanman_fix.py niet gevonden op {pad}"
     if log_func:
         log_func("LanManFix wordt uitgevoerd (kan een UAC-melding tonen)...", "info")
-    ok, output = _run_stil(["cmd", "/c", pad], timeout=120)
+    python_exe = sys.executable.replace("pythonw.exe", "python.exe")
+    ok, output = _run_stil(["cmd", "/c", python_exe, pad], timeout=120)
     return ok, output
 
 

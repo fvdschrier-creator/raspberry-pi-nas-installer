@@ -63,12 +63,12 @@ server met:
 | `smart_plug.py` | Slimme stekker controller (Hue/Tapo) |
 | `pi_welkom.sh` | Welkomstmenu bij SSH-login |
 | `install.sh` | Eerste-start installer |
-| `nas_upload.bat` | Upload scripts naar Pi (Windows) |
+| `nas_upload.py` | Upload scripts naar Pi (Windows) |
 | `kopieer_naar_nas.bat` | Kopieer downloads naar NAS-map (Windows) |
 | `kopieer_helper.ps1` | PowerShell helper voor kopieer bat |
-| `nas_diagnose.bat` | Diagnose uitvoeren (Windows) |
+| `nas_diagnose.py` | Diagnose uitvoeren (Windows) |
 | `nas_diagnose.sh` | Diagnose script (Pi) |
-| `install_vnc_viewer.bat` | VNC Viewer installeren (Windows) |
+| `install_vnc_viewer.py` | VNC Viewer installeren (Windows) |
 | `smart_plug_config.json` | Smart plug configuratie (aanpassen!) |
 | `raspberry_pi_nas_volledig.pdf` | Volledige handleiding |
 

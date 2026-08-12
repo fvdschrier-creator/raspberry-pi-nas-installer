@@ -36,7 +36,7 @@ printserver, statuspagina, dashboard).
    Pi instellen, Windows klaarzetten) doet de rest automatisch.
 
 Zie de `Installatie/`-map: die bevat een LEESMIJ met downloadlinks voor de installers
-die je zelf even moet ophalen (Docker, PuTTY, TigerVNC, Python, Raspberry Pi Imager -
+die je zelf even moet ophalen (PuTTY, TigerVNC, Python, Raspberry Pi Imager -
 te groot om in deze repository mee te nemen).
 
 Volledige uitleg, inclusief een beslisboom voor "wat als ik al iets heb staan":
@@ -60,8 +60,10 @@ zie de [handleiding](Publicatie/PiNAS_Suite_Handleiding.pdf), hoofdstuk 2.
 Dit is een solo-onderhouden project - vooral gericht op functionaliteit en
 documentatie. Een paar dingen om te weten voordat je begint:
 
-- De Windows-installatiekant draait nu op .bat-scripts; migratie naar Python
-  staat op de planning voor meer robuustheid.
+- De meeste Windows-scripts zijn inmiddels van .bat naar Python omgezet. Een
+  klein aantal blijft bewust .bat: bootstrap-installers (Beheer_install.bat)
+  moeten werken voordat Python zelf geinstalleerd is, en python_bijwerken.bat
+  werkt de Python-installatie zelf bij.
 - Nog geen geautomatiseerde CI-pipeline - tests draaien lokaal via
   `test_suite.py`, niet automatisch bij elke commit.
 - "Op mijn iPhone" (de Bestanden-app) is niet doorbladerbaar via de

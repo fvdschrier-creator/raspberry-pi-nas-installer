@@ -168,7 +168,7 @@ def _check_ongeregistreerd():
     ongeregistreerd = []
     for ext in ("py", "pyw", "bat", "sh", "ps1"):
         for pad in glob.glob(os.path.join(_NAS_ROOT, "**", f"*.{ext}"), recursive=True):
-            if any(x in pad for x in ("NAS_Public", "NAS_Simulator", "__pycache__", "Logs")):
+            if any(x in pad for x in ("NAS_Public", "__pycache__", "Logs")):
                 continue
             rel = os.path.relpath(pad, _NAS_ROOT)
             if rel not in bekend:
@@ -199,7 +199,7 @@ def _alle_py_bestanden():
     gevonden = []
     for ext in ("py", "pyw"):
         for pad in glob.glob(os.path.join(_NAS_ROOT, "**", f"*.{ext}"), recursive=True):
-            if "NAS_Public" in pad or "NAS_Simulator" in pad or "__pycache__" in pad:
+            if "NAS_Public" in pad or "__pycache__" in pad:
                 continue
             rel = os.path.relpath(pad, _NAS_ROOT)
             deel = rel.split(os.sep, 1)
@@ -228,7 +228,7 @@ def _scan_script_hygiene():
     bom_fout, le_fout, ascii_fout = [], [], []
     for ext in ("bat", "sh", "ps1", "pyw", "py", "ini"):
         for pad in _glob.glob(os.path.join(_NAS_ROOT, "**", f"*.{ext}"), recursive=True):
-            if "NAS_Public" in pad or "NAS_Simulator" in pad:
+            if "NAS_Public" in pad:
                 continue  # gegenereerde mappen: worden opnieuw gebouwd uit de bron
             try:
                 with open(pad, "rb") as fh:
@@ -261,12 +261,12 @@ def _scan_code_kwaliteit():
     - losse '&' in echo-regels van .bat: cmd ziet dat als commando-scheider
       ("'Backup' is not recognized"); ge-escapete ^& en && blijven met rust.
     - 'pause >nul' zonder zichtbare uitleg ervoor: lijkt vast te lopen.
-    NAS_Public/NAS_Simulator worden overgeslagen (gegenereerd uit de bron)."""
+    NAS_Public wordt overgeslagen (gegenereerd uit de bron)."""
     import glob as _glob
     dood, echo_amp, pauze = [], [], []
     base = _NAS_ROOT
     for pad in _glob.glob(os.path.join(base, "**", "*.pyw"), recursive=True):
-        if "NAS_Public" in pad or "NAS_Simulator" in pad:
+        if "NAS_Public" in pad:
             continue
         try:
             src = open(pad, encoding="utf-8", errors="replace").read()
@@ -279,7 +279,7 @@ def _scan_code_kwaliteit():
             if c not in bekend:
                 dood.append(f"{rel}: self.{c}()")
     for pad in _glob.glob(os.path.join(base, "**", "*.bat"), recursive=True):
-        if "NAS_Public" in pad or "NAS_Simulator" in pad:
+        if "NAS_Public" in pad:
             continue
         try:
             lines = open(pad, encoding="utf-8", errors="replace").read().splitlines()
@@ -394,15 +394,6 @@ def _check_tigervnc():
         if os.path.exists(p):
             return "OK", p
     return "WARN", "TigerVNC niet gevonden (optioneel)"
-
-def _check_docker():
-    for p in [
-        r"C:\Program Files\Docker\Docker\Docker Desktop.exe",
-        r"C:\Program Files\Docker Desktop\Docker Desktop.exe",
-    ]:
-        if os.path.exists(p):
-            return "OK", p
-    return "WARN", "Docker Desktop niet gevonden (optioneel — alleen voor simulator)"
 
 def _check_schijf(letter):
     def _check():
@@ -780,7 +771,6 @@ def bouw_checks():
     # ── Windows software ──────────────────────────────────────────────────────
     checks.append(Check("💻 Windows software", "PuTTY",       _check_putty))
     checks.append(Check("💻 Windows software", "TigerVNC",    _check_tigervnc,  optioneel=True))
-    checks.append(Check("💻 Windows software", "Docker Desktop", _check_docker, optioneel=True))
 
     # ── Schijven ──────────────────────────────────────────────────────────────
     _y_letter = _schijf_letter("Y", "Opslag", "Y")

@@ -26,16 +26,15 @@ echo [DEBUG] Admin OK >> "%LOG%"
 
 rem 16 juli 2026: welke onderdelen zijn aangevinkt in Pi_NAS_Menu.pyw? Was
 rem eerder een dode doorgeefluik - de vinkjes deden niets, dit script deed
-rem altijd alles. Nu gaten Stap 5/6/6a2/6b+6c/7 hierop.
+rem altijd alles. Nu gaten Stap 5/6/6a2/7 hierop (6b/6c WSL+Docker op
+rem 11 augustus 2026 verwijderd, zie verderop).
 set DO_PUTTY=0
 set DO_VNC=0
-set DO_DOCKER=0
 set DO_SCHIJVEN=0
 :parse_args
 if "%~1"=="" goto :args_klaar
 if /i "%~1"=="PUTTY=J"    set DO_PUTTY=1
 if /i "%~1"=="VNC=J"      set DO_VNC=1
-if /i "%~1"=="DOCKER=J"   set DO_DOCKER=1
 if /i "%~1"=="SCHIJVEN=J" set DO_SCHIJVEN=1
 shift
 goto :parse_args
@@ -76,7 +75,7 @@ if exist "C:\PiNAS\Gedeeld\pinas_versies.json" (
 if "!INSTALLATIE_STATUS!"=="GEZOND" (
     echo Bestaande installatie gevonden in C:\PiNAS\ en is actueel.
     echo Bestanden worden niet opnieuw gekopieerd - alleen instellingen en
-    echo verbindingen ^(SSH-sleutel, PuTTY, Docker, schijven^) worden gecontroleerd.
+    echo verbindingen ^(SSH-sleutel, PuTTY, schijven^) worden gecontroleerd.
     echo.
 ) else (
     if "!INSTALLATIE_STATUS!"=="VEROUDERD" (
@@ -133,7 +132,7 @@ echo OK stap 1
 echo Stap 1 >> "%LOG%"
 echo Stap 1b: Beheer bestanden installeren...
 set BRON=%~dp0
-for %%F in (Pi_NAS_Menu.pyw pi_nas_setup.pyw Pi_NAS_Menu.ico lanman_fix.bat install_vnc_viewer.bat Beheer_install.bat pinas_backup_beheer.pyw pinas_image_backup.pyw) do (
+for %%F in (Pi_NAS_Menu.pyw pi_nas_setup.pyw Pi_NAS_Menu.ico lanman_fix.py install_vnc_viewer.py Beheer_install.bat pinas_backup_beheer.pyw pinas_image_backup.pyw) do (
     if exist "%BRON%Beheer\%%F" (
         xcopy "%BRON%Beheer\%%F" "C:\PiNAS\Beheer\" /Y /Q >nul 2>&1
         echo    OK: %%F
@@ -169,7 +168,7 @@ if exist "%BRON%Beheer\assets" (
 echo Stap 1b >> "%LOG%"
 
 echo Stap 1c: Gedeeld modules installeren...
-for %%F in (pinas_theme.py pinas_theme_donker.py pinas_theme_licht.py pinas_ui.py pinas_wachtwoord.py pinas_logging.py pinas_launcher.py pinas_schijven.py pinas_versies.json version.py test_suite.py nas_upload.bat nas_diagnose.bat nas_diagnose.sh herstel_backup_hdd.sh maak_starterkit.bat maak_publieke_versie.bat download_links.ini) do (
+for %%F in (pinas_theme.py pinas_theme_donker.py pinas_theme_licht.py pinas_ui.py pinas_wachtwoord.py pinas_logging.py pinas_launcher.py pinas_schijven.py pinas_versies.json version.py test_suite.py nas_upload.py nas_diagnose.py nas_diagnose.sh herstel_backup_hdd.sh maak_starterkit.py maak_publieke_versie.py download_links.ini) do (
     if exist "%BRON%Gedeeld\%%F" (
         xcopy "%BRON%Gedeeld\%%F" "C:\PiNAS\Gedeeld\" /Y /Q >nul 2>&1
         echo    OK: %%F
@@ -366,70 +365,10 @@ if defined TIGERVNC_EXE (
 echo Stap 6 >> "%LOG%"
 :na_vnc
 
-if not "%DO_DOCKER%"=="1" (
-    echo Stap 6b/6c: WSL/Docker overgeslagen ^(niet aangevinkt^).
-    goto :na_docker
-)
-echo Stap 6b: WSL (vereist voor Docker Desktop)...
-wsl --status >nul 2>&1
-if errorlevel 1 (
-    echo WSL nog niet aanwezig - installeren...
-    wsl --install --no-distro
-    echo LET OP: voor WSL is een Windows-herstart nodig voordat het echt werkt.
-    set WSL_HERSTART_NODIG=J
-) else (
-    echo WSL OK
-)
-echo Stap 6b >> "%LOG%"
-
-echo Stap 6c: Docker Desktop...
-set DOCKER_EXE=
-for %%P in ("%ProgramFiles%\Docker\Docker\Docker Desktop.exe" "%LOCALAPPDATA%\Docker\Docker Desktop.exe") do (
-    if exist %%P set DOCKER_EXE=%%P
-)
-if defined DOCKER_EXE (
-    echo Docker Desktop OK: !DOCKER_EXE!
-) else (
-    set DOCKER_INSTALLER=
-    for %%F in ("%BRON%Installatie\Docker*.exe" "%BRON%Docker*.exe") do (
-        if exist "%%F" set DOCKER_INSTALLER=%%F
-    )
-    if defined DOCKER_INSTALLER (
-        echo Docker Desktop gevonden in Installatie-map: !DOCKER_INSTALLER!
-    ) else (
-        echo Docker Desktop niet lokaal gevonden - downloaden...
-        del /f /q "%TEMP%\docker_installer.exe" >nul 2>&1
-        powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'https://desktop.docker.com/win/main/amd64/Docker%%20Desktop%%20Installer.exe' -OutFile '%TEMP%\docker_installer.exe' -UseBasicParsing } catch { Write-Host ('DOWNLOADFOUT: ' + $_.Exception.Message) }"
-        set DOCKER_BESTANDSGROOTTE=0
-        if exist "%TEMP%\docker_installer.exe" (
-            for %%S in ("%TEMP%\docker_installer.exe") do set DOCKER_BESTANDSGROOTTE=%%~zS
-        )
-        if !DOCKER_BESTANDSGROOTTE! GEQ 100000000 set DOCKER_INSTALLER=%TEMP%\docker_installer.exe
-    )
-    if defined DOCKER_INSTALLER (
-        echo Docker Desktop installeren - dit duurt meestal 2-5 minuten, geduld a.u.b...
-        start /wait "" "!DOCKER_INSTALLER!" install --quiet --accept-license
-        echo Installatieprogramma is klaar, controleren of Docker Desktop nu aanwezig is...
-        set DOCKER_EXE=
-        for %%P in ("%ProgramFiles%\Docker\Docker\Docker Desktop.exe" "%LOCALAPPDATA%\Docker\Docker Desktop.exe") do (
-            if exist %%P set DOCKER_EXE=%%P
-        )
-        if defined DOCKER_EXE (
-            echo OK: Docker Desktop geinstalleerd - !DOCKER_EXE!
-            if defined WSL_HERSTART_NODIG (
-                echo LET OP: WSL is net geinstalleerd - Docker Desktop start pas echt na een Windows-herstart.
-            ) else (
-                echo LET OP: mogelijk is alsnog een Windows-herstart nodig voordat Docker Desktop echt opstart.
-            )
-        ) else (
-            echo WAARSCHUWING: installatie is uitgevoerd maar Docker Desktop.exe is nog niet gevonden.
-            echo Dit kan gebeuren als het installatieprogramma om een herstart vraagt voordat het zichzelf voltooit.
-            echo Herstart Windows en controleer daarna via Beheer ^& Onderhoud opnieuw.
-        )
-    )
-)
-echo Stap 6c >> "%LOG%"
-:na_docker
+rem (11 augustus 2026) Stap 6b/6c (WSL + Docker Desktop) hier weggehaald -
+rem was uitsluitend nodig voor de NAS Simulator (Docker-container die een Pi
+rem nabootste), die niet meer gebruikt wordt. Zie OVERDRACHT_NIEUWE_CHAT.md
+rem voor de achtergrond.
 
 if not "%DO_SCHIJVEN%"=="1" (
     echo Stap 7: Netwerkschijven overgeslagen ^(niet aangevinkt^).
