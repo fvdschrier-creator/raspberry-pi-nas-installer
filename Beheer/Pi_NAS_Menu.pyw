@@ -43,17 +43,15 @@ def _nas_root():
 def _c_pinas():
     return os.path.join("C:\\", "PiNAS")
 
-# 30 juli 2026: welk installatiescript hoort bij welke addon-sleutel - zelfde
-# mapping als in pinas_addons_beheer.pyw, hier herhaald omdat dit een apart
-# proces/bestand is. Gebruikt om te waarschuwen als het lokale bestand in
-# Addons\ afwijkt van wat er als laatst-geinstalleerd op de Pi bekend staat.
-_ADDON_SCRIPT = {
-    "nextcloud": "pinas_nextcloud.sh",
-    "pihole": "pinas_pihole.sh",
-    "zerotier": "pinas_zerotier.sh",
-    "vaultwarden": "pinas_vaultwarden.sh",
-    "printer": "pinas_printer.sh",
-}
+# 30 juli 2026: welk installatiescript hoort bij welke addon-sleutel.
+# Gebruikt om te waarschuwen als het lokale bestand in Addons\ afwijkt van
+# wat er als laatst-geinstalleerd op de Pi bekend staat.
+# 13 augustus 2026: centraal in Gedeeld/pinas_addon_scripts.py (verbeterpunt
+# #1) - i.p.v. hier apart te onderhouden. Zie dat bestand voor de reden
+# (loste ook meteen een latent gat op: de "dashboard"-sleutel ontbrak hier,
+# waardoor de "Pi draait een andere versie"-check voor Dashboard nooit
+# afging).
+from pinas_addon_scripts import ADDON_SCRIPT as _ADDON_SCRIPT
 
 def _lokale_addon_hash(addon_key):
     """SHA256 van het huidige lokale Addons\\<script>.sh, om te vergelijken

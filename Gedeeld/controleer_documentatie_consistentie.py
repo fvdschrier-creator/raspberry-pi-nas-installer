@@ -2,7 +2,7 @@
 """
 Gedeeld/controleer_documentatie_consistentie.py
 
-Checkt of elke add-on die in pinas_addons_beheer.pyw's _ADDON_SCRIPT
+Checkt of elke add-on die in Gedeeld/pinas_addon_scripts.py's ADDON_SCRIPT
 staat, ook daadwerkelijk voorkomt in de plekken waar 'ie hoort te
 staan: de Topografie, Structuurcheck (NAS_Map_Beheer.pyw) en de
 Handleiding-bouwer. Meldt per addon en per bestand of die ontbreekt.
@@ -23,10 +23,12 @@ Handleiding, en waarschuwt bij een gat" - dit soort gaten kwam die dag
 vergeten dashboard-parsing-tak) en werden toen pas gevonden doordat
 Frans het toevallig zag in een screenshot.
 
-_ADDON_SCRIPT zelf blijft de ENE bron van waarheid voor "welke addons
-bestaan er" - dit script leest die lijst uit pinas_addons_beheer.pyw
-uit (in plaats van een eigen, tweede lijst te onderhouden die zelf ook
-weer uit de pas zou kunnen lopen).
+Gedeeld/pinas_addon_scripts.py blijft de ENE bron van waarheid voor
+"welke addons bestaan er" - dit script importeert die lijst rechtstreeks
+(sinds 13 augustus 2026, verbeterpunt #1 - daarvoor werd _ADDON_SCRIPT met
+een regex uit pinas_addons_beheer.pyw's brontekst gelezen, wat al net zo'n
+losse-kopie-risico was als het probleem dat dit hele controlescript
+probeert te voorkomen).
 
 Gebruik:
     python3 controleer_documentatie_consistentie.py
@@ -36,13 +38,18 @@ Gedeeld) - met --root geef je een ander pad aan de suite-hoofdmap op.
 """
 import argparse
 import os
-import re
 import sys
 
-# Voor elke addon-sleutel (zoals in _ADDON_SCRIPT) de mensleesbare naam
+# Gedeeld staat er zelf al in (dit script draait normaliter vanuit die map),
+# maar --root kan een andere suite-hoofdmap opgeven - zorg dat de import
+# altijd de Gedeeld-map bij DIT script vindt, ongeacht cwd of --root.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pinas_addon_scripts import ADDON_SCRIPT
+
+# Voor elke addon-sleutel (zoals in ADDON_SCRIPT) de mensleesbare naam
 # zoals die in de documentatie wordt gebruikt. Dit koppelbestandje is
 # bewust klein en verandert zelden (een addon-naam wijzigt niet vaak) -
-# de addon-LIJST zelf komt uit pinas_addons_beheer.pyw, niet hiervandaan.
+# de addon-LIJST zelf komt uit pinas_addon_scripts.py, niet hiervandaan.
 NAAM_MAP = {
     "nextcloud": "Nextcloud",
     "pihole": "Pi-hole",
@@ -66,24 +73,13 @@ TE_CONTROLEREN_BESTANDEN = [
     ("Publicatie/build_suite_handleiding.py", "Handleiding-bouwer"),
 ]
 
-ADDONS_BEHEER_PAD = "Addons/pinas_addons_beheer.pyw"
-
-
-def laad_addon_lijst(pad):
-    """Leest _ADDON_SCRIPT rechtstreeks uit pinas_addons_beheer.pyw -
+def laad_addon_lijst():
+    """Geeft ADDON_SCRIPT terug uit Gedeeld/pinas_addon_scripts.py -
     dat blijft de ENE bron van waarheid voor welke addons bestaan."""
-    if not os.path.exists(pad):
-        print(f"FOUT: kan {pad} niet vinden - kan de addon-lijst niet lezen.")
+    if not ADDON_SCRIPT:
+        print("FOUT: ADDON_SCRIPT uit pinas_addon_scripts.py is leeg.")
         return None
-    with open(pad, encoding="utf-8") as f:
-        inhoud = f.read()
-    match = re.search(r"_ADDON_SCRIPT\s*=\s*\{(.*?)\}", inhoud, re.DOTALL)
-    if not match:
-        print(f"FOUT: _ADDON_SCRIPT niet gevonden in {pad} - "
-              "is het bestand gewijzigd/hernoemd?")
-        return None
-    paren = re.findall(r'"(\w+)"\s*:\s*"([\w.]+)"', match.group(1))
-    return dict(paren)  # {addon_sleutel: scriptbestandsnaam}
+    return dict(ADDON_SCRIPT)  # {addon_sleutel: scriptbestandsnaam}
 
 
 def zoek_addon_in_bestand(bestandspad, addon_naam):
@@ -97,23 +93,19 @@ def zoek_addon_in_bestand(bestandspad, addon_naam):
     return addon_naam.lower() in inhoud.lower()
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", default=None,
-                         help="Pad naar de suite-hoofdmap (standaard: 1 map "
-                              "boven waar dit script zelf staat, dus C:\\PiNAS "
-                              "als dit script in Gedeeld\\ staat)")
-    args = parser.parse_args()
+def voer_controle_uit(root):
+    """Voert de volledige controle uit en print het rapport. Geeft het
+    aantal gevonden gaten terug (0 = alles consistent), of None als de
+    addon-lijst zelf niet geladen kon worden.
 
-    if args.root:
-        root = args.root
-    else:
-        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    addons_pad = os.path.join(root, ADDONS_BEHEER_PAD)
-    addon_lijst = laad_addon_lijst(addons_pad)
+    13 augustus 2026 (verbeterpunt #2): losgetrokken van main() zodat
+    andere scripts (zoals maak_publieke_versie.py, vlak voor een
+    GitHub-push) deze check ook rechtstreeks kunnen aanroepen en op het
+    resultaat kunnen reageren, i.p.v. dat iemand moet ONTHOUDEN dit los
+    te draaien."""
+    addon_lijst = laad_addon_lijst()
     if addon_lijst is None:
-        sys.exit(1)
+        return None
 
     print("=" * 70)
     print(f"  Consistentiecontrole documentatie - {len(addon_lijst)} addons gevonden")
@@ -149,6 +141,25 @@ def main():
     else:
         print(f"  {totaal_gaten} gat(en) gevonden - zie hierboven.")
     print("=" * 70)
+    return totaal_gaten
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", default=None,
+                         help="Pad naar de suite-hoofdmap (standaard: 1 map "
+                              "boven waar dit script zelf staat, dus C:\\PiNAS "
+                              "als dit script in Gedeeld\\ staat)")
+    args = parser.parse_args()
+
+    if args.root:
+        root = args.root
+    else:
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    totaal_gaten = voer_controle_uit(root)
+    if totaal_gaten is None:
+        sys.exit(1)
     sys.exit(1 if totaal_gaten else 0)
 
 

@@ -895,7 +895,46 @@ if __name__ == "__main__":
         raise SystemExit("Wachtwoord/sessiesleutel ontbreekt - draai eerst pinas_dashboard.sh")
     app.run(host="0.0.0.0", port=PORT, debug=False, threaded=True)
 APP_EOF
-    success "Webapp weggeschreven."
+
+    # 13 augustus 2026 (verbeterpunt #8/#6, Frans): dit bestand is 700+
+    # regels met de hele webapp verstopt in een heredoc - lastig te
+    # linten/testen, en het ingebedde base64-icoon is al eens bijna
+    # gecorrumpeerd door handmatig overtypen. Bewust GEEN structuurwijziging
+    # (het 1-bestand-plak-en-klaar-patroon is precies waarom de rest van de
+    # suite dit ook zo doet) - wel 2 harde controles vlak na het wegschrijven,
+    # zodat een kapotte heredoc/icoon hier meteen opvalt i.p.v. pas bij een
+    # falende systemd-dienst verderop.
+    log "Weggeschreven app.py controleren..."
+    if ! python3 -m py_compile "${APP_DIR}/app.py"; then
+        error "app.py bevat een Python-syntaxfout - de heredoc is waarschijnlijk kapot."
+        exit 1
+    fi
+    if ! python3 - "${APP_DIR}/app.py" <<'ICOONCHECK_EOF'
+import re, base64, sys
+pad = sys.argv[1]
+inhoud = open(pad, encoding="utf-8").read()
+match = re.search(r'ICOON_PNG_B64\s*=\s*\((.*?)\)', inhoud, re.DOTALL)
+if not match:
+    print("FOUT: ICOON_PNG_B64 niet gevonden in app.py.")
+    sys.exit(1)
+b64 = "".join(re.findall(r'"([^"]*)"', match.group(1)))
+try:
+    ruwe_bytes = base64.b64decode(b64, validate=True)
+except Exception as e:
+    print(f"FOUT: ICOON_PNG_B64 is geen geldige base64 ({e}).")
+    sys.exit(1)
+if not ruwe_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+    print("FOUT: ICOON_PNG_B64 decodeert niet naar een geldige PNG (PNG-magic-bytes ontbreken).")
+    sys.exit(1)
+print(f"OK: icoon decodeert naar een geldige PNG ({len(ruwe_bytes)} bytes).")
+ICOONCHECK_EOF
+    then
+        error "Het ingebedde beginscherm-icoon in app.py is corrupt - opnieuw genereren/plakken nodig."
+        exit 1
+    fi
+    rm -f "${APP_DIR}/app.py.pyc" 2>/dev/null || true
+    find "${APP_DIR}" -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    success "Webapp weggeschreven en gecontroleerd (syntax + icoon geldig)."
 }
 
 ###############################################################################

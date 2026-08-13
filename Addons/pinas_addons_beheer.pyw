@@ -171,14 +171,9 @@ def _status_tekst_kleur(addon_key, waarde):
 # om de lokale (Windows-kant) versie te hashen en te vergelijken met de
 # hash-marker die het script bij een geslaagde installatie op de Pi
 # achterlaat (zie schrijf_versie_marker() in elk .sh-bestand).
-_ADDON_SCRIPT = {
-    "nextcloud": "pinas_nextcloud.sh",
-    "pihole": "pinas_pihole.sh",
-    "zerotier": "pinas_zerotier.sh",
-    "vaultwarden": "pinas_vaultwarden.sh",
-    "printer": "pinas_printer.sh",
-    "dashboard": "pinas_dashboard.sh",
-}
+# 13 augustus 2026: centraal in Gedeeld/pinas_addon_scripts.py (verbeterpunt
+# #1) - i.p.v. hier apart te onderhouden. Zie dat bestand voor de reden.
+from pinas_addon_scripts import ADDON_SCRIPT as _ADDON_SCRIPT
 
 
 def _lokale_hash(addon_key):

@@ -19,6 +19,11 @@ gelegenheid:
   - Anonimiseren gebeurt nu in Python zelf i.p.v. via een los PowerShell-
     commando - geen kans meer op het delayed-expansion/'!'-probleem dat op
     10 augustus 2026 het oude script brak. Zelfde vervangingspatronen.
+
+(13 augustus 2026, verbeterpunt #2) Draait nu VERPLICHT eerst
+controleer_documentatie_consistentie.py voordat de publieke versie gebouwd
+wordt - bij een gevonden gat stopt dit script met een foutmelding i.p.v.
+gewoon door te bouwen met een stille documentatie-inconsistentie.
 """
 import os
 import re
@@ -32,6 +37,46 @@ def _script_dir():
 
 def _nas_root():
     return os.path.dirname(_script_dir())
+
+
+# 13 augustus 2026 (verbeterpunt #2): documentatie-consistentiecheck is
+# voorheen een los script geweest dat iemand handmatig moest ONTHOUDEN te
+# draaien - op 12 augustus (laat) bleef daardoor een vergeten Docker-check
+# een tijd onopgemerkt. Nu een vereiste stap vlak voor elke GitHub-push:
+# deze module (de daadwerkelijke pre-push-bouwstap) importeert en draait
+# de check zelf, en weigert door te gaan bij een gevonden gat.
+sys.path.insert(0, _script_dir())
+import controleer_documentatie_consistentie as _docconsistentie
+import bijwerk_pinas_versies as _versiesbijwerker
+
+
+def _controleer_documentatie_of_stop(nas_root):
+    print()
+    print("  [Documentatie-consistentiecheck - verplicht voor een publieke build]")
+    totaal_gaten = _docconsistentie.voer_controle_uit(nas_root)
+    if totaal_gaten is None:
+        print()
+        print("  FOUT: kon de addon-lijst niet laden - zie foutmelding hierboven.")
+        print("  Publieke versie NIET gebouwd.")
+        sys.exit(1)
+    if totaal_gaten:
+        print()
+        print(f"  FOUT: {totaal_gaten} documentatiegat(en) gevonden (zie hierboven) - "
+              "dicht deze eerst.")
+        print("  Publieke versie NIET gebouwd, er is NIETS gepusht.")
+        sys.exit(1)
+    print("  OK - documentatie is consistent, doorgaan met de build.")
+
+
+def _werk_versies_bij(nas_root):
+    # 13 augustus 2026 (verbeterpunt #3): pinas_versies.json niet meer met
+    # de hand bijwerken - dit gebeurt nu automatisch, vlak voor elke
+    # publieke build, op basis van een contenthash-vergelijking met de
+    # vorige keer. Nooit blokkerend (in tegenstelling tot de documentatie-
+    # check): een gewijzigd bestand is geen foutsituatie.
+    print()
+    print("  [pinas_versies.json automatisch bijwerken]")
+    _versiesbijwerker.bijwerken(nas_root)
 
 
 def _copy(bronmap, doelmap, bestand, label):
@@ -194,6 +239,9 @@ def main():
     print(f" NAS root:  {nas_root}")
     print(f" Output:    {public_map}")
     print(" " + "=" * 62)
+
+    _werk_versies_bij(nas_root)
+    _controleer_documentatie_of_stop(nas_root)
     print()
 
     # Eerst opschonen: NAS_Public volledig opnieuw opbouwen, zodat verouderde
@@ -305,13 +353,14 @@ def main():
     for bestand in (
         "pinas_theme.py", "pinas_theme_donker.py", "pinas_theme_licht.py",
         "pinas_ui.py", "pinas_wachtwoord.py", "pinas_logging.py",
-        "pinas_launcher.py", "pinas_pi_status.py",
+        "pinas_launcher.py", "pinas_pi_status.py", "pinas_addon_scripts.py",
         "controleer_documentatie_consistentie.py", "pinas_schijven.py",
         "pinas_versies.json", "version.py",
         "nas_upload.py", "nas_diagnose.py", "nas_diagnose.sh",
         "herstel_backup_hdd.sh", "pinas_iphone_backup.sh",
         "pinas_iphone_verkennen.sh", "test_suite.py",
         "maak_publieke_versie.py", "maak_starterkit.py",
+        "bijwerk_pinas_versies.py",
     ):
         _copy(gedeeld_bron, gedeeld_doel, bestand, "Gedeeld")
     # Gedeeld\ScriptRunner\pi_script_draaien.bat ingetrokken (31 juli 2026,
