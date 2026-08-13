@@ -29,6 +29,10 @@ except ImportError:
     BG="#1e2d3d"; PANEL="#2a3f55"; PANEL2="#344d63"; FG="#e2eaf2"; DIM="#8ba3be"
     OK_C="#22c55e"; ERR_C="#ef4444"; WARN="#f59e0b"; ACCENT="#1d4ed8"
     ACCENT_PICONTROL="#7c3aed"
+    # 13 augustus 2026: Installatie & Herstel kreeg een eigen kleur
+    # (ACCENT_PIBEHEER, zie pinas_theme.py) i.p.v. het paars dat bewust
+    # gereserveerd is voor Pi NAS Menu's eigen vensterkop-branding.
+    ACCENT_PIBEHEER="#c2456b"
 
 try:
     from pinas_ui import maak_header
@@ -120,9 +124,12 @@ class SetupApp(tk.Tk):
         # knop, wel Help) omdat dit een apart proces is zonder toegang tot
         # Pi_NAS_Menu.pyw's _open_help().
         if maak_header:
+            # 13 augustus 2026: eigen kleur (ACCENT_PIBEHEER) i.p.v.
+            # ACCENT_PICONTROL - dat laatste is gereserveerd voor Pi NAS
+            # Menu's eigen vensterkop-branding, niet voor sub-schermen.
             maak_header(self, "Pi NAS Suite - Installatie",
                         subtekst="Volg de stappen om jouw NAS in te stellen",
-                        help_hoofdstukken=self.INSTALLATIE_HELP, kleur=ACCENT_PICONTROL)
+                        help_hoofdstukken=self.INSTALLATIE_HELP, kleur=ACCENT_PIBEHEER)
         else:
             hdr = tk.Frame(self, bg=PANEL, pady=12)
             hdr.pack(fill="x")
@@ -188,7 +195,7 @@ class SetupApp(tk.Tk):
                 command=self._terug)
         self.btn_terug.pack(side="left", padx=16)
         self.btn_verder = tk.Button(ftr, text="Verder  ▶",
-                font=("Segoe UI", 10, "bold"), bg=ACCENT, fg="#ffffff", relief="flat",
+                font=("Segoe UI", 10, "bold"), bg=ACCENT_PIBEHEER, fg="#ffffff", relief="flat",
                 cursor="hand2", padx=14, pady=6, borderwidth=0,
                 command=self._verder)
         self.btn_verder.pack(side="right", padx=16)
@@ -344,7 +351,7 @@ class SetupApp(tk.Tk):
         self.ping_lbl.pack(fill="x")
 
         tk.Button(self.inhoud, text="📡  Wachten op Pi (automatische pingloop)",
-                  font=("Segoe UI", 10), bg=ACCENT, fg="#ffffff",
+                  font=("Segoe UI", 10), bg=ACCENT_PIBEHEER, fg="#ffffff",
                   relief="flat", cursor="hand2", padx=14, pady=8, borderwidth=0,
                   command=self._start_pingloop).pack(fill="x", pady=(8,0))
 
@@ -457,7 +464,7 @@ class SetupApp(tk.Tk):
         # Voortgangsbalk
         balk_frame = tk.Frame(self.inhoud, bg=PANEL2, relief="flat", bd=1)
         balk_frame.pack(fill="x", pady=(0,4))
-        self.balk_binnen = tk.Frame(balk_frame, bg=ACCENT, height=20, width=0)
+        self.balk_binnen = tk.Frame(balk_frame, bg=ACCENT_PIBEHEER, height=20, width=0)
         self.balk_binnen.pack(side="left")
         self.balk_breedte = 0
 

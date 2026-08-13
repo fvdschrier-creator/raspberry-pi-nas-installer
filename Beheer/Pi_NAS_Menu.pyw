@@ -863,13 +863,18 @@ class Menu(tk.Tk):
         # 16 juli 2026 (kleuren herzien): eerst ACCENT_PICONTROL (paars) voor
         # deze 3 knoppen, maar 3x identiek paars naast elkaar bleek precies
         # het probleem waar Frans op wees. ACCENT_PICONTROL is nu gereserveerd
-        # voor de vensterkoppen zelf (branding, 1x per venster) - gewone
-        # knoppen als deze gebruiken ACCENT_PINAS, de "kern"-kleur voor
-        # algemeen suite-beheer (zelfde categorie als Verbinden hierboven).
+        # voor de vensterkoppen zelf (branding, 1x per venster).
+        # 13 augustus 2026 (kleuren herzien, 2e keer): deze 3 knoppen kregen
+        # daarna allemaal ACCENT_PINAS - dezelfde kleur als Verbinden
+        # hierboven, dus Verbinden en heel Beheer waren niet van elkaar te
+        # onderscheiden ("een groen moeras", Frans). Beheer heeft nu een
+        # eigen kleurfamilie (ACCENT_PIBEHEER), en elke knop zijn eigen tint
+        # daarvan - het scherm dat opengaat gebruikt dezelfde tint als de
+        # knop (zie _open_installatie/_open_controle_beheer/_open_setup).
         self._sectie(body, "BEHEER")
-        self._btn(body, "🔧  Installatie & Herstel", self._open_installatie, ACCENT_PINAS)
-        self._btn(body, "🧪  Controles", self._open_controle_beheer, ACCENT_PINAS)
-        self._btn(body, "🔧  Onderhoud", self._open_setup, ACCENT_PINAS)
+        self._btn(body, "🔧  Installatie & Herstel", self._open_installatie, ACCENT_PIBEHEER)
+        self._btn(body, "🧪  Controles", self._open_controle_beheer, ACCENT_PIBEHEER_2)
+        self._btn(body, "🔧  Onderhoud", self._open_setup, ACCENT_PIBEHEER_3)
         self._sep(body)
 
         # ── Footer ────────────────────────────────────────────────────────────
@@ -1775,7 +1780,7 @@ class Menu(tk.Tk):
         # bijna-identieke kopieën in dit bestand die de al-bestaande
         # gedeelde functie nooit gebruikten.
         hdr = maak_header(win, "Onderhoud", subtekst="Beheer en onderhoud van bestaande installatie",
-                    kleur=ACCENT_PICONTROL)
+                    kleur=ACCENT_PIBEHEER_3)
         # Hergebruikt de bestaande, uitgebreide _open_help() (zelfde als
         # het hoofdmenu) - GEEN aparte, dubbele help-inhoud voor dit
         # scherm, want dit draait in hetzelfde proces/dezelfde klasse.
@@ -1842,7 +1847,7 @@ class Menu(tk.Tk):
         vars_ = {}
 
         # ── Pi services ──────────────────────────────────────────────────────
-        sectie("🖥  Pi services", ACCENT_PINAS)
+        sectie("🖥  Pi services", ACCENT_PIBEHEER_3)
         tk.Label(frame, text="Installeer of herstel services op de Pi.",
                  font=("Segoe UI", 8), bg=BG, fg=DIM, wraplength=480).pack(anchor="w", pady=(2,4))
 
@@ -1858,7 +1863,7 @@ class Menu(tk.Tk):
             check_item(naam, key, vars_[key])
 
         # ── Windows onderdelen ───────────────────────────────────────────────
-        sectie("💻  Windows onderdelen", ACCENT_PINAS)
+        sectie("💻  Windows onderdelen", ACCENT_PIBEHEER_3)
         for key, naam in [
             ("putty",     "PuTTY"),
             ("vnc",       "TigerVNC Viewer"),
@@ -1939,7 +1944,7 @@ class Menu(tk.Tk):
             win.destroy()
             self._voer_setup_uit(keuzes)
 
-        self._rbtn(frame, "⚙️  Uitvoeren", installeer, ACCENT_PINAS, bold=True)
+        self._rbtn(frame, "⚙️  Uitvoeren", installeer, ACCENT_PIBEHEER_3, bold=True)
 
         # ── Publicatie / Distributie ─────────────────────────────────────────
         # Verhuisd hierheen vanuit NAS Map Beheer's opgeheven "Herstel &
@@ -1949,7 +1954,7 @@ class Menu(tk.Tk):
         # Geavanceerd, bij de andere Pi-onderhoudsacties.
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
         tk.Label(frame, text="Publicatie", font=("Segoe UI", 9, "bold"),
-                 bg=BG, fg=ACCENT_PINAS).pack(anchor="w", pady=(4,2))
+                 bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
 
         def _distributie_zoekpad(bestand, submappen):
             nas = _nas_root()
@@ -2066,7 +2071,7 @@ class Menu(tk.Tk):
 
         _herbouw_rij("📄  Suite handleiding herbouwen (PDF)",
                      lambda: _python_actie("build_suite_handleiding.py"),
-                     "PiNAS_Suite_Handleiding.pdf", ACCENT_PINAS)
+                     "PiNAS_Suite_Handleiding.pdf", ACCENT_PIBEHEER_3)
         # Functieoverzicht herbouwen-knop verwijderd (10 augustus 2026, Frans:
         # "functieoverzicht kan vervallen als je een korte versie op een
         # pagina kunt opnemen in de presentatie") - build_functieoverzicht.py
@@ -2075,7 +2080,7 @@ class Menu(tk.Tk):
         # bewerkt, geen herbouw-knop voor nodig).
         _herbouw_rij("🗺  Topografie herbouwen (build_topografie.py)",
                      lambda: _python_actie("build_topografie.py"),
-                     "PiNAS_Topografie.html", ACCENT_PINAS)
+                     "PiNAS_Topografie.html", ACCENT_PIBEHEER_3)
 
         # 5 augustus 2026 (Frans: "waarom zou ik dat niet vanuit de suite
         # starten?" - terechte vraag): consistentiecontrole-script kreeg
@@ -2085,38 +2090,38 @@ class Menu(tk.Tk):
         # gewoon live in het cmd-venster dat _python_actie al opent.
         RoundedButton(frame, text="🔍  Documentatie consistentie controleren",
                       command=lambda: _python_actie("controleer_documentatie_consistentie.py"),
-                      bg=ACCENT_PINAS, fg="#ffffff").pack(fill="x", pady=2)
+                      bg=ACCENT_PIBEHEER_3, fg="#ffffff").pack(fill="x", pady=2)
 
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
         tk.Label(frame, text="Distributie", font=("Segoe UI", 9, "bold"),
-                 bg=BG, fg=ACCENT_PINAS).pack(anchor="w", pady=(4,2))
+                 bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
         self._rbtn(frame, "📦  Starter Kit ZIP bouwen (maak_starterkit.py)",
-                   lambda: _python_actie("maak_starterkit.py"), ACCENT_PINAS)
+                   lambda: _python_actie("maak_starterkit.py"), ACCENT_PIBEHEER_3)
         self._rbtn(frame, "🌐  Publieke versie maken voor GitHub (maak_publieke_versie.py)",
-                   lambda: _python_actie("maak_publieke_versie.py"), ACCENT_PINAS)
+                   lambda: _python_actie("maak_publieke_versie.py"), ACCENT_PIBEHEER_3)
 
         # ── Geavanceerd ──────────────────────────────────────────────────────
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
         tk.Label(frame, text="Geavanceerd", font=("Segoe UI", 9, "bold"),
-                 bg=BG, fg=ACCENT_PINAS).pack(anchor="w", pady=(4,2))
-        self._rbtn(frame, "🔄  Pi OS bijwerken (apt update + upgrade)", self._pi_update, ACCENT_PINAS)
+                 bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
+        self._rbtn(frame, "🔄  Pi OS bijwerken (apt update + upgrade)", self._pi_update, ACCENT_PIBEHEER_3)
         self._rbtn(frame, "🐍  Python bijwerken naar laatste versie (Windows)",
-                   lambda: _bat_actie("python_bijwerken.bat"), ACCENT_PINAS)
+                   lambda: _bat_actie("python_bijwerken.bat"), ACCENT_PIBEHEER_3)
         self._rbtn(frame, "♻  Pi NAS herstarten (sudo reboot)",
                    self._herstart_pi, DESTRUCTIEF)
         self._rbtn(frame, "🔓  LanMan-fix — alleen bij 'Toegang geweigerd' / Systeemfout 5",
                    self._herstel_verbinding, WARN)
         self._rbtn(frame, "⬆  Scripts uploaden naar Pi (nas_upload.py)",
-                   lambda: _python_actie("nas_upload.py"), ACCENT_PINAS)
+                   lambda: _python_actie("nas_upload.py"), ACCENT_PIBEHEER_3)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
-        self._rbtn(frame, "🔗  Download links beheren", self._open_download_links, ACCENT_PINAS)
+        self._rbtn(frame, "🔗  Download links beheren", self._open_download_links, ACCENT_PIBEHEER_3)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Weergave", font=("Segoe UI", 9, "bold"),
-                 bg=BG, fg=ACCENT_PINAS).pack(anchor="w", pady=(4,2))
+                 bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
         huidig = getattr(__import__("pinas_theme"), "HUIDIG_THEMA", "donker")
         thema_tekst = f"🎨  Thema wisselen  (nu: {huidig}) — herstart vereist"
         self._rbtn(frame, thema_tekst, self._wissel_thema, PANEL2)
-        self._rbtn(frame, "🌈  Kleuren kiezen (aanpassen)", self._open_kleuren_kiezer, ACCENT_PINAS)
+        self._rbtn(frame, "🌈  Kleuren kiezen (aanpassen)", self._open_kleuren_kiezer, ACCENT_PIBEHEER_3)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Beveiliging", font=("Segoe UI", 8, "bold"),
                  bg=BG, fg=DIM).pack(anchor="w")

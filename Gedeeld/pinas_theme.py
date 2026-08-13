@@ -23,15 +23,27 @@ twee bestanden zijn nu omgezet naar kale re-exports van DIT bestand
 gebeuren - er is nu precies 1 plek om kleuren te wijzigen.
 
 CATEGORIE-ACCENTEN - het systeem achter de knopkleuren in de hele suite:
-  ACCENT_PINAS     blauw   - kern/algemeen: Verbinden, Installatie & Herstel,
-                             Onderhoud, Publicatie/Distributie-acties.
-  ACCENT_PIBACKUP  groen   - alles rond Backup Beheer/Sync/PC Image Backup
+  ACCENT_PINAS     blauwgroen (teal) - Verbinden op het hoofdmenu, en de
+                             algemene Status & Details-schermen.
+  ACCENT_PIBACKUP  blauw   - alles rond Backup Beheer/Sync/PC Image Backup
                              (ook al gebruikt in pinas_image_backup.pyw).
   ACCENT_PIADDONS  amber   - Addons Beheer en de add-on-schermen erachter.
-  ACCENT_PICONTROL paars   - spaarzaam: alleen branding/vensterkoppen van
-                             Pi NAS Menu zelf, NIET meer voor gewone knoppen
+  ACCENT_PIBEHEER  roze/bes - Beheer op het hoofdmenu EN de 3 schermen
+                             erachter (Installatie & Herstel, Controles,
+                             Onderhoud) - elk scherm krijgt een eigen tint
+                             (ACCENT_PIBEHEER/_2/_3, zie tint() hieronder)
+                             i.p.v. alle 3 dezelfde kale ACCENT_PIBEHEER.
+                             NIEUW, 13 augustus 2026: loste op dat Verbinden
+                             en heel Beheer voorheen dezelfde ACCENT_PINAS
+                             deelden en dus visueel niet te onderscheiden
+                             waren (Frans: "een groen moeras").
+  ACCENT_PICONTROL paars   - spaarzaam: alleen branding/vensterkop van
+                             Pi NAS Menu zelf, NIET voor gewone knoppen
                              (3x identiek paars naast elkaar was té veel).
-Elke knop/sectiekop in de suite hoort een van deze vier te gebruiken (of
+(13 augustus 2026: de labels hierboven zijn nu ook daadwerkelijk correct -
+ze klopten eerder niet met de werkelijke hex-waarden, bijv. ACCENT_PINAS
+heette "blauw" maar was al een tijd een blauwgroene teal.)
+Elke knop/sectiekop in de suite hoort een van deze vijf te gebruiken (of
 DESTRUCTIEF/WARN/ERR_C voor hun eigen specifieke betekenis) - nooit een
 losse hex-code direct in een .pyw-bestand.
 
@@ -71,10 +83,11 @@ _DONKER = dict(
     FG="#eef2f6", DIM="#9aa8b5",
     OK_C="#22c55e", ERR_C="#ef4444", WARN="#f59e0b", YELLOW="#fbbf24",
     DESTRUCTIEF="#e2875e",
-    ACCENT_PINAS="#4f8fdb", ACCENT_PIBACKUP="#2fb787",
-    ACCENT_PIADDONS="#dba53f", ACCENT_PICONTROL="#9480e0",
-    BLUE="#4f8fdb", GREEN_C="#2fb787", GREEN="#2fb787", RED_C="#ef4444",
-    RED="#ef4444", TEAL="#14b8a6", MAGENTA="#9480e0", ACCENT="#4f8fdb",
+    ACCENT_PINAS="#3185e9", ACCENT_PIBACKUP="#1aae79",
+    ACCENT_PIADDONS="#e79e15", ACCENT_PICONTROL="#9480e0",
+    ACCENT_PIBEHEER="#e0668a",
+    BLUE="#3185e9", GREEN_C="#1aae79", GREEN="#1aae79", RED_C="#ef4444",
+    RED="#ef4444", TEAL="#14b8a6", MAGENTA="#9480e0", ACCENT="#3185e9",
 )
 
 _LICHT = dict(
@@ -82,14 +95,36 @@ _LICHT = dict(
     FG="#333c47", DIM="#6d7d8c",
     OK_C="#16a34a", ERR_C="#dc2626", WARN="#d97706", YELLOW="#c98a2a",
     DESTRUCTIEF="#d9704a",
-    ACCENT_PINAS="#0f8a8a", ACCENT_PIBACKUP="#3573c4",
-    ACCENT_PIADDONS="#c98a2a", ACCENT_PICONTROL="#7c5cd6",
-    BLUE="#0f8a8a", GREEN_C="#3573c4", GREEN="#3573c4", RED_C="#dc2626",
-    RED="#dc2626", TEAL="#0d9488", MAGENTA="#7c5cd6", ACCENT="#0f8a8a",
+    ACCENT_PINAS="#038787", ACCENT_PIBACKUP="#206ac9",
+    ACCENT_PIADDONS="#c07c15", ACCENT_PICONTROL="#7c5cd6",
+    ACCENT_PIBEHEER="#c2456b",
+    BLUE="#038787", GREEN_C="#206ac9", GREEN="#206ac9", RED_C="#dc2626",
+    RED="#dc2626", TEAL="#0d9488", MAGENTA="#7c5cd6", ACCENT="#038787",
 )
 
 _thema = _lees_thema()
 _palet = _DONKER if _thema == "donker" else _LICHT
+
+
+def tint(hex_c, amt=24):
+    """Lichtere variant van een kleur (RGB-kanalen ophogen, geclipt op 255).
+    Gedeelde versie van wat eerder als _licht_tint() los in Pi_NAS_Menu.pyw
+    stond - hier neergezet (13 augustus 2026, kleurenherziening Beheer-
+    domein) zodat elk bestand dezelfde tint-berekening gebruikt i.p.v. een
+    eigen kopie te onderhouden."""
+    h = hex_c.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"#{min(r+amt,255):02x}{min(g+amt,255):02x}{min(b+amt,255):02x}"
+
+
+# ACCENT_PIBEHEER_2/_3: automatisch afgeleide, lichtere tinten van
+# ACCENT_PIBEHEER - geven de 3 Beheer-subknoppen (Installatie & Herstel/
+# Controles/Onderhoud) elk hun eigen tint van dezelfde kleurfamilie, zonder
+# dat iemand 2 extra kleuren met de hand hoeft te kiezen/synchroniseren. Bij
+# een gewijzigde ACCENT_PIBEHEER (via de kleurenkiezer) worden deze bij de
+# eerstvolgende start automatisch opnieuw berekend.
+_palet["ACCENT_PIBEHEER_2"] = tint(_palet["ACCENT_PIBEHEER"], 22 if _thema != "donker" else 16)
+_palet["ACCENT_PIBEHEER_3"] = tint(_palet["ACCENT_PIBEHEER"], 44 if _thema != "donker" else 32)
 
 globals().update(_palet)
 
