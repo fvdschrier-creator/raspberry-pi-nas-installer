@@ -2084,7 +2084,7 @@ def diagnose():
             "df -h — schijfgebruik",
             "cat /etc/fstab — mountconfiguratie",
             "Actieve mounts",
-            "Schijftemperatuur (hddtemp)",
+            "Schijftemperatuur (smartctl)",
             "Samba status",
             "Netwerk status",
             "← Terug",
@@ -2094,7 +2094,12 @@ def diagnose():
         elif idx==1: os.system("df -h")
         elif idx==2: os.system("cat /etc/fstab")
         elif idx==3: os.system("mount | grep /mnt/")
-        elif idx==4: os.system("sudo hddtemp /dev/sda 2>&1 || echo 'sudo apt install hddtemp'")
+        # 13 augustus 2026: hddtemp is niet meer beschikbaar in de Debian-
+        # repositories van huidige Raspberry Pi OS-versies (Frans liep hier
+        # tegenaan: "Package hddtemp has no installation candidate") - nu
+        # smartctl (smartmontools), zelfde tool die herstel_backup_hdd.sh al
+        # gebruikt voor de SMART-check.
+        elif idx==4: os.system("command -v smartctl >/dev/null 2>&1 && sudo smartctl -A /dev/sda | grep -i temp || echo 'smartctl niet geinstalleerd - installeer met: sudo apt install smartmontools'")
         elif idx==5: os.system("sudo systemctl status smbd --no-pager")
         elif idx==6: os.system("nmcli general && echo && ip addr show | grep inet")
         elif idx==7 or idx==-1: return

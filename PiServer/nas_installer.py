@@ -1079,7 +1079,12 @@ class NASInstaller(ctk.CTk if CTK else tk.Tk):
         self.diag_out=self._logw_in(parent,8)
         for lbl,cmd in [("🔍 lsblk","lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT"),
                          ("📊 df -h","df -h"),("📋 fstab","cat /etc/fstab"),
-                         ("🔗 Mounts","mount | grep /mnt/"),("🌡 Temp",f"sudo hddtemp {self.fmt_dev.get()} 2>&1")]:
+                         ("🔗 Mounts","mount | grep /mnt/"),
+                         # 13 augustus 2026: hddtemp is niet meer beschikbaar in de
+                         # Debian-repositories van huidige Raspberry Pi OS-versies -
+                         # nu smartctl (smartmontools), zelfde tool als
+                         # herstel_backup_hdd.sh al gebruikt voor de SMART-check.
+                         ("🌡 Temp",f"command -v smartctl >/dev/null 2>&1 && sudo smartctl -A {self.fmt_dev.get()} | grep -i temp || echo 'smartctl niet geinstalleerd - installeer met: sudo apt install smartmontools'")]:
             self._btn(br,lbl,lambda c=cmd:(self.diag_out.delete("1.0",tk.END),
                                             self.diag_out.insert(tk.END,f"$ {c}\n","head"),
                                             self.diag_out.insert(tk.END,sh(c)+"\n")),
