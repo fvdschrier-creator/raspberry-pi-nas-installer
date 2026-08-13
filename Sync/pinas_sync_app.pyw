@@ -97,12 +97,15 @@ class BronDoelScherm(tk.Frame):
         self._build()
 
     def _build(self):
-        kop = tk.Frame(self, bg="#2f3b47", height=64)
+        # 13 augustus 2026: was hardcoded "#2f3b47" (geen enkel thema/domein) -
+        # nu ACCENT (= ACCENT_PIBACKUP), zodat dit scherm zichtbaar bij
+        # Backup Beheer hoort, ook al is het zijn eigen vensterproces.
+        kop = tk.Frame(self, bg=ACCENT, height=64)
         kop.pack(fill="x")
-        tk.Label(kop, text="Pi NAS Sync", font=FONT_TITEL, bg="#2f3b47", fg=KNOP_TEKST
+        tk.Label(kop, text="Pi NAS Sync", font=FONT_TITEL, bg=ACCENT, fg=KNOP_TEKST
                  ).pack(side="left", padx=18, pady=14)
         tk.Label(kop, text="Stap 1: kies bronnen en doelen",
-                 font=FONT_NORMAAL, bg="#2f3b47", fg=SUBTITEL).pack(side="left", pady=14)
+                 font=FONT_NORMAAL, bg=ACCENT, fg=SUBTITEL).pack(side="left", pady=14)
 
         toelichting = tk.Frame(self, bg=BG_ZACHT)
         toelichting.pack(fill="x")
@@ -220,12 +223,12 @@ class SyncScherm(tk.Frame):
     # -- Layout ----------------------------------------------------
 
     def _bouw_layout(self):
-        kop = tk.Frame(self, bg="#2f3b47", height=64)
+        kop = tk.Frame(self, bg=ACCENT, height=64)
         kop.pack(fill="x")
-        tk.Label(kop, text="Pi NAS Sync", font=FONT_TITEL, bg="#2f3b47", fg=KNOP_TEKST
+        tk.Label(kop, text="Pi NAS Sync", font=FONT_TITEL, bg=ACCENT, fg=KNOP_TEKST
                  ).pack(side="left", padx=18, pady=14)
         tk.Label(kop, text=f"Stap 2: synchroniseren ({len(self.taken)} taak/taken)",
-                 font=FONT_NORMAAL, bg="#2f3b47", fg=SUBTITEL).pack(side="left", pady=14)
+                 font=FONT_NORMAAL, bg=ACCENT, fg=SUBTITEL).pack(side="left", pady=14)
         RondeKnop(kop, "<- Terug naar bron/doel", kleur=ACCENT_DONKER,
                  command=self._terug).pack(side="right", padx=18)
 

@@ -74,10 +74,12 @@ try:
     _BG, _PANEL, _PANEL2 = _t.BG, _t.PANEL, _t.PANEL2
     _FG, _DIM = _t.FG, _t.DIM
     _OK, _ERR, _WARN, _BLUE = _t.OK_C, _t.ERR_C, _t.WARN, _t.BLUE
+    _BACKUP = _t.ACCENT_PIBACKUP
     _THEMA = getattr(_t, "HUIDIG_THEMA", "donker")
 except Exception:
     _BG, _PANEL, _PANEL2 = "#0f172a", "#1e293b", "#334155"
     _FG, _DIM, _OK, _ERR, _WARN, _BLUE = "#e2e8f0", "#94a3b8", "#22c55e", "#ef4444", "#f59e0b", "#3b82f6"
+    _BACKUP = "#3185e9"
     _THEMA = "donker"
 try:
     from version import SUITE_VERSIE
@@ -145,8 +147,10 @@ def _backup_doel_standaard():
     Backup-schijfletter, i.p.v. de hardcoded STANDAARD_BACKUP."""
     return f"{_spiegel_letter()}:\\SpiegelBackup"
 
-NAVY = "#2f3b47"                       # header blijft zelfde kleur in beide thema's (16 juli 2026: navy -> zacht zakelijk blauw)
-GROEN, ROOD, ORANJE, BLAUW = _OK, _ERR, _WARN, _BLUE
+NAVY = _BACKUP                         # 13 augustus 2026: was hardcoded "#2f3b47" (matchte geen
+                                        # enkel thema/domein) - dit scherm hoort bij Backup Beheer,
+                                        # dus nu ACCENT_PIBACKUP zoals de rest van dat domein.
+GROEN, ROOD, ORANJE, BLAUW = _OK, _ERR, _WARN, _BACKUP
 _LOG = "#0b1220" if _THEMA == "donker" else "#f8fafc"
 _HELDER = "#ffffff" if _THEMA == "donker" else _FG
 THEMES = {_THEMA: dict(BG=_BG, PANEL=_PANEL, PANEL2=_PANEL2,

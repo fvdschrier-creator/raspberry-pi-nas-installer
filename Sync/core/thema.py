@@ -44,8 +44,12 @@ try:
     PANEL_RAND    = _t.PANEL2      # subtiele paneelrand
     TEKST         = _t.FG          # primaire tekst
     TEKST_DIM     = _t.DIM         # secundaire tekst
-    ACCENT        = _t.BLUE        # blauw - header en primaire knoppen
-    ACCENT_DONKER = _t.BLUE        # actief/ingedrukt (zelfde blauw)
+    # 13 augustus 2026: was _t.BLUE (= Verbinden/ACCENT_PINAS-kleur) - Pi NAS
+    # Sync opent vanuit Backup Beheer, dus hoort ACCENT_PIBACKUP te tonen
+    # (Frans: "de sub sub menu's moeten ook de kleur van het thema meekrijgen
+    # in de titel, gebeurt nu niet").
+    ACCENT        = _t.ACCENT_PIBACKUP   # header en primaire knoppen
+    ACCENT_DONKER = _t.ACCENT_PIBACKUP   # actief/ingedrukt (zelfde kleur)
     GROEN         = _t.OK_C        # OK / succes
     ROOD          = _t.ERR_C       # fout / stoppen
     ORANJE        = _t.WARN        # waarschuwing
