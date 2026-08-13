@@ -117,14 +117,38 @@ def tint(hex_c, amt=24):
     return f"#{min(r+amt,255):02x}{min(g+amt,255):02x}{min(b+amt,255):02x}"
 
 
-# ACCENT_PIBEHEER_2/_3: automatisch afgeleide, lichtere tinten van
-# ACCENT_PIBEHEER - geven de 3 Beheer-subknoppen (Installatie & Herstel/
-# Controles/Onderhoud) elk hun eigen tint van dezelfde kleurfamilie, zonder
+def kleurvariant(hex_c, tint_graden=0, licht_delta=0.0):
+    """Draait de tint (kleurtoon) een aantal graden en verhoogt de
+    lichtheid - gebruikt voor de Beheer-subtinten (ACCENT_PIBEHEER_2/_3).
+
+    13 augustus 2026: eerst geprobeerd met alleen tint() (rechtstreeks
+    lichter maken) - Frans, na een 2e screenshot: "het kleurverschil
+    binnen Beheer mag iets groter, anders is het effect te gering". Alleen
+    lichter maken loopt echter snel tegen een plafond (te lichter = te
+    dicht bij wit = te weinig contrast met de witte knoptekst). Een kleine
+    tint-draai (dezelfde kleurFAMILIE, net een andere kant op het
+    kleurenwiel) geeft een veel duidelijker onderscheid bij hetzelfde
+    contrastniveau."""
+    import colorsys
+    h = hex_c.lstrip("#")
+    r, g, b = [int(h[i:i+2], 16) / 255 for i in (0, 2, 4)]
+    hh, l, s = colorsys.rgb_to_hls(r, g, b)
+    hh = (hh + tint_graden / 360.0) % 1.0
+    l = max(0.0, min(1.0, l + licht_delta))
+    r, g, b = colorsys.hls_to_rgb(hh, l, s)
+    return f"#{round(r*255):02x}{round(g*255):02x}{round(b*255):02x}"
+
+
+# ACCENT_PIBEHEER_2/_3: automatisch afgeleide varianten van ACCENT_PIBEHEER
+# (kleine tint-draai + iets lichter, zie kleurvariant() hierboven) - geven
+# de 3 Beheer-subknoppen (Installatie & Herstel/Controles/Onderhoud) elk
+# hun eigen, duidelijk te onderscheiden kleur uit dezelfde familie, zonder
 # dat iemand 2 extra kleuren met de hand hoeft te kiezen/synchroniseren. Bij
 # een gewijzigde ACCENT_PIBEHEER (via de kleurenkiezer) worden deze bij de
 # eerstvolgende start automatisch opnieuw berekend.
-_palet["ACCENT_PIBEHEER_2"] = tint(_palet["ACCENT_PIBEHEER"], 22 if _thema != "donker" else 16)
-_palet["ACCENT_PIBEHEER_3"] = tint(_palet["ACCENT_PIBEHEER"], 44 if _thema != "donker" else 32)
+_beheer_deltas = (-18, 0.06, 18, 0.13) if _thema != "donker" else (-18, 0.05, 18, 0.10)
+_palet["ACCENT_PIBEHEER_2"] = kleurvariant(_palet["ACCENT_PIBEHEER"], _beheer_deltas[0], _beheer_deltas[1])
+_palet["ACCENT_PIBEHEER_3"] = kleurvariant(_palet["ACCENT_PIBEHEER"], _beheer_deltas[2], _beheer_deltas[3])
 
 globals().update(_palet)
 
