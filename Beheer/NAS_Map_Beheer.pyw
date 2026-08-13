@@ -485,6 +485,13 @@ def main():
             ("Gedeeld",  "pinas_schijven.py",                   "Gedeelde schijfletter-resolver (share-naam i.p.v. vaste letter)"),
             ("Gedeeld",  "pinas_versies.json",                  "Versie-manifest (laatst geleverde datum per bestand)"),
             ("Gedeeld",  "bijwerk_pinas_versies.py",            "Werkt pinas_versies.json automatisch bij via contenthash-vergelijking"),
+            # 13 augustus 2026: stond hier nog niet, werd daardoor elke keer
+            # als "onbekend bestand" gemeld (Frans gemeld). Bewust GEEN
+            # eigen entry in pinas_versies.json (zie de uitzondering
+            # hieronder bij VERSIE-MANIFEST vs. BEKENDE BESTANDEN) - de
+            # inhoud wijzigt bij elke run, een "laatst geleverde versie"-
+            # datum heeft hier geen betekenis.
+            ("Gedeeld",  "pinas_versies_hashes.json",           "Hash-cache voor bijwerk_pinas_versies.py - lokaal, wijzigt bij elke run, wordt niet gepubliceerd"),
             ("Gedeeld",  "controleer_syntax.py",                "py_compile/bash -n over de hele boom, verplicht voor een publieke build"),
             ("Gedeeld",  "opruimen_lijst.json",                 "Opruimlijst voor pinas_opruimen.pyw (FUSE kon niet verwijderen)"),
             ("Gedeeld",  "maak_publieke_versie.py",             "Publieke versie maker"),
@@ -842,7 +849,11 @@ def main():
             schrijf("\nVERSIE-MANIFEST vs. BEKENDE BESTANDEN", "kop")
             bekende_sleutels = {f"{m}\\{n}" for (m, n, _) in checks}
             versie_sleutels = {k for k in versies.keys() if not k.startswith("_")}
-            mist_in_versies = sorted(bekende_sleutels - versie_sleutels)
+            # pinas_versies_hashes.json hoort BEWUST niet in pinas_versies.json
+            # (zie entry hierboven) - anders zou deze uitzondering hier zelf
+            # weer als "geen entry"-waarschuwing verschijnen.
+            _GEEN_VERSIE_ENTRY_VERWACHT = {"Gedeeld\\pinas_versies_hashes.json"}
+            mist_in_versies = sorted(bekende_sleutels - versie_sleutels - _GEEN_VERSIE_ENTRY_VERWACHT)
             mist_in_checks = sorted(versie_sleutels - bekende_sleutels)
             if mist_in_versies:
                 for s in mist_in_versies:
