@@ -489,6 +489,23 @@ _cfg_pad = os.path.join(_script_dir(), "picontrol.cfg")
 if os.path.exists(_cfg_pad):
     _cfg.read(_cfg_pad, encoding="utf-8")
 
+def _huidig_thema_van_schijf():
+    """Leest het huidige thema VERS (opnieuw) uit picontrol.cfg, in plaats
+    van via pinas_theme.HUIDIG_THEMA. Dat laatste wordt maar 1x berekend
+    bij het importeren van de module en blijft daarna "bevroren" voor de
+    hele levensduur van dit proces - een 2e klik op "Thema wisselen"
+    zonder tussentijdse herstart gaf daardoor steeds dezelfde (verkeerde)
+    richting terug (13 augustus 2026, Frans gemeld: "van licht naar
+    donker werkt, maar van donker naar licht werkt niet")."""
+    cfg = configparser.ConfigParser()
+    if os.path.exists(_cfg_pad):
+        try:
+            cfg.read(_cfg_pad, encoding="utf-8")
+        except Exception:
+            pass
+    return cfg.get("ui", "thema", fallback="licht").strip().lower()
+
+
 PI_IP = _cfg.get("pi", "ip", fallback="UW_PI_IP_ADRES")
 # 4 augustus 2026 (Frans: wil in de Status ook de ZeroTier-adressen zien,
 # niet alleen lokaal) - zelfde patroon als pinas_addons_beheer.pyw's ZT_IP.
@@ -2180,9 +2197,13 @@ class Menu(tk.Tk):
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Weergave", font=("Segoe UI", 9, "bold"),
                  bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
-        huidig = getattr(__import__("pinas_theme"), "HUIDIG_THEMA", "donker")
+        # 13 augustus 2026: was pinas_theme.HUIDIG_THEMA (bevroren bij
+        # import, zie _huidig_thema_van_schijf() hierboven) - nu een verse
+        # read, en de knoptekst wordt na een klik meteen bijgewerkt i.p.v.
+        # pas na een volledige herstart (Frans: "niet soepel").
+        huidig = _huidig_thema_van_schijf()
         thema_tekst = f"🎨  Thema wisselen  (nu: {huidig}) — herstart vereist"
-        self._rbtn(frame, thema_tekst, self._wissel_thema, PANEL2)
+        self._thema_knop = self._rbtn(frame, thema_tekst, self._wissel_thema, PANEL2)
         self._rbtn(frame, "🌈  Kleuren kiezen (aanpassen)", self._open_kleuren_kiezer, PANEL2)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Beveiliging", font=("Segoe UI", 8, "bold"),
@@ -2203,12 +2224,19 @@ class Menu(tk.Tk):
                 f"Technische details: {fout}")
 
     def _wissel_thema(self):
-        """Wissel tussen donker en licht thema — sla op in picontrol.cfg."""
-        try:
-            import pinas_theme as _pt
-            huidig = getattr(_pt, "HUIDIG_THEMA", "donker")
-        except Exception:
-            huidig = "donker"
+        """Wissel tussen donker en licht thema — sla op in picontrol.cfg.
+
+        13 augustus 2026 (bugfix, Frans gemeld: "van licht naar donker
+        werkt, maar van donker naar licht werkt niet"): las voorheen
+        pinas_theme.HUIDIG_THEMA, dat maar 1x bij het importeren van de
+        module wordt berekend en daarna "bevroren" blijft voor de hele
+        levensduur van dit proces. Een 2e klik zonder tussentijdse
+        volledige herstart (het programma sluiten en opnieuw starten)
+        gaf daardoor altijd dezelfde richting terug, ongeacht wat er
+        inmiddels echt in picontrol.cfg stond. Nu een verse read via
+        _huidig_thema_van_schijf() - werkt hierdoor ook correct als je
+        meerdere keren achter elkaar wisselt zonder te herstarten."""
+        huidig = _huidig_thema_van_schijf()
         nieuw_thema = "licht" if huidig == "donker" else "donker"
 
         # Schrijf naar picontrol.cfg
@@ -2223,10 +2251,20 @@ class Menu(tk.Tk):
         with open(cfg_pad, "w", encoding="utf-8") as f:
             cfg.write(f)
 
+        # Knoptekst meteen bijwerken - zonder dit bleef "nu: ..." tot een
+        # volledige herstart de oude waarde tonen, ook al was de wissel
+        # zelf al gelukt (droeg bij aan "niet soepel").
+        if hasattr(self, "_thema_knop"):
+            try:
+                self._thema_knop.config(
+                    text=f"🎨  Thema wisselen  (nu: {nieuw_thema}) — herstart vereist")
+            except Exception:
+                pass
+
         messagebox.showinfo(
             "Thema gewijzigd",
             f"Thema gewijzigd naar: {nieuw_thema}\n\n"
-            "Herstart Pi NAS Menu om het nieuwe thema toe te passen.")
+            "Herstart Pi NAS Menu om het nieuwe thema (kleuren) toe te passen.")
 
     def _pi_update(self):
         """Voert apt update + upgrade uit op de Pi in een zichtbaar CMD venster."""
