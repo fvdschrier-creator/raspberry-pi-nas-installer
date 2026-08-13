@@ -3144,8 +3144,11 @@ class Menu(tk.Tk):
         # Header - 5 augustus 2026 (Frans: headers niet consequent, overal
         # een Help-knop) - omgezet naar de gedeelde maak_header(), zelfde
         # reden als Onderhoud. Hergebruikt _open_help(), geen dubbele inhoud.
+        # 13 augustus 2026: was ACCENT_PICONTROL (paars, gereserveerd voor
+        # Pi NAS Menu's eigen branding) - Status & Details hoort volgens
+        # pinas_theme.py's eigen categorie-indeling bij ACCENT_PINAS (teal).
         hdr = maak_header(win, "Status", subtekst=f"bijgewerkt: {BIJGEWERKT}",
-                           kleur=ACCENT_PICONTROL)
+                           kleur=ACCENT_PINAS)
         # In hdr.rij pakken (de titelregel zelf), niet in hdr - zelfde
         # reden als Onderhoud (5 augustus 2026, Frans gemeld: Vernieuwen
         # en Help liever op de regel van "Status" zelf).
