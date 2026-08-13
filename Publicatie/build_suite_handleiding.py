@@ -476,10 +476,11 @@ def bouw_handleiding():
         ]),
         ("4.", "Controles", [
             ("4.1", "Structuurcheck & Opruimen"),
-            ("4.2", "Suite testen"),
-            ("4.3", "Diagnose uitvoeren"),
-            ("4.4", "Log Bestanden Bekijken"),
-            ("4.5", "Systeem-image terugzetten (SD-kaart)"),
+            ("4.2", "Pi opruimen"),
+            ("4.3", "Suite testen"),
+            ("4.4", "Diagnose uitvoeren"),
+            ("4.5", "Log Bestanden Bekijken"),
+            ("4.6", "Systeem-image terugzetten (SD-kaart)"),
         ]),
         ("5.", "PiNAS Sync (Synchronisatie)", [
             ("5.1", "Scherm 1 - Bronnen en doelen kiezen"),
@@ -866,7 +867,7 @@ def bouw_handleiding():
         ["Knop", "Voor wat"],
         [
             ["Installatie & Herstel", "Start de installatiewizard (pi_nas_setup.pyw) - voor een nieuwe installatie of het herstellen van een bestaande."],
-            ["Controles",             "Structuurcheck & Opruimen, Suite testen, Diagnose uitvoeren, Log Bestanden Bekijken - zie 4."],
+            ["Controles",             "Structuurcheck & Opruimen, Pi opruimen, Suite testen, Diagnose uitvoeren, Log Bestanden Bekijken - zie 4."],
             ["Onderhoud",             "Pi services en Windows onderdelen installeren/herstellen, Publicatie, Distributie, Geavanceerd, Weergave en Beveiliging - hieronder."],
         ],
         [3.5*cm, BREEDTE - 3.5*cm]))
@@ -1286,7 +1287,7 @@ def bouw_handleiding():
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph(
         "Controles is de centrale plek voor alles wat de suite controleert en test - "
-        "bereikbaar via de knop 'Controles' onder BEHEER op het hoofdmenu. Vier "
+        "bereikbaar via de knop 'Controles' onder BEHEER op het hoofdmenu. Vijf "
         "onderdelen:", s["body"]))
     story.append(Spacer(1, 0.2*cm))
 
@@ -1295,17 +1296,28 @@ def bouw_handleiding():
         "Opent NAS_Map_Beheer.pyw met twee tabs. Structuurcheck controleert of alle "
         "verwachte bestanden aanwezig zijn in de suite-mappenstructuur — groen = OK, "
         "rood = ontbreekt. Opruimen toont verouderde en onnodige bestanden met "
-        "checkboxes — verwijder in één klik.", s["body"]))
+        "checkboxes — verwijder in één klik. Dit werkt op de PC-kant (C:\\PiNAS).", s["body"]))
     story.append(Spacer(1, 0.3*cm))
 
-    story.append(Paragraph("4.2 Suite testen", s["h2"]))
+    story.append(Paragraph("4.2 Pi opruimen", s["h2"]))
+    story.append(Paragraph(
+        "Dezelfde soort controle als Structuurcheck & Opruimen, maar dan voor /home/pi "
+        "op de Pi zelf (via SSH). Vergelijkt wat daar staat met de bestanden die de "
+        "suite er hoort te zetten en toont onbekende bestanden/mappen met hun grootte "
+        "- vaak resten van een oude, afgebroken actie (zoals een per ongeluk "
+        "achtergebleven systeem-image). Verwijder ze in één keer, na bevestiging. "
+        "Toegevoegd 13 augustus 2026, na een SD-kaart-onderzoek dat een 7+ GB grote "
+        "verweesde image aan het licht bracht.", s["body"]))
+    story.append(Spacer(1, 0.3*cm))
+
+    story.append(Paragraph("4.3 Suite testen", s["h2"]))
     story.append(Paragraph(
         "Draait test_suite.py: een reeks kwaliteitschecks over bestanden, syntax, "
         "packages, schijven en Pi services, met een duidelijke geslaagd/mislukt-uitkomst "
         "per check.", s["body"]))
     story.append(PageBreak())
 
-    story.append(Paragraph("4.3 Diagnose uitvoeren", s["h2"]))
+    story.append(Paragraph("4.4 Diagnose uitvoeren", s["h2"]))
     story.append(Paragraph(
         "Opent een venster met twee opties:", s["body"]))
     story.append(data_tabel(s,
@@ -1317,14 +1329,14 @@ def bouw_handleiding():
         [4*cm, BREEDTE - 4*cm]))
     story.append(Spacer(1, 0.2*cm))
 
-    story.append(Paragraph("4.4 Log Bestanden Bekijken", s["h2"]))
+    story.append(Paragraph("4.5 Log Bestanden Bekijken", s["h2"]))
     story.append(Paragraph(
         "Overzicht van alle logbestanden (Pi NAS Menu, PiNAS Sync, Externe HDD). Klik 'Open' "
         "naast een log om het in Kladblok te openen. Logmap: C:\\PiNAS\\Logs\\. Logs worden "
         "automatisch verwijderd na 30 dagen.", s["body"]))
     story.append(PageBreak())
 
-    story.append(Paragraph("4.5 Systeem-image terugzetten (SD-kaart)", s["h2"]))
+    story.append(Paragraph("4.6 Systeem-image terugzetten (SD-kaart)", s["h2"]))
     story.append(Paragraph(
         "Het <b>maken</b> van een systeem-image gebeurt via Backup Beheer "
         "(zie 3.6), niet in Controles. Dit hoofdstuk beschrijft het terugzetten, wat "
@@ -1876,8 +1888,9 @@ def bouw_handleiding():
         ["assets\\pinas_sync_scherm1/2/3.png", "Schermafbeeldingen van PiNAS Sync, gebruikt in hoofdstuk 5 van deze handleiding."],
         ["NAS_Map_Beheer.pyw", "Structuurcheck en Opruimen: controleert of alle verwachte bestanden er zijn en up-to-date zijn, en helpt overbodige/onbekende bestanden opsporen."],
         ["NAS_Map_Beheer.bat", "Start NAS_Map_Beheer.pyw."],
-        ["pinas_controle_beheer.pyw", "Verzamelt Suite testen, PC/Pi Diagnose en Logbestanden-bekijken op één plek (Controles)."],
+        ["pinas_controle_beheer.pyw", "Verzamelt Structuurcheck & Opruimen, Pi opruimen, Suite testen, PC/Pi Diagnose en Logbestanden-bekijken op één plek (Controles)."],
         ["pinas_kleuren_kiezer.pyw", "Hiermee pas je het kleurenschema (thema) van de hele suite aan via kleurstalen."],
+        ["pinas_pi_opruimen.pyw", "Pi opruimen: vergelijkt /home/pi op de Pi (via SSH) met de bestanden die de suite daar hoort te zetten en helpt onbekende bestanden verwijderen."],
     ], kol_breedte_bestanden))
     story.append(Spacer(1, 0.3*cm))
 

@@ -391,6 +391,14 @@ def main():
         "Pi_NAS_Menu.pyw", "pi_nas_setup.pyw", "Pi_NAS_Menu.ico",
         "Beheer_install.bat", "lanman_fix.py", "install_vnc_viewer.py",
         "pinas_backup_beheer.pyw", "pinas_image_backup.pyw",
+        # 13 augustus 2026: ontbraken hier - Pi_NAS_Menu.pyw's "Controles"-
+        # knop verwees dus naar bestanden die niet in de publieke versie
+        # zaten (kapotte knop voor GitHub-gebruikers). Was per ongeluk nooit
+        # meeverhuisd toen deze schermen op 16 juli 2026 van Gedeeld naar
+        # Beheer gingen. Nu wel meegenomen.
+        "NAS_Map_Beheer.pyw", "NAS_Map_Beheer.bat",
+        "pinas_controle_beheer.pyw", "pinas_kleuren_kiezer.pyw",
+        "pinas_pi_opruimen.pyw",
     ):
         _copy(beheer_bron, beheer_doel, bestand, "Beheer")
 

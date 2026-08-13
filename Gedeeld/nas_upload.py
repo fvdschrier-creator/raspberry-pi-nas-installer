@@ -19,6 +19,23 @@ PI_USER = "pi"
 PI_DIR = "/home/pi"
 SSH_OPT = ["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
 
+# 13 augustus 2026: losgetrokken uit main() zodat dit de ENE bron van
+# waarheid wordt voor "welke bestanden hoort de suite in /home/pi te
+# zetten" - pinas_pi_opruimen.pyw hergebruikt deze set om te bepalen wat
+# op de Pi WEL verwacht wordt (i.p.v. een eigen, losse kopie van deze
+# lijst bij te houden die uit elkaar kan groeien - zelfde reden als bij
+# ADDON_SCRIPT eerder deze sessie).
+PISERVER_BESTANDEN = (
+    "nas_installer.py", "nas_installer_cli.py", "seagate_web.py",
+    "seagate-web.service", "smart_plug.py", "smart_plug_config.json",
+    "hue_diagnose.py", "pi_welkom.sh", "install.sh", "nas_start.sh",
+)
+GEDEELD_BESTANDEN = (
+    "nas_diagnose.sh", "herstel_backup_hdd.sh", "pinas_theme.py",
+    "pinas_wachtwoord.py", "pinas_logging.py", "version.py",
+)
+PI_BESTANDEN = frozenset(PISERVER_BESTANDEN + GEDEELD_BESTANDEN)
+
 
 def _script_dir():
     return os.path.dirname(os.path.abspath(__file__))
@@ -72,20 +89,13 @@ def main():
 
     print("  [PiServer]")
     piserver = os.path.join(nas_root, "PiServer")
-    for bestand in (
-        "nas_installer.py", "nas_installer_cli.py", "seagate_web.py",
-        "seagate-web.service", "smart_plug.py", "smart_plug_config.json",
-        "hue_diagnose.py", "pi_welkom.sh", "install.sh", "nas_start.sh",
-    ):
+    for bestand in PISERVER_BESTANDEN:
         upload(os.path.join(piserver, bestand), bestand)
 
     print()
     print("  [Gedeeld]")
     gedeeld = os.path.join(nas_root, "Gedeeld")
-    for bestand in (
-        "nas_diagnose.sh", "herstel_backup_hdd.sh", "pinas_theme.py",
-        "pinas_wachtwoord.py", "pinas_logging.py", "version.py",
-    ):
+    for bestand in GEDEELD_BESTANDEN:
         upload(os.path.join(gedeeld, bestand), bestand)
 
     def ssh(cmd, tty=False):

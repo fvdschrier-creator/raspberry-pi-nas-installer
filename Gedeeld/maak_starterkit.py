@@ -101,6 +101,13 @@ def main():
         "Pi_NAS_Menu.pyw", "pi_nas_setup.pyw", "Pi_NAS_Menu.ico",
         "lanman_fix.py", "install_vnc_viewer.py",
         "pinas_backup_beheer.pyw", "pinas_image_backup.pyw",
+        # 13 augustus 2026: ontbraken hier - Pi_NAS_Menu.pyw's "Controles"-
+        # knop verwees dus naar een bestand dat niet in het pakket zat.
+        # Nu wel meegenomen (was per ongeluk nooit meeverhuisd toen deze
+        # schermen op 16 juli 2026 van Gedeeld naar Beheer gingen).
+        "NAS_Map_Beheer.pyw", "NAS_Map_Beheer.bat",
+        "pinas_controle_beheer.pyw", "pinas_kleuren_kiezer.pyw",
+        "pinas_pi_opruimen.pyw",
     ):
         _copy(os.path.join(NAS_ROOT, "Beheer"), beheer_doel, bestand)
 
@@ -189,7 +196,12 @@ def main():
         "nas_upload.py", "nas_diagnose.py", "nas_diagnose.sh",
         "herstel_backup_hdd.sh", "pinas_iphone_backup.sh",
         "pinas_iphone_verkennen.sh", "test_suite.py",
-        "NAS_Map_Beheer.pyw", "NAS_Map_Beheer.bat", "download_links.ini",
+        "download_links.ini",
+        # 13 augustus 2026: "NAS_Map_Beheer.pyw"/".bat" stonden hier ten
+        # onrechte in - dat bestand woont in Beheer\, niet Gedeeld\, dus
+        # deze regel kopieerde al sinds 16 juli 2026 stilzwijgend niets
+        # (_copy() print "niet gevonden" maar breekt de build niet af).
+        # Nu correct in de Beheer-lijst hierboven opgenomen.
     ):
         _copy(os.path.join(NAS_ROOT, "Gedeeld"), gedeeld_doel, bestand)
 
