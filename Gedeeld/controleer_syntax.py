@@ -38,6 +38,27 @@ PY_EXTENSIES = (".py", ".pyw")
 SH_EXTENSIES = (".sh",)
 
 
+def _bash_werkt_echt():
+    """13 augustus 2026 (bugfix, Frans meldde dit via een screenshot van
+    zijn eigen pc): shutil.which('bash') alleen is niet genoeg. Op Windows
+    staat vaak nog C:\\Windows\\System32\\bash.exe op het PATH - een oude
+    WSL-launcher-stub die WEL bestaat, maar bij elke aanroep meteen faalt
+    ("execvpe(/bin/bash) failed: No such file or directory") zodra er geen
+    WSL-distro (meer) geinstalleerd is. Frans verwijderde WSL bewust op 12
+    augustus 2026, maar die stub blijft gewoon op het PATH staan. Zonder
+    deze functionele test werd elk .sh-bestand als 'kapot' gemeld (20
+    valse syntaxfouten) en blokkeerde dat de hele publieke build - terwijl
+    de bedoeling was dat bash-controle hier gewoon stil wordt overgeslagen."""
+    pad = shutil.which("bash")
+    if pad is None:
+        return False
+    try:
+        r = subprocess.run([pad, "-c", "exit 0"], capture_output=True, text=True, timeout=5)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
 def _vind_bestanden(root):
     for dirpad, submappen, bestanden in os.walk(root):
         submappen[:] = [d for d in submappen if d not in OVERSLAAN_MAPNAMEN]
@@ -54,7 +75,7 @@ def controleer(root):
     kapotte bestanden terug (0 = alles schoon)."""
     sys.dont_write_bytecode = True  # geen __pycache__-rommel in de suite-boom
 
-    bash_beschikbaar = shutil.which("bash") is not None
+    bash_beschikbaar = _bash_werkt_echt()
     python_bestanden = []
     bash_bestanden = []
     for soort, pad in _vind_bestanden(root):
