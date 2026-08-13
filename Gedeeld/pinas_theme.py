@@ -77,17 +77,23 @@ def _lees_thema():
 # "Zacht zakelijk blauw", 16 juli 2026 herzien: iets steviger/frisser dan de
 # eerste zachte versie (op verzoek van Frans), maar nadrukkelijk niet
 # terug richting het oude donkere marineblauw/militaire palet.
+# 13 augustus 2026 (4e ronde): in _DONKER stonden ACCENT_PINAS (blauw) en
+# ACCENT_PIBACKUP (groen) verwisseld t.o.v. _LICHT (waar PINAS teal/
+# blauwgroen is en PIBACKUP blauw) - Verbinden en Backup Beheer ruilden dus
+# letterlijk van kleur zodra je van thema wisselde. Rechtgetrokken: PINAS
+# gebruikt nu dezelfde teal als de (voorheen ongebruikte) TEAL-alias,
+# PIBACKUP het blauw dat eerst per ongeluk bij PINAS stond.
 # ---------------------------------------------------------------------------
 _DONKER = dict(
     BG="#232a33", PANEL="#2b333d", PANEL2="#33404c",
     FG="#eef2f6", DIM="#9aa8b5",
     OK_C="#22c55e", ERR_C="#ef4444", WARN="#f59e0b", YELLOW="#fbbf24",
     DESTRUCTIEF="#e2875e",
-    ACCENT_PINAS="#3185e9", ACCENT_PIBACKUP="#1aae79",
+    ACCENT_PINAS="#14b8a6", ACCENT_PIBACKUP="#3185e9",
     ACCENT_PIADDONS="#e79e15", ACCENT_PICONTROL="#9480e0",
     ACCENT_PIBEHEER="#e0668a",
-    BLUE="#3185e9", GREEN_C="#1aae79", GREEN="#1aae79", RED_C="#ef4444",
-    RED="#ef4444", TEAL="#14b8a6", MAGENTA="#9480e0", ACCENT="#3185e9",
+    BLUE="#14b8a6", GREEN_C="#3185e9", GREEN="#3185e9", RED_C="#ef4444",
+    RED="#ef4444", TEAL="#14b8a6", MAGENTA="#9480e0", ACCENT="#14b8a6",
 )
 
 _LICHT = dict(
