@@ -30,11 +30,13 @@ rem altijd alles. Nu gaten Stap 5/6/6a2/7 hierop (6b/6c WSL+Docker op
 rem 11 augustus 2026 verwijderd, zie verderop).
 set DO_PUTTY=0
 set DO_VNC=0
+set DO_WINSCP=0
 set DO_SCHIJVEN=0
 :parse_args
 if "%~1"=="" goto :args_klaar
 if /i "%~1"=="PUTTY=J"    set DO_PUTTY=1
 if /i "%~1"=="VNC=J"      set DO_VNC=1
+if /i "%~1"=="WINSCP=J"   set DO_WINSCP=1
 if /i "%~1"=="SCHIJVEN=J" set DO_SCHIJVEN=1
 shift
 goto :parse_args
@@ -364,6 +366,44 @@ if defined TIGERVNC_EXE (
 )
 echo Stap 6 >> "%LOG%"
 :na_vnc
+
+if not "%DO_WINSCP%"=="1" (
+    echo Stap 6a: WinSCP overgeslagen ^(niet aangevinkt^).
+    goto :na_winscp
+)
+echo Stap 6a: WinSCP...
+set WINSCP_EXE=
+for %%P in ("%ProgramFiles%\WinSCP\WinSCP.exe" "%ProgramFiles(x86)%\WinSCP\WinSCP.exe") do (
+    if exist %%P set WINSCP_EXE=%%P
+)
+if defined WINSCP_EXE (
+    echo WinSCP OK: !WINSCP_EXE!
+) else (
+    set WINSCP_INSTALLER=
+    rem 3 patronen geprobeerd, want dit script draait in 2 contexten: vanuit
+    rem de Starter Kit-root (BRON=root, Installatie is dan een subfolder) EN
+    rem vanuit de al-geinstalleerde suite (BRON=Beheer\, Installatie is dan
+    rem een buurmap - vandaar ook de ..\Installatie-variant hieronder).
+    for %%F in ("%BRON%Installatie\WinSCP*.exe" "%BRON%..\Installatie\WinSCP*.exe" "%BRON%WinSCP*.exe") do (
+        if exist "%%F" set WINSCP_INSTALLER=%%F
+    )
+    if not defined WINSCP_INSTALLER (
+        echo WinSCP niet lokaal gevonden - downloaden...
+        powershell -NoProfile -Command "Invoke-WebRequest -Uri 'https://sourceforge.net/projects/winscp/files/latest/download' -OutFile '%TEMP%\winscp.exe' -UseBasicParsing" >nul 2>&1
+        if exist "%TEMP%\winscp.exe" set WINSCP_INSTALLER=%TEMP%\winscp.exe
+    ) else (
+        echo WinSCP gevonden in Installatie-map: !WINSCP_INSTALLER!
+    )
+    if defined WINSCP_INSTALLER (
+        "!WINSCP_INSTALLER!" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+        timeout /t 12 /nobreak >nul
+        echo OK: WinSCP geinstalleerd.
+    ) else (
+        echo WAARSCHUWING: WinSCP niet gevonden en download mislukt.
+    )
+)
+echo Stap 6a >> "%LOG%"
+:na_winscp
 
 rem (11 augustus 2026) Stap 6b/6c (WSL + Docker Desktop) hier weggehaald -
 rem was uitsluitend nodig voor de NAS Simulator (Docker-container die een Pi

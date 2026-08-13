@@ -36,8 +36,8 @@ printserver, dashboard).
    Pi instellen, Windows klaarzetten) doet de rest automatisch.
 
 Zie de `Installatie/`-map: die bevat een LEESMIJ met downloadlinks voor de installers
-die je zelf even moet ophalen (PuTTY, TigerVNC, Python, Raspberry Pi Imager -
-te groot om in deze repository mee te nemen).
+die je zelf even moet ophalen (PuTTY, TigerVNC, WinSCP (optioneel), Python,
+Raspberry Pi Imager - te groot om in deze repository mee te nemen).
 
 Volledige uitleg, inclusief een beslisboom voor "wat als ik al iets heb staan":
 zie de [handleiding](Publicatie/PiNAS_Suite_Handleiding.pdf), hoofdstuk 2.

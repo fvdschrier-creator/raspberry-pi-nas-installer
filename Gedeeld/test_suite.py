@@ -400,6 +400,15 @@ def _check_tigervnc():
             return "OK", p
     return "WARN", "TigerVNC niet gevonden (optioneel)"
 
+def _check_winscp():
+    for p in [
+        r"C:\Program Files\WinSCP\WinSCP.exe",
+        r"C:\Program Files (x86)\WinSCP\WinSCP.exe",
+    ]:
+        if os.path.exists(p):
+            return "OK", p
+    return "WARN", "WinSCP niet gevonden (optioneel)"
+
 def _check_schijf(letter):
     def _check():
         pad = letter + ":\\"
@@ -776,6 +785,7 @@ def bouw_checks():
     # ── Windows software ──────────────────────────────────────────────────────
     checks.append(Check("💻 Windows software", "PuTTY",       _check_putty))
     checks.append(Check("💻 Windows software", "TigerVNC",    _check_tigervnc,  optioneel=True))
+    checks.append(Check("💻 Windows software", "WinSCP",      _check_winscp,    optioneel=True))
 
     # ── Schijven ──────────────────────────────────────────────────────────────
     _y_letter = _schijf_letter("Y", "Opslag", "Y")

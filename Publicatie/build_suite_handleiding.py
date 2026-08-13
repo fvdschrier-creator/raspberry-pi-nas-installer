@@ -577,7 +577,7 @@ def bouw_handleiding():
         "Draai daarin <b>Beheer_install.bat</b> - dit losse bestand staat los in de root van het "
         "uitgepakte geheel",
         "Beheer_install.bat zet de hele suite neer op C:\\PiNAS, installeert de Windows-onderdelen "
-        "(PuTTY, TigerVNC) en maakt een bureaubladsnelkoppeling",
+        "(PuTTY, TigerVNC, WinSCP) en maakt een bureaubladsnelkoppeling",
         "Belangrijk: Beheer_install.bat opent zelf NIETS - open daarna zelf de nieuwe "
         "snelkoppeling om Pi NAS Menu voor het eerst te starten",
     ]:
@@ -673,7 +673,7 @@ def bouw_handleiding():
             [r"C:\PiNAS\Gedeeld" + "\\",    "Gedeelde hulpscripts en modules",                "Schaduwkopie"],
             [r"C:\PiNAS\Logs" + "\\",       "Logbestanden en wachtwoordcache",                "Automatisch aangemaakt"],
             [r"C:\PiNAS\Publicatie" + "\\", "Handleiding, topografie, presentatie, GitHub publieke versie",            "Schaduwkopie"],
-            [r"C:\PiNAS\Installatie" + "\\","Installers (TigerVNC, Pi Imager, PuTTY, Python)",  "Schaduwkopie"],
+            [r"C:\PiNAS\Installatie" + "\\","Installers (TigerVNC, Pi Imager, PuTTY, WinSCP, Python)",  "Schaduwkopie"],
         ],
         [5.5*cm, 6*cm, BREEDTE - 11.5*cm]))
     story.append(PageBreak())
@@ -727,6 +727,7 @@ def bouw_handleiding():
             ["SSH via PowerShell", "Opent een terminal rechtstreeks naar de Pi — geen extra software nodig"],
             ["SSH via PuTTY",      "Opent PuTTY met het ingestelde IP-adres"],
             ["TigerVNC bureaublad","Opent het grafische bureaublad van de Pi op je scherm (poort 5901)"],
+            ["Bestanden via WinSCP","Opent WinSCP, al verbonden via dezelfde SSH-sleutel als PuTTY — bekijk/sleep bestanden op de Pi, ook de SD-kaart zelf (optioneel, geen suite-vereiste)"],
             ["Schijven verbinden (netwerkschijven)", "Koppelt Opslag en Backup schoon opnieuw (zonder /persistent), gebruikt het opgeslagen wachtwoord, ververst de status direct"],
         ],
         [4.5*cm, BREEDTE - 4.5*cm]))
@@ -754,7 +755,7 @@ def bouw_handleiding():
     story.append(Paragraph(
         "De knop 'Status & details' opent een uitgebreid venster met:", s["body"]))
     for item in [
-        "Deze PC — software: PuTTY, TigerVNC, PiNAS Sync, Opslag/Backup-schijven",
+        "Deze PC — software: PuTTY, TigerVNC, WinSCP (optioneel), PiNAS Sync, Opslag/Backup-schijven",
         "Raspberry Pi — services: Samba, Nextcloud, FileBrowser, Cockpit, Externe HDD svc",
         "Raspberry Pi — hardware: model, RAM, SD-kaart grootte, CPU temperatuur, uptime",
         "Pi scripts — sync: status per script (up-to-date / verschil / upload nodig) met upload knop",
@@ -876,7 +877,7 @@ def bouw_handleiding():
         ["Sectie", "Functies"],
         [
             ["Pi services",       "Samba, FileBrowser, Cockpit en Externe HDD service installeren of herstellen op de Pi. Status per service wordt live gecheckt. Bij een NIEUWE installatie doet Installatie & Herstel dit al automatisch - deze knop is voor een latere reparatie."],
-            ["Windows onderdelen","PuTTY, TigerVNC, Sync & Backup en Netwerkschijven (Opslag/Backup) - elk los aan te vinken en te installeren/herstellen."],
+            ["Windows onderdelen","PuTTY, TigerVNC, WinSCP (optioneel), Sync & Backup en Netwerkschijven (Opslag/Backup) - elk los aan te vinken en te installeren/herstellen."],
             ["Publicatie",        "Suite handleiding en Topografie herbouwen - elk met een 'Open'-knop ernaast om het resultaat meteen te bekijken. Het functieoverzicht staat sinds 10 augustus 2026 als losse pagina in de presentatie (PiNAS_Suite_Presentatie.pptx), niet meer als apart bestand."],
             ["Distributie",       "Starter Kit ZIP bouwen: verpakt de suite geanonimiseerd (zonder IP/wachtwoorden) in 1 ZIP voor een nieuwe pc; publieke versie maken voor GitHub."],
             ["Geavanceerd",       "Pi OS bijwerken (apt update + upgrade), Python bijwerken naar de laatste versie, Pi NAS herstarten (sudo reboot), LanMan-fix (alleen bij 'Toegang geweigerd' / Systeemfout 5), Scripts uploaden naar Pi, Download links beheren."],
@@ -1310,7 +1311,7 @@ def bouw_handleiding():
     story.append(data_tabel(s,
         ["Optie", "Wat wordt gecontroleerd?"],
         [
-            ["PC diagnose",      "PuTTY, TigerVNC, PiNAS Sync, Opslag/Backup-schijven, wachtwoord in Credential Manager"],
+            ["PC diagnose",      "PuTTY, TigerVNC, WinSCP (optioneel), PiNAS Sync, Opslag/Backup-schijven, wachtwoord in Credential Manager"],
             ["Pi diagnose (SSH)", "Alle services, schijfmounts, fstab, scripts, Nextcloud, Samba shares — via SSH"],
         ],
         [4*cm, BREEDTE - 4*cm]))
@@ -1739,7 +1740,7 @@ def bouw_handleiding():
     story.append(data_tabel(s,
         ["Poort", "Service", "Bereikbaar via"],
         [
-            ["22",   "SSH",          "PuTTY, PowerShell, SCP"],
+            ["22",   "SSH",          "PuTTY, PowerShell, SCP, WinSCP (SFTP)"],
             ["80",   "Apache/Nextcloud", "Browser: http://[Pi IP]"],
             ["445",  "Samba (SMB)",  "Windows Verkenner, net use"],
             ["5901", "TigerVNC",     "TigerVNC Viewer"],
@@ -1897,7 +1898,7 @@ def bouw_handleiding():
         ["pinas_versies.json", "Houdt per bestand bij wanneer de laatst geleverde versie gemaakt is - de basis van Structuurcheck's versiecontrole."],
         ["maak_publieke_versie.py", "Bouwt een geanonimiseerde versie van de suite voor GitHub (zonder wachtwoorden/IP-adres)."],
         ["maak_starterkit.py", "Bouwt een ZIP-pakket om de suite op een nieuwe pc te installeren."],
-        ["download_links.ini", "Bewaart downloadlinks voor externe software (PuTTY, TigerVNC, Python, enzovoort)."],
+        ["download_links.ini", "Bewaart downloadlinks voor externe software (PuTTY, TigerVNC, WinSCP, Python, enzovoort)."],
         ["herstel_backup_hdd.sh", "Herstelscript dat op de Pi draait om de Backup-HDD te repareren/opnieuw te mounten."],
         ["pinas_iphone_backup.sh", "Draait op de Pi (iPhone via usb aangesloten op de Pi): kopieert foto's, 'Op mijn iPhone', app-bestanden en (best effort) WhatsApp naar de Backup-schijf."],
         ["pinas_iphone_verkennen.sh", "Draait op de Pi: maakt de iPhone tijdelijk en alleen-lezen zichtbaar in Verkenner (geen back-up), ruimt zichzelf op bij afsluiten."],
@@ -1955,6 +1956,7 @@ def bouw_handleiding():
         ["imager_2.0.7.exe", "Raspberry Pi Imager - zet het besturingssysteem op de SD-kaart van de Pi."],
         ["tigervnc64-1.16.2.exe", "TigerVNC Viewer - voor het grafisch bureaublad van de Pi bekijken."],
         ["putty-64bit-0.84-installer.msi", "PuTTY - SSH-terminaltoegang tot de Pi."],
+        ["WinSCP-6.5.6-Setup.exe", "WinSCP - SFTP-bestandsbeheerder voor de Pi (optioneel, geen suite-vereiste)."],
         ["python-3.x-amd64.exe (versienummer wisselt)", "Python voor Windows - nodig voor de Publicatie-builders en Suite testen."],
     ], kol_breedte_bestanden))
 

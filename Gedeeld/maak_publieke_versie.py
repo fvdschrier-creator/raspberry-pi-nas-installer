@@ -117,12 +117,13 @@ De actuele downloadlinks staan ook in Gedeeld\\download_links.ini.
 |---|---|---|
 | putty-64bit-installer.msi | SSH-verbinding met de Pi | https://the.earth.li/~sgtatham/putty/latest/w64/putty-64bit-installer.msi |
 | tigervnc64-installer.exe | Grafisch bureaublad van de Pi | https://github.com/TigerVNC/tigervnc/releases/latest |
+| WinSCP-installer.exe | Bestanden op de Pi bekijken/beheren (optioneel) | https://sourceforge.net/projects/winscp/files/latest/download |
 | python-installer.exe | Draagt de hele Windows-kant van de suite | https://www.python.org/downloads/windows/ |
 | imager_latest.exe | SD-kaart voorbereiden (Stap 2 van de wizard) | https://www.raspberrypi.com/software/ |
 
 Bestandsnaam maakt niet uit zolang die begint met de juiste naam
-(python-3*.exe, putty*.msi, tigervnc*.exe) - dat is wat Beheer_install.bat
-zoekt.
+(python-3*.exe, putty*.msi, tigervnc*.exe, WinSCP*.exe) - dat is wat
+Beheer_install.bat zoekt.
 """
 
 README = """# Pi NAS Suite
@@ -163,8 +164,8 @@ printserver, dashboard).
    Pi instellen, Windows klaarzetten) doet de rest automatisch.
 
 Zie de `Installatie/`-map: die bevat een LEESMIJ met downloadlinks voor de installers
-die je zelf even moet ophalen (PuTTY, TigerVNC, Python, Raspberry Pi Imager -
-te groot om in deze repository mee te nemen).
+die je zelf even moet ophalen (PuTTY, TigerVNC, WinSCP (optioneel), Python,
+Raspberry Pi Imager - te groot om in deze repository mee te nemen).
 
 Volledige uitleg, inclusief een beslisboom voor "wat als ik al iets heb staan":
 zie de [handleiding](Publicatie/PiNAS_Suite_Handleiding.pdf), hoofdstuk 2.

@@ -105,6 +105,17 @@ def tigervnc_exe():
         if os.path.exists(p): return p
     return None
 
+def winscp_exe():
+    """13 augustus 2026 (Frans wilde de inhoud van de Pi's SD-kaart kunnen
+    bekijken - dat gaat het handigst met een SFTP-bestandsbeheerder i.p.v.
+    de kaart fysiek uit te lezen). WinSCP is geen suite-installatie (geen
+    installer/knop hiervoor, zoals bij PuTTY/TigerVNC) - Frans installeert
+    het zelf; dit zoekt alleen de standaard installatielocaties."""
+    for p in [r"C:\Program Files\WinSCP\WinSCP.exe",
+              r"C:\Program Files (x86)\WinSCP\WinSCP.exe"]:
+        if os.path.exists(p): return p
+    return None
+
 def ppk_pad():
     return os.path.join(os.environ.get("USERPROFILE", ""), ".ssh", "id_ed25519.ppk")
 
@@ -168,6 +179,7 @@ def check_ssh():
     except Exception:
         return False
 def check_tigervnc():   return tigervnc_exe() is not None
+def check_winscp():     return winscp_exe() is not None
 def check_pibackup():   return pibackup_pad("pinas_sync_app.pyw") is not None
 
 def nieuwste_log_bestand(prefix, fallback):
@@ -665,6 +677,27 @@ def open_tigervnc():
         return
     subprocess.Popen([exe, f"{PI_IP}:5901"])
 
+def open_winscp():
+    """Opent WinSCP, al verbonden met de Pi via dezelfde SSH-sleutel als
+    'SSH via PuTTY' - geen wachtwoord nodig. Voor als je gewoon de
+    bestanden op de Pi (incl. de SD-kaart zelf) wilt bekijken/slepen
+    i.p.v. een terminal (13 augustus 2026, Frans)."""
+    exe = winscp_exe()
+    if not exe:
+        messagebox.showerror("WinSCP niet gevonden",
+        "WinSCP is niet gevonden op deze PC.\n\n"
+        "WinSCP installeert de suite niet automatisch (het is geen "
+        "verplicht suite-onderdeel) - download en installeer het zelf "
+        "via winscp.net, probeer het daarna opnieuw.")
+        return
+    ppk = ppk_pad()
+    if not os.path.exists(ppk):
+        if not zorg_voor_ppk():
+            return  # zorg_voor_ppk() heeft de gebruiker al zelf geinstrueerd
+    if not os.path.exists(ppk):
+        return
+    subprocess.Popen([exe, f"sftp://pi@{PI_IP}/", f"/privatekey={ppk}"])
+
 # ── ICO ───────────────────────────────────────────────────────────────────────
 ICO_B64 = "AAABAAQAEBAAAAAAIADnAAAARgAAACAgAAAAACAALgEAAC0BAAAwMAAAAAAgAJ4BAABbAgAAAAAAAAAAIAAsCAAA+QMAAIlQTkcNChoKAAAADUlIRFIAAAAQAAAAEAgGAAAAH/P/YQAAAK5JREFUeJxjZGBgYJCz6vrPQAZ4dKyMkZFczTDARIlmBgYGBhZkjlN2AU6FL8TqGCReNcH5+6ZOIN4FL8TqUGhkgBoGbKo4DdGqPslwrdUcIfDrNhYDCBiCrpmBAS0M0CWJASgGlHYX41S4pCaEIaZlDZzfXdrLwMBAZCAuqQlBoZEB0YEoybiI4fn/OIQA1KuoLsDjf2yaGRioEIgUJ2XKDXh0rIyRXM2PjpUxAgCYhjdeC3PqXQAAAABJRU5ErkJggg=="
 
@@ -813,6 +846,10 @@ class Menu(tk.Tk):
         self._btn(body, "⌨  SSH via PowerShell", open_powershell, ACCENT_PINAS)
         self._btn(body, "🖥  SSH via PuTTY", open_putty, ACCENT_PINAS)
         self._btn(body, "🖼  TigerVNC bureaublad", open_tigervnc, ACCENT_PINAS)
+        # 13 augustus 2026 (Frans): wilde de inhoud van de Pi's SD-kaart
+        # kunnen bekijken - dat gaat het handigst met WinSCP (Verkenner-
+        # achtig slepen/klikken) i.p.v. de kaart fysiek uit te lezen.
+        self._btn(body, "📁  Bestanden via WinSCP", open_winscp, ACCENT_PINAS)
         self._sep(body)
         # 16 juli 2026: vaste knop "Schijven verbinden" hier weggehaald op
         # verzoek van Frans - die staat al als blauwe balk boven in beeld en
@@ -1867,6 +1904,7 @@ class Menu(tk.Tk):
         for key, naam in [
             ("putty",     "PuTTY"),
             ("vnc",       "TigerVNC Viewer"),
+            ("winscp",    "WinSCP"),
             ("pibackup",  "Sync & Backup"),
             ("schijven",  "Netwerkschijven (Opslag + Backup)"),
             # Node.js is hier verwijderd (6 augustus 2026, Frans: "als dat
@@ -1921,6 +1959,7 @@ class Menu(tk.Tk):
             try:
                 resultaat["putty"]     = check_putty()
                 resultaat["vnc"]       = check_tigervnc()
+                resultaat["winscp"]    = check_winscp()
                 resultaat["pibackup"]  = check_pibackup()
                 resultaat["schijven"]  = (check_share("Opslag", _opslag_letter(), PI_IP)
                                            and check_share("Backup", _backup_letter(), PI_IP))
@@ -3197,6 +3236,9 @@ class Menu(tk.Tk):
         _vnc = tigervnc_exe()
         status_rij(frame, "TigerVNC",      check_tigervnc(),
                    f"OK  {_vnc}" if _vnc else "Niet gevonden")
+        _winscp = winscp_exe()
+        status_rij(frame, "WinSCP",        check_winscp(),
+                   f"OK  {_winscp}" if _winscp else "Niet gevonden (optioneel)")
 
         # ZeroTier-Windows-dienst (starten/stoppen) verhuisd naar Addons
         # Beheer (4 augustus 2026, Frans: wil dit consistent met de andere
