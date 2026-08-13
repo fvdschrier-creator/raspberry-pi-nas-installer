@@ -48,6 +48,7 @@ def _nas_root():
 sys.path.insert(0, _script_dir())
 import controleer_documentatie_consistentie as _docconsistentie
 import bijwerk_pinas_versies as _versiesbijwerker
+import controleer_syntax as _syntaxcontrole
 
 
 def _controleer_documentatie_of_stop(nas_root):
@@ -66,6 +67,21 @@ def _controleer_documentatie_of_stop(nas_root):
         print("  Publieke versie NIET gebouwd, er is NIETS gepusht.")
         sys.exit(1)
     print("  OK - documentatie is consistent, doorgaan met de build.")
+
+
+def _controleer_syntax_of_stop(nas_root):
+    # 13 augustus 2026 (verbeterpunt #4): geen handmatige py_compile/bash -n
+    # meer per bestand vlak voor een push - verplichte, blokkerende stap.
+    print()
+    print("  [Syntaxcontrole - verplicht voor een publieke build]")
+    fouten = _syntaxcontrole.controleer(nas_root)
+    if fouten:
+        print()
+        print(f"  FOUT: {fouten} bestand(en) met een syntaxfout (zie hierboven) - "
+              "dicht deze eerst.")
+        print("  Publieke versie NIET gebouwd, er is NIETS gepusht.")
+        sys.exit(1)
+    print("  OK - alle bestanden zijn syntactisch geldig, doorgaan met de build.")
 
 
 def _werk_versies_bij(nas_root):
@@ -229,6 +245,73 @@ def _anonimiseer(public_map, wachtwoord, zelf_naam):
             print(f"   SCHOON: {naam}")
 
 
+# 13 augustus 2026 (verbeterpunt #5, Frans): "de anonimisering leunt op mijn
+# handmatige grep-controle voor de push, geen ingebouwde garantie - een
+# publieke repo, dit zou ik het eerst dichttimmeren." Elk patroon hieronder
+# is het SPIEGELBEELD van een vervanging in _anonimiseer() hierboven (plus
+# een generieke GitHub-token-check, die _anonimiseer() zelf niet had) - komt
+# een van deze patronen NA het anonimiseren nog voor, dan is er iets
+# misgegaan (nieuw vervangingspatroon vergeten, wachtwoord elders in een
+# andere vorm, etc.) en moet de build hard stoppen i.p.v. gewoon doorgaan.
+_GEHEIM_PATRONEN = (
+    ("privé-IP-adres", re.compile(r"192\.168\.\d+\.\d+")),
+    ("'Test1234'-placeholder (had UW_WACHTWOORD moeten worden)", re.compile(r"Test1234")),
+    ("gebruikersnaam 'fvdsc...' (had GEBRUIKER moeten worden)", re.compile(r"fvdsc(?!hrier)[a-z]*")),
+    ("backup-HDD UUID", re.compile(r"f838cf2d(-6221-4452-b9df-a0ab36913586)?")),
+    ("ZeroTier netwerk-ID", re.compile(r"166359304e3cacb3")),
+    # Klassiek formaat (ghp_/gho_/ghu_/ghs_/ghr_...) EN het nieuwere
+    # fijnmazige formaat (github_pat_...) - alleen het eerste dekken was
+    # een blinde vlek: precies het formaat van de PAT's die in deze suite
+    # zelf gebruikt zijn (zie OVERDRACHT_NIEUWE_CHAT.md).
+    ("GitHub Personal Access Token (klassiek)", re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}")),
+    ("GitHub Personal Access Token (fijnmazig)", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
+)
+
+
+def _controleer_geen_geheimen(public_map, wachtwoord, zelf_naam):
+    """Doorzoekt de AL geanonimiseerde public_map nogmaals op alles wat
+    _anonimiseer() had moeten weghalen (plus GitHub-tokens). Geeft een lijst
+    (relpad, omschrijving, voorbeeldregel) terug - leeg = schoon."""
+    extensies = {".bat", ".py", ".pyw", ".sh", ".json", ".md", ".ini", ".cfg"}
+    treffers = []
+    for dirpad, _dirs, bestanden in os.walk(public_map):
+        for naam in bestanden:
+            if naam == zelf_naam:
+                continue  # bevat de patronen zelf als broncode, geen lek
+            if os.path.splitext(naam)[1].lower() not in extensies:
+                continue
+            pad = os.path.join(dirpad, naam)
+            try:
+                with open(pad, "rb") as f:
+                    tekst = f.read().decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            for omschrijving, patroon in _GEHEIM_PATRONEN:
+                match = patroon.search(tekst)
+                if match:
+                    relpad = os.path.relpath(pad, public_map)
+                    treffers.append((relpad, omschrijving, match.group(0)))
+            if wachtwoord and wachtwoord in tekst:
+                relpad = os.path.relpath(pad, public_map)
+                treffers.append((relpad, "het Samba-wachtwoord zelf", "(verborgen)"))
+    return treffers
+
+
+def _controleer_geheimen_of_stop(public_map, wachtwoord, zelf_naam):
+    print()
+    print("  [Controle op resterende geheimen - verplicht na het anonimiseren]")
+    treffers = _controleer_geen_geheimen(public_map, wachtwoord, zelf_naam)
+    if treffers:
+        print(f"  FOUT: {len(treffers)} verdachte treffer(s) gevonden NA anonimiseren:")
+        for relpad, omschrijving, voorbeeld in treffers:
+            print(f"    X  {relpad}: {omschrijving} ({voorbeeld!r})")
+        print()
+        print(f"  De publieke versie staat nog in {public_map} voor onderzoek,")
+        print("  maar is NIET geverifieerd als schoon - NIET pushen naar GitHub.")
+        sys.exit(1)
+    print("  OK - geen resterende geheimen gevonden.")
+
+
 def main():
     nas_root = _nas_root()
     public_map = os.path.join(nas_root, "Publicatie", "NAS_Public")
@@ -240,6 +323,7 @@ def main():
     print(f" Output:    {public_map}")
     print(" " + "=" * 62)
 
+    _controleer_syntax_of_stop(nas_root)
     _werk_versies_bij(nas_root)
     _controleer_documentatie_of_stop(nas_root)
     print()
@@ -360,7 +444,7 @@ def main():
         "herstel_backup_hdd.sh", "pinas_iphone_backup.sh",
         "pinas_iphone_verkennen.sh", "test_suite.py",
         "maak_publieke_versie.py", "maak_starterkit.py",
-        "bijwerk_pinas_versies.py",
+        "bijwerk_pinas_versies.py", "controleer_syntax.py",
     ):
         _copy(gedeeld_bron, gedeeld_doel, bestand, "Gedeeld")
     # Gedeeld\ScriptRunner\pi_script_draaien.bat ingetrokken (31 juli 2026,
@@ -414,14 +498,16 @@ def main():
     print("  [Anonimiseren]")
     _anonimiseer(public_map, huidig_ww, zelf_naam="maak_publieke_versie.py")
 
+    _controleer_geheimen_of_stop(public_map, huidig_ww, zelf_naam="maak_publieke_versie.py")
+
     print()
     print("  " + "=" * 62)
     print("  Klaar! Publieke versie staat in:")
     print(f"  {public_map}")
     print()
     print("  Structuur: PiServer\\, Sync\\, ArchiefBackup\\, Beheer\\, Addons\\, Publicatie\\, Gedeeld\\, Installatie\\")
-    print("  Geanonimiseerd: IP, wachtwoord, gebruikersnaam, backup-HDD UUID en ZeroTier netwerk-ID")
-    print("  Controleer de inhoud voor upload naar GitHub.")
+    print("  Geanonimiseerd + geverifieerd: IP, wachtwoord, gebruikersnaam, backup-HDD UUID, ZeroTier")
+    print("  netwerk-ID en GitHub-tokens - geen handmatige controle meer nodig voor de push.")
     print("  " + "=" * 62)
     print()
     input("Druk op Enter om af te sluiten...")
