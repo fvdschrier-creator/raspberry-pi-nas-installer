@@ -452,6 +452,18 @@ def start():
               font=("Segoe UI", 8), bg=achtergrond0, fg=DIM, anchor="w").pack(fill="x", pady=(0, 8))
     maak_knop(sectie0, "Structuurcheck & Opruimen openen", _open_structuurcheck, stijl="primair", kleur=ACCENT_PIBEHEER_2)
 
+    # 13 augustus 2026: deze sectie zelf was per ongeluk nooit toegevoegd -
+    # de knop stond wel al in HELP_HOOFDSTUKKEN en _open_pi_opruimen() was
+    # al geschreven, maar de maak_sectie/maak_knop-aanroep hieronder ontbrak
+    # (Frans meldde: "staat in de handleiding, maar zie het niet").
+    sectie_pi = maak_sectie(win)
+    achtergrond_pi = sectie_pi.cget("bg")
+    tk.Label(sectie_pi, text="Pi opruimen", font=("Segoe UI", 10, "bold"),
+              bg=achtergrond_pi, fg=FG, anchor="w").pack(fill="x")
+    tk.Label(sectie_pi, text="Onbekende bestanden op de Pi zelf (/home/pi) opsporen en verwijderen",
+              font=("Segoe UI", 8), bg=achtergrond_pi, fg=DIM, anchor="w").pack(fill="x", pady=(0, 8))
+    maak_knop(sectie_pi, "Pi opruimen openen", _open_pi_opruimen, stijl="primair", kleur=ACCENT_PIBEHEER_2)
+
     sectie = maak_sectie(win)
     achtergrond = sectie.cget("bg")
     tk.Label(sectie, text="Suite testen", font=("Segoe UI", 10, "bold"),
