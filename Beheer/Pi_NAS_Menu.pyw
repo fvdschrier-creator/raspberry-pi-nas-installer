@@ -108,12 +108,32 @@ def tigervnc_exe():
 def winscp_exe():
     """13 augustus 2026 (Frans wilde de inhoud van de Pi's SD-kaart kunnen
     bekijken - dat gaat het handigst met een SFTP-bestandsbeheerder i.p.v.
-    de kaart fysiek uit te lezen). WinSCP is geen suite-installatie (geen
-    installer/knop hiervoor, zoals bij PuTTY/TigerVNC) - Frans installeert
-    het zelf; dit zoekt alleen de standaard installatielocaties."""
+    de kaart fysiek uit te lezen).
+
+    13 augustus 2026, later: de vaste Program Files-paden vonden een
+    handmatige WinSCP-installatie niet ("WinSCP niet gevonden", terwijl
+    WinSCP wel gewoon open en verbonden stond) - waarschijnlijk een
+    installatie "alleen voor mij" (%LOCALAPPDATA%\\Programs) of een
+    aangepaste map. Daarom nu ook de App Paths-registersleutel geprobeerd -
+    dezelfde plek die Windows zelf gebruikt (Startmenu, 'waar staat
+    WinSCP.exe') ongeacht waar het echt geinstalleerd is."""
     for p in [r"C:\Program Files\WinSCP\WinSCP.exe",
-              r"C:\Program Files (x86)\WinSCP\WinSCP.exe"]:
-        if os.path.exists(p): return p
+              r"C:\Program Files (x86)\WinSCP\WinSCP.exe",
+              os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "WinSCP", "WinSCP.exe")]:
+        if p and os.path.exists(p): return p
+    try:
+        import winreg
+        for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+            try:
+                with winreg.OpenKey(hive,
+                        r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\WinSCP.exe") as k:
+                    pad, _ = winreg.QueryValueEx(k, "")
+                    if pad and os.path.exists(pad):
+                        return pad
+            except OSError:
+                continue
+    except ImportError:
+        pass
     return None
 
 def ppk_pad():

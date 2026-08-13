@@ -404,9 +404,23 @@ def _check_winscp():
     for p in [
         r"C:\Program Files\WinSCP\WinSCP.exe",
         r"C:\Program Files (x86)\WinSCP\WinSCP.exe",
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "WinSCP", "WinSCP.exe"),
     ]:
-        if os.path.exists(p):
+        if p and os.path.exists(p):
             return "OK", p
+    try:
+        import winreg
+        for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+            try:
+                with winreg.OpenKey(hive,
+                        r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\WinSCP.exe") as k:
+                    pad, _ = winreg.QueryValueEx(k, "")
+                    if pad and os.path.exists(pad):
+                        return "OK", pad
+            except OSError:
+                continue
+    except ImportError:
+        pass
     return "WARN", "WinSCP niet gevonden (optioneel)"
 
 def _check_schijf(letter):
