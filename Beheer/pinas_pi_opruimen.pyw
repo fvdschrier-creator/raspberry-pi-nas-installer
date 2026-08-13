@@ -225,8 +225,18 @@ def main():
                 "Dit kan niet ongedaan worden gemaakt."):
             return
         paden = " ".join(f"'/home/pi/{n}'" for n, _g in onbekend)
+        # 13 augustus 2026 (bugfix, Frans meldde dit via een screenshot):
+        # zonder sudo faalde dit stil-gedeeltelijk op alles wat een
+        # root-eigen achtergronddienst (bijv. de seagate-/smart_plug-
+        # logging) in een map had achtergelaten - "rm: cannot remove
+        # ...: Permission denied" per bestand DIEP in zo'n map, terwijl
+        # alleen de map zelf (bijv. "logs") in het kandidatenlijstje
+        # stond. pi heeft nergens leesrechten-probleem (du -sh werkte
+        # allang), maar wel schrijfrechten-probleem om root-eigen
+        # bestanden te verwijderen. sudo hier is consistent met de rest
+        # van de suite (nas_upload.py doet hetzelfde via SSH zonder tty).
         try:
-            r = _ssh_run(f"rm -rf {paden} && echo OK")
+            r = _ssh_run(f"sudo rm -rf {paden} && echo OK")
         except Exception as e:
             messagebox.showerror("Opruimen mislukt", str(e))
             return
