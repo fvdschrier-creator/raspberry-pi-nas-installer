@@ -313,10 +313,15 @@ def _check_documentatie_consistentie():
         import controleer_documentatie_consistentie as _cdc
     except Exception as e:
         return "WARN", f"Kon controleer_documentatie_consistentie.py niet laden: {e}"
-    addons_pad = os.path.join(_NAS_ROOT, _cdc.ADDONS_BEHEER_PAD)
-    addon_lijst = _cdc.laad_addon_lijst(addons_pad)
+    # 13 augustus 2026: laad_addon_lijst() heeft sinds verbeterpunt #1 geen
+    # pad-argument meer nodig - leest nu rechtstreeks ADDON_SCRIPT uit
+    # pinas_addon_scripts.py. Deze aanroep hier was toen niet meeverhuisd,
+    # waardoor deze check crashte met AttributeError op ADDONS_BEHEER_PAD
+    # (gevonden via een screenshot van Frans: "Uitzondering: module
+    # 'controleer_documentatie_consistentie' ...").
+    addon_lijst = _cdc.laad_addon_lijst()
     if addon_lijst is None:
-        return "FOUT", "Kon addon-lijst niet lezen uit pinas_addons_beheer.pyw"
+        return "FOUT", "Kon addon-lijst niet lezen uit pinas_addon_scripts.py (ADDON_SCRIPT leeg?)"
     gaten = []
     for sleutel in addon_lijst:
         naam = _cdc.NAAM_MAP.get(sleutel, sleutel)
