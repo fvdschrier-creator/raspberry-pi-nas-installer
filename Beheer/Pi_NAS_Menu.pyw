@@ -2062,8 +2062,11 @@ class Menu(tk.Tk):
             naar Publicatie te hoeven bladeren."""
             rij = tk.Frame(frame, bg=BG)
             rij.pack(fill="x", pady=2)
+            # 13 augustus 2026: fg meegeven o.b.v. kleur i.p.v. altijd wit -
+            # een neutrale PANEL2-knop met witte tekst is onleesbaar.
+            fg = FG if kleur in (PANEL, PANEL2) else "#ffffff"
             hoofd = RoundedButton(rij, text=label, command=bouw_cmd,
-                                   bg=kleur, fg="#ffffff")
+                                   bg=kleur, fg=fg)
             hoofd.pack(side="left", fill="x", expand=True, padx=(0,6))
             openknop = RoundedButton(rij, text="📂 Open", command=lambda: _open_publicatie_bestand(open_bestand),
                                       bg=PANEL2, fg=FG, width=76)
@@ -2071,7 +2074,7 @@ class Menu(tk.Tk):
 
         _herbouw_rij("📄  Suite handleiding herbouwen (PDF)",
                      lambda: _python_actie("build_suite_handleiding.py"),
-                     "PiNAS_Suite_Handleiding.pdf", ACCENT_PIBEHEER_3)
+                     "PiNAS_Suite_Handleiding.pdf", PANEL2)
         # Functieoverzicht herbouwen-knop verwijderd (10 augustus 2026, Frans:
         # "functieoverzicht kan vervallen als je een korte versie op een
         # pagina kunt opnemen in de presentatie") - build_functieoverzicht.py
@@ -2080,7 +2083,7 @@ class Menu(tk.Tk):
         # bewerkt, geen herbouw-knop voor nodig).
         _herbouw_rij("🗺  Topografie herbouwen (build_topografie.py)",
                      lambda: _python_actie("build_topografie.py"),
-                     "PiNAS_Topografie.html", ACCENT_PIBEHEER_3)
+                     "PiNAS_Topografie.html", PANEL2)
 
         # 5 augustus 2026 (Frans: "waarom zou ik dat niet vanuit de suite
         # starten?" - terechte vraag): consistentiecontrole-script kreeg
@@ -2090,38 +2093,38 @@ class Menu(tk.Tk):
         # gewoon live in het cmd-venster dat _python_actie al opent.
         RoundedButton(frame, text="🔍  Documentatie consistentie controleren",
                       command=lambda: _python_actie("controleer_documentatie_consistentie.py"),
-                      bg=ACCENT_PIBEHEER_3, fg="#ffffff").pack(fill="x", pady=2)
+                      bg=PANEL2, fg=FG).pack(fill="x", pady=2)
 
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
         tk.Label(frame, text="Distributie", font=("Segoe UI", 9, "bold"),
                  bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
         self._rbtn(frame, "📦  Starter Kit ZIP bouwen (maak_starterkit.py)",
-                   lambda: _python_actie("maak_starterkit.py"), ACCENT_PIBEHEER_3)
+                   lambda: _python_actie("maak_starterkit.py"), PANEL2)
         self._rbtn(frame, "🌐  Publieke versie maken voor GitHub (maak_publieke_versie.py)",
-                   lambda: _python_actie("maak_publieke_versie.py"), ACCENT_PIBEHEER_3)
+                   lambda: _python_actie("maak_publieke_versie.py"), PANEL2)
 
         # ── Geavanceerd ──────────────────────────────────────────────────────
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
         tk.Label(frame, text="Geavanceerd", font=("Segoe UI", 9, "bold"),
                  bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
-        self._rbtn(frame, "🔄  Pi OS bijwerken (apt update + upgrade)", self._pi_update, ACCENT_PIBEHEER_3)
+        self._rbtn(frame, "🔄  Pi OS bijwerken (apt update + upgrade)", self._pi_update, PANEL2)
         self._rbtn(frame, "🐍  Python bijwerken naar laatste versie (Windows)",
-                   lambda: _bat_actie("python_bijwerken.bat"), ACCENT_PIBEHEER_3)
+                   lambda: _bat_actie("python_bijwerken.bat"), PANEL2)
         self._rbtn(frame, "♻  Pi NAS herstarten (sudo reboot)",
                    self._herstart_pi, DESTRUCTIEF)
         self._rbtn(frame, "🔓  LanMan-fix — alleen bij 'Toegang geweigerd' / Systeemfout 5",
                    self._herstel_verbinding, WARN)
         self._rbtn(frame, "⬆  Scripts uploaden naar Pi (nas_upload.py)",
-                   lambda: _python_actie("nas_upload.py"), ACCENT_PIBEHEER_3)
+                   lambda: _python_actie("nas_upload.py"), PANEL2)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
-        self._rbtn(frame, "🔗  Download links beheren", self._open_download_links, ACCENT_PIBEHEER_3)
+        self._rbtn(frame, "🔗  Download links beheren", self._open_download_links, PANEL2)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Weergave", font=("Segoe UI", 9, "bold"),
                  bg=BG, fg=ACCENT_PIBEHEER_3).pack(anchor="w", pady=(4,2))
         huidig = getattr(__import__("pinas_theme"), "HUIDIG_THEMA", "donker")
         thema_tekst = f"🎨  Thema wisselen  (nu: {huidig}) — herstart vereist"
         self._rbtn(frame, thema_tekst, self._wissel_thema, PANEL2)
-        self._rbtn(frame, "🌈  Kleuren kiezen (aanpassen)", self._open_kleuren_kiezer, ACCENT_PIBEHEER_3)
+        self._rbtn(frame, "🌈  Kleuren kiezen (aanpassen)", self._open_kleuren_kiezer, PANEL2)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Beveiliging", font=("Segoe UI", 8, "bold"),
                  bg=BG, fg=DIM).pack(anchor="w")
