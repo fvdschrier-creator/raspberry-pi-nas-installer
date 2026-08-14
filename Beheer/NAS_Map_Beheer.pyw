@@ -421,155 +421,25 @@ def main():
                 fouten += 1
 
         schrijf("\nVERPLICHTE BESTANDEN", "kop")
-        checks = [
-            # PiServer (Pi-kant installatiescripts)
-            ("PiServer",    "nas_installer.py",                    "NAS Installer"),
-            ("PiServer",    "nas_installer_cli.py",                "CLI"),
-            ("PiServer",    "seagate_web.py",                      "Seagate service"),
-            ("PiServer",    "seagate-web.service",                 "Seagate systemd"),
-            ("PiServer",    "smart_plug.py",                       "Smart plug"),
-            ("PiServer",    "smart_plug_config.json",              "Smart plug configuratie"),
-            ("PiServer",    "hue_diagnose.py",                     "Hue Bridge diagnose"),
-            ("PiServer",    "pi_welkom.sh",                        "Pi welkom script"),
-            ("PiServer",    "install.sh",                          "Pi installatie script"),
-            ("PiServer",    "nas_start.sh",                        "Desktop-snelkoppelingen wrapper (pkexec) op de Pi"),
-            ("PiServer",    "README.md",                           "PiServer leesmij"),
-            # Raspberry_Pi_NAS_Volledig.pdf verwijderd (oud, vervangen door PiNAS_Suite_Handleiding.pdf)
-            # Sync (nu PiNAS Sync)
-            ("Sync", "pinas_sync_app.pyw",                  "Sync & Backup hoofdprogramma"),
-            ("Sync", "start.bat",                           "Sync & Backup start"),
-            ("Sync", os.path.join("core","sync_engine.py"), "sync-engine"),
-            ("Sync", os.path.join("core","bron_doel_picker.py"),"bron/doel-kiezer"),
-            ("Sync", os.path.join("core","thema.py"),       "kleuren/thema"),
-            ("Sync", os.path.join("core","__init__.py"),    "core package"),
-            ("Sync", "requirements.txt",                    "afhankelijkheden (geen externe)"),
-            ("Sync", "install_windows.bat",                 "Windows installatie"),
-            # Beheer
-            ("Beheer","Pi_NAS_Menu.pyw",                     "Menu"),
-            ("Beheer","pi_nas_setup.pyw",                    "Herstel/installatie wizard"),
-            ("Beheer","Pi_NAS_Menu.ico",                     "Icoon"),
-            # PiNAS_Suite_Handleiding.pdf verhuisd naar Publicatie (zie verderop)
-            ("Beheer","Beheer_install.bat",               "Installer"),
-            ("Beheer","lanman_fix.py",                       "LanManFix"),
-            # build_suite_handleiding.py verhuisd naar Publicatie (zie verderop)
-            ("Beheer","install_vnc_viewer.py",               "TigerVNC installer"),
-            ("Beheer","pinas_opruimen.pyw",                  "Ruimt FUSE-opruimlijst + __pycache__ op (buiten de sandbox te draaien)"),
-            ("Beheer","python_bijwerken.bat",                "Python bijwerken naar laatste versie (16 juli 2026)"),
-            ("Beheer","pinas_backup_beheer.pyw",             "Backup Beheer - centrale backup-acties"),
-            ("Beheer","pinas_image_backup.pyw",              "PC Image Backup (los van Sync)"),
-            ("Beheer","picontrol.cfg",                       "Configuratie (Pi-IP, thema)"),
-            ("Beheer",os.path.join("core","image_backup.py"),"PC Image Backup logica"),
-            ("Beheer",os.path.join("core","__init__.py"),    "core package (Beheer)"),
-            ("Beheer",os.path.join("assets","pinas_logo.png"),          "Logo (PNG, algemeen gebruik)"),
-            ("Beheer",os.path.join("assets","pinas_logo.svg"),          "Logo (SVG, bron/vector)"),
-            ("Beheer",os.path.join("assets","pinas_logo_header.png"),   "Logo voor vensterkoppen"),
-            ("Beheer",os.path.join("assets","pinas_logo_hoofdmenu.png"),"Logo voor het hoofdmenu-scherm"),
-            ("Beheer",os.path.join("assets","pinas_logo_icoon.png"),    "Logo als icoon-formaat"),
-            ("Beheer",os.path.join("assets","pinas_sync_scherm1.png"), "Screenshot handleiding 1"),
-            ("Beheer",os.path.join("assets","pinas_sync_scherm2.png"), "Screenshot handleiding 2"),
-            ("Beheer",os.path.join("assets","pinas_sync_scherm3.png"), "Screenshot handleiding 3"),
-            # Gedeeld
-            ("Gedeeld",  "nas_upload.py",                       "Upload naar Pi"),
-            ("Gedeeld",  "nas_diagnose.py",                     "Diagnose"),
-            ("Gedeeld",  "nas_diagnose.sh",                     "Diagnose Pi-kant"),
-            ("Gedeeld",  "pinas_theme.py",                      "Centraal thema"),
-            ("Gedeeld",  "pinas_theme_donker.py",               "Thema override - donker"),
-            ("Gedeeld",  "pinas_theme_licht.py",                "Thema override - licht"),
-            ("Gedeeld",  "pinas_ui.py",                         "Gedeelde UI-bouwstenen"),
-            ("Gedeeld",  "pinas_wachtwoord.py",                 "Wachtwoordbeheer"),
-            ("Gedeeld",  "pinas_logging.py",                    "Centrale logging"),
-            ("Gedeeld",  "pinas_launcher.py",                   "Gedeelde launcher-helper (voorkomt dubbele vensters)"),
-            ("Gedeeld",  "pinas_pi_status.py",                  "Gedeelde Pi-statuscheck (1 SSH-commando voor Status + Addons Beheer)"),
-            ("Gedeeld",  "pinas_addon_scripts.py",              "Gedeelde addon-sleutel -> scriptbestandsnaam-mapping"),
-            ("Gedeeld",  "controleer_documentatie_consistentie.py", "Checkt of elke addon in Toegangsoverzicht/Topografie/Structuurcheck/Handleiding voorkomt"),
-            ("Gedeeld",  "pinas_schijven.py",                   "Gedeelde schijfletter-resolver (share-naam i.p.v. vaste letter)"),
-            ("Gedeeld",  "pinas_versies.json",                  "Versie-manifest (laatst geleverde datum per bestand)"),
-            ("Gedeeld",  "bijwerk_pinas_versies.py",            "Werkt pinas_versies.json automatisch bij via contenthash-vergelijking"),
-            # 13 augustus 2026: stond hier nog niet, werd daardoor elke keer
-            # als "onbekend bestand" gemeld (Frans gemeld). Bewust GEEN
-            # eigen entry in pinas_versies.json (zie de uitzondering
-            # hieronder bij VERSIE-MANIFEST vs. BEKENDE BESTANDEN) - de
-            # inhoud wijzigt bij elke run, een "laatst geleverde versie"-
-            # datum heeft hier geen betekenis.
-            ("Gedeeld",  "pinas_versies_hashes.json",           "Hash-cache voor bijwerk_pinas_versies.py - lokaal, wijzigt bij elke run, wordt niet gepubliceerd"),
-            ("Gedeeld",  "controleer_syntax.py",                "py_compile/bash -n over de hele boom, verplicht voor een publieke build"),
-            ("Gedeeld",  "opruimen_lijst.json",                 "Opruimlijst voor pinas_opruimen.pyw (FUSE kon niet verwijderen)"),
-            ("Gedeeld",  "maak_publieke_versie.py",             "Publieke versie maker"),
-            ("Gedeeld",  "maak_starterkit.py",                  "Starter Kit maker"),
-            ("Gedeeld",  "download_links.ini",                  "Download-links tools"),
-            ("Gedeeld",  "herstel_backup_hdd.sh",               "Backup-HDD herstelscript (Pi-kant)"),
-            ("Gedeeld",  "pinas_iphone_backup.sh",              "iPhone Back-up script (Pi-kant): foto's, bestanden, WhatsApp"),
-            ("Gedeeld",  "pinas_iphone_verkennen.sh",           "iPhone Doorbladeren script (Pi-kant): live, alleen-lezen Samba-share"),
-            ("Gedeeld",  "version.py",                          "Centraal versienummer"),
-            ("Gedeeld",  "test_suite.py",                       "Suite test"),
-            ("Gedeeld",  "CONVENTIES.md",                       "Vaste conventies - lees dit eerst (9 augustus 2026)"),
-            # Gedeeld\ScriptRunner\pi_script_draaien.bat ingetrokken (31 juli 2026,
-            # Frans: niet meer los gebruikt - Addons Beheer dekt dit nu)
-            # Builder_ExeDebLinWin_NEW.py verwijderd (niet meer gebruikt)
-            # Publicatie
-            ("Publicatie","PiNAS_Suite_Handleiding.pdf",         "Suite handleiding"),
-            ("Publicatie","build_suite_handleiding.py",          "Suite handleiding builder"),
-            ("Publicatie","Publicatie_Gids.md",                 "Publicatiegids"),
-            ("Publicatie","Publicatie_Gids.pdf",                "Publicatiegids (PDF)"),
-            ("Publicatie","PiNAS_Topografie.html",               "Suite-topografie (menu x mappen matrix)"),
-            ("Publicatie","build_topografie.py",                 "Topografie builder (16 juli 2026)"),
-            ("Publicatie","PiNAS_Suite_Presentatie.pptx",         "Presentatie voor bekendheid/publiciteit - installatie tot gebruik (9 augustus 2026)"),
-            ("Publicatie","PiNAS_Suite_Architectuur.png",         "Architectuurplaatje (5 lagen) voor de GitHub README (9 augustus 2026)"),
-            ("Publicatie","PiNAS_Suite_Presentatie_Preview.pdf",  "PDF-export van de presentatie, voor GitHub's ingebouwde viewer (9 augustus 2026)"),
-            # package.json/package-lock.json (npm, voor de oude docx-versie
-            # van Functieoverzicht) verhuisd naar ONNODIGE BESTANDEN
-            # hieronder - 6 augustus 2026, sinds de Python/PDF-omzetting.
-            # Installatie
-            # Let op: Pi Imager/TigerVNC/PuTTY hebben stabiele bestandsnamen
-            # (veranderen zelden). Python wordt echter door "Onderhoud ->
-            # Windows onderdelen" steeds als NIEUWSTE versie gedownload, dus de
-            # bestandsnaam bevat een versienummer dat elke keer kan wijzigen -
-            # die staat daarom NIET hier met een vaste naam, maar wordt verderop
-            # met een joker-patroon (python-3*.exe) herkend, net zoals
-            # het Status-scherm dat al deed. Zo blijft een net gedownloade nieuwere
-            # installer altijd herkend, in plaats van na elke versie-update ten
-            # onrechte als "onbekend bestand" te worden aangemerkt.
-            ("Installatie","imager_2.0.7.exe",                  "Pi Imager"),
-            ("Installatie","tigervnc64-1.16.2.exe",             "TigerVNC"),
-            ("Installatie","putty-64bit-0.84-installer.msi",    "PuTTY"),
-            ("Installatie","WinSCP-6.5.6-Setup.exe",            "WinSCP"),
-            # NAS Map Beheer zelf
-            ("Beheer","NAS_Map_Beheer.pyw",                     "Structuurcheck & Opruimen (bereikbaar via Controles)"),
-            ("Beheer","NAS_Map_Beheer.bat",                     "Map beheer launcher"),
-            # Addons - Pi-hole, ZeroTier, Nextcloud, Vaultwarden (eigen hoofdmap,
-            # net als ArchiefBackup - elk add-on heeft een eigen installatie+verwijderscript)
-            ("Addons", "pinas_pihole.sh",                  "Pi-hole installatie"),
-            ("Addons", "pinas_pihole_verwijderen.sh",      "Pi-hole verwijderen"),
-            ("Addons", "pinas_zerotier.sh",                "ZeroTier installatie"),
-            ("Addons", "pinas_zerotier_verwijderen.sh",    "ZeroTier verwijderen"),
-            ("Addons", "pinas_nextcloud.sh",               "Nextcloud installatie"),
-            ("Addons", "pinas_nextcloud_verwijderen.sh",   "Nextcloud verwijderen"),
-            ("Addons", "pinas_vaultwarden.sh",             "Vaultwarden installatie (root-CA + servercertificaat)"),
-            ("Addons", "pinas_vaultwarden_verwijderen.sh", "Vaultwarden verwijderen"),
-            ("Addons", "pinas_vaultwarden_cert_vertrouwen.pyw", "Vaultwarden - root-certificaat vertrouwen (Windows)"),
-            ("Addons", "pinas_vaultwarden_cert_import.ps1",     "Vaultwarden - certificaat-import (elevated)"),
-            ("Addons", "pinas_printer.sh",                  "Printserver (CUPS+AirPrint) installatie"),
-            ("Addons", "pinas_printer_verwijderen.sh",      "Printserver verwijderen"),
-            ("Addons", "pinas_dashboard.sh",                "PiNAS Dashboard installatie"),
-            ("Addons", "pinas_dashboard_verwijderen.sh",    "PiNAS Dashboard verwijderen"),
-            ("Addons", "pinas_dashboard_wachtwoord_resetten.sh", "PiNAS Dashboard - wachtwoord resetten"),
-            ("Addons", "pinas_addons_beheer.pyw",          "Addons Beheer - hub-scherm"),
-            ("Beheer", "pinas_controle_beheer.pyw",        "Controles - Suite testen, Diagnose, Logs"),
-            ("Beheer", "pinas_kleuren_kiezer.pyw",          "Kleuren kiezen - thema aanpassen via kleurstalen"),
-            ("Beheer", "pinas_pi_opruimen.pyw",             "Pi opruimen - onbekende bestanden in /home/pi opsporen en verwijderen (13 augustus 2026)"),
-            # Zijprojecten\AdblockVPN is 16 juli 2026 door Frans zelf volledig
-            # verwijderd ("opgeruimd") - geen enkele verwijzing hoort hier dus
-            # nog naar te staan (zie ook overbodig/ALLE_MAPPEN/onbekend-scan
-            # hieronder, die om dezelfde reden zijn opgeschoond).
-            # PiNAS_Toegangsoverzicht.md/.pdf + de builder zijn hier weg (16 juli
-            # 2026) - bevatten echte wachtwoorden, horen dus NOOIT in deze
-            # suite-boom (kan per ongeluk in starterkit/publieke versie belanden).
-            # Nieuwe, enige plek: de Backup-schijf\PiNAS Toegang (buiten de suite, alleen op de
-            # backup-HDD van de Pi).
-            # ArchiefBackup (voorheen QnapCheck) - hoort bij Backup Beheer, geen zijproject (meer)
-            ("ArchiefBackup", "archief_backup_bewaking.pyw",  "Archief Backup Bewaking hoofdprogramma"),
-            ("ArchiefBackup", "start.bat",                    "Archief Backup Bewaking launcher"),
-        ]
+        # 14 augustus 2026: deze hand-getypte lijst (~130 regels) is
+        # vervangen door Gedeeld\pinas_bestanden_register.py - de ENE bron
+        # van waarheid, ook gebruikt door maak_publieke_versie.py en
+        # maak_starterkit.py (die eerder allebei hun eigen kopie van een
+        # deel van deze lijst bijhielden, en daardoor meerdere keren uit
+        # de pas liepen: WinSCP-installer, de Controles-schermen,
+        # pinas_versies_hashes.json ontbraken op verschillende plekken -
+        # zie de docstring in dat register voor de volledige lijst gaten
+        # die dit oploste). Zijprojecten\AdblockVPN (16 juli 2026, door
+        # Frans zelf verwijderd) en PiNAS_Toegangsoverzicht (bevat echte
+        # wachtwoorden, hoort nooit in de suite-boom) staan bewust NIET
+        # in het register.
+        try:
+            import pinas_bestanden_register as _reg
+            checks = _reg.voor_structuurcheck()
+        except ImportError:
+            schrijf("  x  Gedeeld\\pinas_bestanden_register.py niet gevonden - "
+                     "bestandscontrole kan niet doorgaan", "fout")
+            checks = []
         misplaatst = []  # (huidig_pad, juiste_pad, weergavenaam) - te verplaatsen
         dubbel = []       # (extra_pad, weergavenaam) - overbodige kopie, te verwijderen
 

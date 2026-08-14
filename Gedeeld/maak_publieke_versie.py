@@ -49,6 +49,13 @@ sys.path.insert(0, _script_dir())
 import controleer_documentatie_consistentie as _docconsistentie
 import bijwerk_pinas_versies as _versiesbijwerker
 import controleer_syntax as _syntaxcontrole
+# 14 augustus 2026: de platte per-map bestandenlijsten hieronder (PiServer/
+# Sync/Beheer/Gedeeld/Addons/ArchiefBackup/Publicatie) komen nu uit dit
+# register i.p.v. hier los te staan - zie de docstring daar voor waarom
+# (een reeks bugs deze sessie waarbij een bestand in de ene lijst stond
+# maar niet in de andere). Submap-kopieen (core/, assets/) blijven WEL
+# hier hardgecodeerd - dat zijn geen platte kopieerlijsten.
+import pinas_bestanden_register as _reg
 
 
 def _controleer_documentatie_of_stop(nas_root):
@@ -341,19 +348,14 @@ def main():
     # (12 augustus 2026) Simulator-bestanden bewust weggelaten - niet meer gebruikt.
     print("  [PiServer]")
     piserver_doel = os.path.join(public_map, "PiServer")
-    for bestand in (
-        "nas_installer.py", "nas_installer_cli.py", "seagate_web.py",
-        "seagate-web.service", "smart_plug.py", "smart_plug_config.json",
-        "hue_diagnose.py", "pi_welkom.sh", "install.sh", "nas_start.sh",
-        "README.md",
-    ):
+    for bestand in _reg.publieke_bestanden("PiServer", "github"):
         _copy(os.path.join(nas_root, "PiServer"), piserver_doel, bestand, "PiServer")
 
     # -- Sync ------------------------------------------------------------------
     print()
     print("  [Sync]")
     sync_doel = os.path.join(public_map, "Sync")
-    for bestand in ("pinas_sync_app.pyw", "start.bat", "requirements.txt", "install_windows.bat"):
+    for bestand in _reg.publieke_bestanden("Sync", "github"):
         _copy(os.path.join(nas_root, "Sync"), sync_doel, bestand, "Sync")
     for bestand in ("sync_engine.py", "bron_doel_picker.py", "thema.py", "__init__.py"):
         _copy(os.path.join(nas_root, "Sync", "core"), os.path.join(sync_doel, "core"), bestand, "Sync\\core")
@@ -362,24 +364,14 @@ def main():
     print()
     print("  [ArchiefBackup]")
     archief_doel = os.path.join(public_map, "ArchiefBackup")
-    for bestand in ("archief_backup_bewaking.pyw", "start.bat"):
+    for bestand in _reg.publieke_bestanden("ArchiefBackup", "github"):
         _copy(os.path.join(nas_root, "ArchiefBackup"), archief_doel, bestand, "ArchiefBackup")
 
     # -- Addons (17 juli 2026 toegevoegd - stonden er nooit in) ----------------
     print()
     print("  [Addons]")
     addons_doel = os.path.join(public_map, "Addons")
-    for bestand in (
-        "pinas_addons_beheer.pyw",
-        "pinas_nextcloud.sh", "pinas_nextcloud_verwijderen.sh",
-        "pinas_pihole.sh", "pinas_pihole_verwijderen.sh",
-        "pinas_zerotier.sh", "pinas_zerotier_verwijderen.sh",
-        "pinas_vaultwarden.sh", "pinas_vaultwarden_verwijderen.sh",
-        "pinas_vaultwarden_cert_vertrouwen.pyw", "pinas_vaultwarden_cert_import.ps1",
-        "pinas_printer.sh", "pinas_printer_verwijderen.sh",
-        "pinas_dashboard.sh", "pinas_dashboard_verwijderen.sh",
-        "pinas_dashboard_wachtwoord_resetten.sh",
-    ):
+    for bestand in _reg.publieke_bestanden("Addons", "github"):
         _copy(os.path.join(nas_root, "Addons"), addons_doel, bestand, "Addons")
 
     # -- Beheer ------------------------------------------------------------------
@@ -387,19 +379,13 @@ def main():
     print("  [Beheer]")
     beheer_bron = os.path.join(nas_root, "Beheer")
     beheer_doel = os.path.join(public_map, "Beheer")
-    for bestand in (
-        "Pi_NAS_Menu.pyw", "pi_nas_setup.pyw", "Pi_NAS_Menu.ico",
-        "Beheer_install.bat", "lanman_fix.py", "install_vnc_viewer.py",
-        "pinas_backup_beheer.pyw", "pinas_image_backup.pyw",
-        # 13 augustus 2026: ontbraken hier - Pi_NAS_Menu.pyw's "Controles"-
-        # knop verwees dus naar bestanden die niet in de publieke versie
-        # zaten (kapotte knop voor GitHub-gebruikers). Was per ongeluk nooit
-        # meeverhuisd toen deze schermen op 16 juli 2026 van Gedeeld naar
-        # Beheer gingen. Nu wel meegenomen.
-        "NAS_Map_Beheer.pyw", "NAS_Map_Beheer.bat",
-        "pinas_controle_beheer.pyw", "pinas_kleuren_kiezer.pyw",
-        "pinas_pi_opruimen.pyw",
-    ):
+    for bestand in _reg.publieke_bestanden("Beheer", "github"):
+        # Beheer_install.bat gaat NIET hierin mee - dat bestand hoort in de
+        # ROOT van de publieke map (bootstrap-installer), en wordt verderop
+        # apart gekopieerd. Dubbel meenemen zou 'm ook (nutteloos) binnen
+        # Beheer\ neerzetten.
+        if bestand == "Beheer_install.bat":
+            continue
         _copy(beheer_bron, beheer_doel, bestand, "Beheer")
 
     # PC Image Backup's gedeelde module staat in de submap core/
@@ -431,11 +417,7 @@ def main():
     print()
     print("  [Publicatie]")
     publicatie_doel = os.path.join(public_map, "Publicatie")
-    for bestand in (
-        "PiNAS_Suite_Handleiding.pdf", "build_suite_handleiding.py",
-        "PiNAS_Suite_Presentatie.pptx", "PiNAS_Suite_Presentatie_Preview.pdf",
-        "PiNAS_Suite_Architectuur.png",
-    ):
+    for bestand in _reg.publieke_bestanden("Publicatie", "github"):
         _copy(os.path.join(nas_root, "Publicatie"), publicatie_doel, bestand, "Publicatie")
 
     # -- Gedeeld ------------------------------------------------------------------
@@ -443,18 +425,12 @@ def main():
     print("  [Gedeeld]")
     gedeeld_bron = os.path.join(nas_root, "Gedeeld")
     gedeeld_doel = os.path.join(public_map, "Gedeeld")
-    for bestand in (
-        "pinas_theme.py", "pinas_theme_donker.py", "pinas_theme_licht.py",
-        "pinas_ui.py", "pinas_wachtwoord.py", "pinas_logging.py",
-        "pinas_launcher.py", "pinas_pi_status.py", "pinas_addon_scripts.py",
-        "controleer_documentatie_consistentie.py", "pinas_schijven.py",
-        "pinas_versies.json", "version.py",
-        "nas_upload.py", "nas_diagnose.py", "nas_diagnose.sh",
-        "herstel_backup_hdd.sh", "pinas_iphone_backup.sh",
-        "pinas_iphone_verkennen.sh", "test_suite.py",
-        "maak_publieke_versie.py", "maak_starterkit.py",
-        "bijwerk_pinas_versies.py", "controleer_syntax.py",
-    ):
+    # download_links.ini staat in het register als publiek, maar gaat NIET
+    # hierheen - dat gaat naar Installatie\ (zie verderop) - eruit filteren
+    # om een dubbele/verkeerde kopie in Gedeeld\ te voorkomen.
+    for bestand in _reg.publieke_bestanden("Gedeeld", "github"):
+        if bestand == "download_links.ini":
+            continue
         _copy(gedeeld_bron, gedeeld_doel, bestand, "Gedeeld")
     # Gedeeld\ScriptRunner\pi_script_draaien.bat ingetrokken (31 juli 2026,
     # Frans: niet meer los gebruikt - Addons Beheer dekt dit nu)

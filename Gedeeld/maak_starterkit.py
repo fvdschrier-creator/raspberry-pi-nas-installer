@@ -24,6 +24,13 @@ import sys
 import tempfile
 import zipfile
 
+# 14 augustus 2026: bestandenlijsten komen nu uit het centrale register
+# i.p.v. een eigen, los van maak_publieke_versie.py uit elkaar gegroeide
+# lijst - zie Gedeeld\pinas_bestanden_register.py voor waarom (loste een
+# bug op waarbij pinas_addon_scripts.py hier ontbrak en een verse Starter
+# Kit-installatie meteen crashte).
+import pinas_bestanden_register as _reg
+
 NAS_ROOT = r"C:\PiNAS"
 
 
@@ -97,18 +104,12 @@ def main():
 
     # -- Beheer ---------------------------------------------------------
     beheer_doel = os.path.join(werkmap, "Beheer")
-    for bestand in (
-        "Pi_NAS_Menu.pyw", "pi_nas_setup.pyw", "Pi_NAS_Menu.ico",
-        "lanman_fix.py", "install_vnc_viewer.py",
-        "pinas_backup_beheer.pyw", "pinas_image_backup.pyw",
-        # 13 augustus 2026: ontbraken hier - Pi_NAS_Menu.pyw's "Controles"-
-        # knop verwees dus naar een bestand dat niet in het pakket zat.
-        # Nu wel meegenomen (was per ongeluk nooit meeverhuisd toen deze
-        # schermen op 16 juli 2026 van Gedeeld naar Beheer gingen).
-        "NAS_Map_Beheer.pyw", "NAS_Map_Beheer.bat",
-        "pinas_controle_beheer.pyw", "pinas_kleuren_kiezer.pyw",
-        "pinas_pi_opruimen.pyw",
-    ):
+    for bestand in _reg.publieke_bestanden("Beheer", "starterkit"):
+        # Beheer_install.bat gaat NIET hierin mee - dat hoort in de ROOT
+        # van de ZIP (bootstrap-installer) en wordt verderop apart
+        # gekopieerd (zie "-- Beheer_install.bat in root van ZIP --").
+        if bestand == "Beheer_install.bat":
+            continue
         _copy(os.path.join(NAS_ROOT, "Beheer"), beheer_doel, bestand)
 
     # PC Image Backup's gedeelde module staat in de submap core/
@@ -138,13 +139,13 @@ def main():
 
     # -- Publicatie -------------------------------------------------------
     publicatie_doel = os.path.join(werkmap, "Publicatie")
-    for bestand in ("PiNAS_Suite_Handleiding.pdf", "build_suite_handleiding.py"):
+    for bestand in _reg.publieke_bestanden("Publicatie", "starterkit"):
         _copy(os.path.join(NAS_ROOT, "Publicatie"), publicatie_doel, bestand)
 
     # -- Sync ---------------------------------------------------------------
     sync_doel = os.path.join(werkmap, "Sync")
     os.makedirs(os.path.join(sync_doel, "core"), exist_ok=True)
-    for bestand in ("pinas_sync_app.pyw", "start.bat", "requirements.txt", "install_windows.bat"):
+    for bestand in _reg.publieke_bestanden("Sync", "starterkit"):
         _copy(os.path.join(NAS_ROOT, "Sync"), sync_doel, bestand)
     for bestand in ("sync_engine.py", "bron_doel_picker.py", "thema.py", "__init__.py"):
         bron = os.path.join(NAS_ROOT, "Sync", "core", bestand)
@@ -154,22 +155,12 @@ def main():
 
     # -- ArchiefBackup (hoofdmap, hoort bij Backup Beheer - geen zijproject meer) --
     archief_doel = os.path.join(werkmap, "ArchiefBackup")
-    for bestand in ("archief_backup_bewaking.pyw", "start.bat"):
+    for bestand in _reg.publieke_bestanden("ArchiefBackup", "starterkit"):
         _copy(os.path.join(NAS_ROOT, "ArchiefBackup"), archief_doel, bestand)
 
     # -- Addons (17 juli 2026 toegevoegd - stonden er nooit in) -------------
     addons_doel = os.path.join(werkmap, "Addons")
-    for bestand in (
-        "pinas_addons_beheer.pyw",
-        "pinas_nextcloud.sh", "pinas_nextcloud_verwijderen.sh",
-        "pinas_pihole.sh", "pinas_pihole_verwijderen.sh",
-        "pinas_zerotier.sh", "pinas_zerotier_verwijderen.sh",
-        "pinas_vaultwarden.sh", "pinas_vaultwarden_verwijderen.sh",
-        "pinas_vaultwarden_cert_vertrouwen.pyw", "pinas_vaultwarden_cert_import.ps1",
-        "pinas_printer.sh", "pinas_printer_verwijderen.sh",
-        "pinas_dashboard.sh", "pinas_dashboard_verwijderen.sh",
-        "pinas_dashboard_wachtwoord_resetten.sh",
-    ):
+    for bestand in _reg.publieke_bestanden("Addons", "starterkit"):
         _copy(os.path.join(NAS_ROOT, "Addons"), addons_doel, bestand)
 
     # -- PiServer -------------------------------------------------------------
@@ -177,32 +168,12 @@ def main():
     # sim_setup.sh, SIMULATOR_LEESMIJ.md, start.sh) bewust weggelaten - de NAS
     # Simulator wordt niet meer gebruikt.
     piserver_doel = os.path.join(werkmap, "PiServer")
-    for bestand in (
-        "nas_installer.py", "nas_installer_cli.py", "seagate_web.py",
-        "seagate-web.service", "smart_plug.py", "smart_plug_config.json",
-        "hue_diagnose.py", "pi_welkom.sh", "install.sh", "nas_start.sh",
-        "README.md",
-    ):
+    for bestand in _reg.publieke_bestanden("PiServer", "starterkit"):
         _copy(os.path.join(NAS_ROOT, "PiServer"), piserver_doel, bestand)
 
     # -- Gedeeld ----------------------------------------------------------------
     gedeeld_doel = os.path.join(werkmap, "Gedeeld")
-    for bestand in (
-        "pinas_theme.py", "pinas_theme_donker.py", "pinas_theme_licht.py",
-        "pinas_ui.py", "pinas_wachtwoord.py", "pinas_logging.py",
-        "pinas_launcher.py", "pinas_pi_status.py",
-        "controleer_documentatie_consistentie.py", "pinas_schijven.py",
-        "pinas_versies.json", "version.py",
-        "nas_upload.py", "nas_diagnose.py", "nas_diagnose.sh",
-        "herstel_backup_hdd.sh", "pinas_iphone_backup.sh",
-        "pinas_iphone_verkennen.sh", "test_suite.py",
-        "download_links.ini",
-        # 13 augustus 2026: "NAS_Map_Beheer.pyw"/".bat" stonden hier ten
-        # onrechte in - dat bestand woont in Beheer\, niet Gedeeld\, dus
-        # deze regel kopieerde al sinds 16 juli 2026 stilzwijgend niets
-        # (_copy() print "niet gevonden" maar breekt de build niet af).
-        # Nu correct in de Beheer-lijst hierboven opgenomen.
-    ):
+    for bestand in _reg.publieke_bestanden("Gedeeld", "starterkit"):
         _copy(os.path.join(NAS_ROOT, "Gedeeld"), gedeeld_doel, bestand)
 
     # Gedeeld\ScriptRunner\pi_script_draaien.bat ingetrokken (31 juli 2026,
