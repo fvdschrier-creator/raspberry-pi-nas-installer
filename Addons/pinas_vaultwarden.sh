@@ -121,6 +121,43 @@ detect_network() {
 }
 
 ###############################################################################
+# 0b. Push-notificaties (optioneel - vereist een gratis ID/key van Bitwarden)
+###############################################################################
+# 15 augustus 2026: zonder dit synct de officiele Bitwarden-app op iPhone/
+# Android alleen bij het openen/inloggen of een handmatige "Sync now" -
+# WEBSOCKET_ENABLED (hieronder, altijd aan) geeft alleen live-sync zolang de
+# verbinding openstaat (desktop/browserextensie), niet op de achtergrond op
+# mobiel. Bewust NIET automatisch gegenereerd (kan niet, zoals ADMIN_TOKEN) -
+# elke zelfhoster vraagt zijn EIGEN gratis ID/key aan, dus dit blijft een
+# interactieve vraag i.p.v. iets om in dit publieke script te hardcoden.
+vraag_push_gegevens() {
+    PUSH_ID=""
+    PUSH_KEY=""
+cat <<EOF
+
+  ---------------------------------------------------------------
+  OPTIONEEL - Push-notificaties (live sync op iPhone/Android):
+  ---------------------------------------------------------------
+  Zonder dit synct de Bitwarden-app op je telefoon alleen bij het
+  openen/inloggen of een handmatige "Sync now" - wijzigingen op een
+  ander apparaat komen dan niet vanzelf door, ook niet met "Achtergrond
+  vernieuwen" aan.
+
+  Gratis aan te vragen op: https://bitwarden.com/host
+  (kies Data Region "US" - werkt zonder extra instellingen; EU-region
+  heeft bekende push-problemen op iOS/Android, dus niet gebruiken).
+EOF
+    read -rp "  Installation ID (leeg = overslaan): " PUSH_ID || true
+    if [[ -n "$PUSH_ID" ]]; then
+        read -rp "  Installation Key: " PUSH_KEY || true
+        if [[ -z "$PUSH_KEY" ]]; then
+            warn "Geen key ingevoerd - push-notificaties worden overgeslagen."
+            PUSH_ID=""
+        fi
+    fi
+}
+
+###############################################################################
 # 1. Root-certificaat (eenmalig - blijft bestaan bij herinstallatie)
 ###############################################################################
 maak_root_ca() {
@@ -237,6 +274,14 @@ install_vaultwarden() {
     docker pull vaultwarden/server:latest
     success "Nieuwste image binnengehaald."
 
+    PUSH_ARGS=()
+    if [[ -n "${PUSH_ID:-}" ]]; then
+        PUSH_ARGS=(-e PUSH_ENABLED=true -e PUSH_INSTALLATION_ID="${PUSH_ID}" -e PUSH_INSTALLATION_KEY="${PUSH_KEY}")
+        success "Push-notificaties worden ingeschakeld (live sync op mobiel)."
+    else
+        warn "Push-notificaties overgeslagen - mobiel synct dan alleen bij openen/handmatig. Kan later alsnog: herinstalleer dit script en vul dan wel een ID/key in."
+    fi
+
     log "Vaultwarden-container starten..."
     # SIGNUPS_ALLOWED=true: deze server is toch nooit vanaf het open
     # internet bereikbaar (alleen LAN + ZeroTier-VPN), dus het risico van
@@ -251,6 +296,7 @@ install_vaultwarden() {
         -e SIGNUPS_ALLOWED=true \
         -e SIGNUPS_VERIFY=false \
         -e ADMIN_TOKEN="${ADMIN_TOKEN}" \
+        "${PUSH_ARGS[@]}" \
         -v "${DATA_DIR}:/data" \
         -p "127.0.0.1:${INTERN_POORT}:80" \
         vaultwarden/server:latest
@@ -357,6 +403,18 @@ cat <<EOF
   Beheerderspaneel      : https://${PI_IP}:${HTTPS_POORT}/admin
   Beheerderstoken       : ${ADMIN_TOKEN}
   (schrijf dit token op - het wordt niet opnieuw getoond)
+EOF
+if [[ -n "${PUSH_ID:-}" ]]; then
+cat <<EOF
+  Push-notificaties     : AAN (live sync op mobiel)
+EOF
+else
+cat <<EOF
+  Push-notificaties     : UIT (mobiel synct alleen bij openen/handmatig -
+                          herinstalleer dit script om dit alsnog aan te zetten)
+EOF
+fi
+cat <<EOF
 
   ---------------------------------------------------------------
   VOLGENDE STAP - certificaat vertrouwen:
@@ -377,6 +435,7 @@ main() {
     check_internet
     check_docker
     detect_network
+    vraag_push_gegevens
     maak_root_ca
     maak_server_cert
     maak_vernieuw_taak

@@ -1236,6 +1236,17 @@ def bouw_handleiding():
          "servercertificaat wordt daarna automatisch elk jaar vernieuwd zonder dat dit "
          "opnieuw hoeft."],
         kleur=ACCENT))
+    story.append(Spacer(1, 0.2*cm))
+    story.append(info_box(s, "Let op - live sync op mobiel",
+        ["Zonder extra instellingen synct de Bitwarden-app op telefoon alleen bij het "
+         "openen/inloggen of een handmatige 'Sync now' - een wijziging op een ander "
+         "apparaat komt dan niet vanzelf door, ook niet met 'Achtergrond vernieuwen' aan. "
+         "pinas_vaultwarden.sh vraagt bij installatie daarom optioneel om een gratis "
+         "Installation ID + Key (aan te vragen op https://bitwarden.com/host, kies Data "
+         "Region 'US') - met die 2 waarden krijgt de telefoon wel live push-updates. Al "
+         "geinstalleerd zonder deze stap? Herinstalleer pinas_vaultwarden.sh en vul de "
+         "vraag dan wel in - je root-certificaat en kluisdata blijven daarbij ongewijzigd."],
+        kleur=WARN_C))
     story.append(Spacer(1, 0.3*cm))
 
     # 10 augustus 2026 (Frans: Bitwarden-extensie bleef eeuwig laden, geen
