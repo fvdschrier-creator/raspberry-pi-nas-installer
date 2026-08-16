@@ -43,8 +43,14 @@ _gedeeld = os.path.join(_nas_root(), "Gedeeld")
 if os.path.isdir(_gedeeld) and _gedeeld not in sys.path:
     sys.path.insert(0, _gedeeld)
 
-from pinas_theme import BG, PANEL, PANEL2, FG, DIM, OK_C, ERR_C, WARN, ACCENT, DESTRUCTIEF
+from pinas_theme import (BG, PANEL, PANEL2, FG, DIM, OK_C, ERR_C, WARN, ACCENT,
+                          DESTRUCTIEF, leesbare_tekstkleur)
 import pinas_theme as _pt
+
+# Vaste tekstkleur voor destructieve knoppen (zie maak_knop() in pinas_ui.py -
+# stijl="destructief" gebruikt BEWUST geen leesbare_tekstkleur(), zodat de
+# mini-preview hieronder exact laat zien wat de echte suite doet).
+VAST_DESTRUCTIEF_TEKST = "#3d2604"
 
 
 THEMA_PAD = os.path.join(_gedeeld, "pinas_theme.py")
@@ -55,60 +61,61 @@ THEMA_PAD = os.path.join(_gedeeld, "pinas_theme.py")
 # elke staal hieronder is zorgvuldig gekozen binnen dezelfde "zacht
 # zakelijk"-familie als het huidige palet.
 # ---------------------------------------------------------------------------
-# Gedeeld "regenboogje" van nu 10 duidelijk verschillende kleuren - gebruikt
-# voor alle identiteits-/betekenisvelden hieronder, telkens met de eigen
-# kleur vooraan. Ontstaan naar aanleiding van feedback van Frans: 6 stalen
-# die allemaal een tint van dezelfde kleur zijn (bijv. 6x paars/rose bij
+# Gedeeld palet van 15 frisse, verzadigde kleuren - gebruikt voor alle
+# identiteits-/betekenisvelden hieronder, telkens met de eigen kleurfamilie
+# vooraan. Ontstaan naar aanleiding van feedback van Frans: 6 stalen die
+# allemaal een tint van dezelfde kleur zijn (bijv. 6x paars/rose bij
 # Venster-branding) voelen als GEEN keuze - "een beetje meer of minder
-# paars is voor mij geen verschil". Nu per veld 1 eigen kleur + de andere
-# duidelijk verschillende kleuren, verspreid over het kleurenwiel, nog
-# steeds "zacht zakelijk" (geen navy/camouflage/neon).
-# 13 augustus 2026: "roze" toegevoegd (7e staal) voor het nieuwe Beheer-
-# domein - Verbinden en Beheer deelden voorheen dezelfde kleur ("een groen
-# moeras", Frans) en waren zo niet van elkaar te onderscheiden.
-# 13 augustus 2026 (4e ronde): blauw/groen/amber bijgewerkt naar exact de
-# kleuren die nu echt actief staan in pinas_theme.py (ACCENT_PINAS/
-# ACCENT_PIBACKUP/ACCENT_PIADDONS) - hiervoor toonde de kiezer nog de oude,
-# minder felle stalen terwijl het thema zelf al verfrist was (Frans:
-# "zijn de kleuren in de kleurenkiezer ook wat vrolijker?" - nee dus, nu
-# wel). Voor donker zijn blauw/groen ook meteen gecorrigeerd naar de
-# rechtgetrokken PINAS(teal)/PIBACKUP(blauw)-waarden (zie pinas_theme.py).
-# 15 augustus 2026: 3 stalen toegevoegd (grasgroen/fuchsia/azuur) op
-# uitdrukkelijk verzoek van Frans ("de kleuren ogen niet fris, dat zou
-# tenminste in de kleurentool aanwezig moeten zijn"). Kleurenwiel-analyse
-# van de bestaande 7 liet 2 echte gaten zien (geen zuiver groen tussen
-# amber en turkoois/blauw; geen roze/magenta-achtige kleur tussen paars en
-# rood) plus 1 kleinere aanvulling (een cyaanblauw tussen turkoois en
-# blauw). Voor elke nieuwe kleur is per thema het hoogst haalbare
-# verzadiging+helderheid gekozen BINNEN hetzelfde contrastniveau (tegen
-# wit) als de bestaande stalen in dat thema - dus fris, maar niet feller
-# dan het contrast van de rest toelaat (geen gokken, uitgerekend met de
-# WCAG-relatieve-luminantieformule; licht-thema richt op ~4.5-5.5:1,
-# donker-thema richt op ~3.0-3.6:1, exact de bandbreedte van de 7
-# bestaande stalen in dat thema).
-_REGENBOOG_LICHT = dict(
-    blauw="#038787", groen="#206ac9", amber="#c07c15",
-    paars="#7c5cd6", rood="#c0392b", turkoois="#0f8a8a",
-    roze="#c2456b",
-    grasgroen="#03861e", fuchsia="#db06b0", azuur="#047da9",
-)
-_REGENBOOG_DONKER = dict(
-    blauw="#14b8a6", groen="#3185e9", amber="#e79e15",
-    paars="#9480e0", rood="#e2725a", turkoois="#22b8b0",
-    # 13 augustus 2026: 7e staal voor het nieuwe Beheer-domein (ACCENT_PIBEHEER).
-    roze="#e0668a",
-    grasgroen="#04a925", fuchsia="#fa47d6", azuur="#059ed6",
-)
+# paars is voor mij geen verschil". Nu per veld 1 eigen kleurfamilie + de
+# andere 14, gelijkmatig verspreid over het kleurenwiel (elke 24 graden),
+# nog steeds "zacht zakelijk" (geen navy/camouflage/neon).
+#
+# 16 augustus 2026: van 10 naar 15 kleuren, en het losse met-de-hand-
+# gekozen palet vervangen door een programmatisch afgeleid palet - naar
+# aanleiding van Frans' vraag na het kleurenoverzicht ("een vervolg
+# keuzelijst met 15 frisse kleuren"). Elke kleur is uitgerekend zodat hij
+# (net als OK_C hiervoor) een contrast van minimaal 3.0:1 haalt tegen ZOWEL
+# de achtergrond (BG) als het paneel (PANEL) van dat thema - dus elke kleur
+# is niet alleen bruikbaar als knopachtergrond, maar ook direct als
+# tekstkleur. Verzadiging vast op 0.85 (HSL) voor een consistent "fris"
+# resultaat - geen enkele kleur is vager/valer dan een andere.
+# Puur geel is bewust NIET als eigen slot opgenomen: in het lichte thema
+# haalt zuiver geel nooit 3:1 contrast zonder zo donker te worden dat het
+# alsnog als goud/olijf oogt (precies wat "amber"/"olijfgroen" hieronder
+# al zijn) - dat zou de twee thema's uit elkaar laten lopen. Voor de
+# statusvelden (OK_C/ERR_C/WARN/YELLOW) komt er in het donkere thema WEL
+# een aparte "wit"-optie bij (zie GROEPEN hieronder) - dat was Frans'
+# expliciete verzoek en wit werkt alleen in het donkere thema goed genoeg.
+MASTER_LICHT = {
+    "rood": "#d21121", "terracotta": "#b6440f", "amber": "#86630b",
+    "olijfgroen": "#636f09", "grasgroen": "#3e760a", "smaragd": "#137b0a",
+    "bosgroen": "#0a7b2e", "turkoois": "#0a7859", "cyaan": "#0b7482",
+    "azuur": "#1068c6", "blauw": "#2b3bee", "indigo": "#682bee",
+    "paars": "#a712e2", "fuchsia": "#bd0fa8", "roze": "#cb106b",
+}
+MASTER_DONKER = {
+    "rood": "#f25a67", "terracotta": "#ed6324", "amber": "#b6860f",
+    "olijfgroen": "#87970c", "grasgroen": "#54a00d", "smaragd": "#1aa50d",
+    "bosgroen": "#0da53d", "turkoois": "#0da077", "cyaan": "#0e9caf",
+    "azuur": "#3790ef", "blauw": "#7983f4", "indigo": "#9e76f4",
+    "paars": "#c85ff2", "fuchsia": "#ef3edb", "roze": "#f1509e",
+}
 
-_REGENBOOG_VOLGORDE = ["blauw", "groen", "amber", "paars", "rood", "turkoois",
-                       "roze", "grasgroen", "fuchsia", "azuur"]
+_MASTER_VOLGORDE = ["rood", "terracotta", "amber", "olijfgroen", "grasgroen",
+                     "smaragd", "bosgroen", "turkoois", "cyaan", "azuur",
+                     "blauw", "indigo", "paars", "fuchsia", "roze"]
 
 
-def _regenboog(thema, eigen_eerst):
-    """Geeft de 10 regenboogkleuren terug, met 'eigen_eerst' vooraan."""
-    r = _REGENBOOG_LICHT if thema == "licht" else _REGENBOOG_DONKER
-    volgorde = [eigen_eerst] + [k for k in _REGENBOOG_VOLGORDE if k != eigen_eerst]
-    return [r[k] for k in volgorde]
+def _master(thema, eigen_eerst, plus_wit=False):
+    """Geeft de 15 kleuren terug, met 'eigen_eerst' vooraan. plus_wit=True
+    voegt (alleen zinvol in het donkere thema) wit toe als 16e, extra
+    staal - voor statusvelden waar Frans dat expliciet vroeg."""
+    m = MASTER_LICHT if thema == "licht" else MASTER_DONKER
+    volgorde = [eigen_eerst] + [k for k in _MASTER_VOLGORDE if k != eigen_eerst]
+    stalen = [m[k] for k in volgorde]
+    if plus_wit:
+        stalen.append("#ffffff")
+    return stalen
 
 
 GROEPEN = [
@@ -117,16 +124,16 @@ GROEPEN = [
          "Verbinden op het hoofdmenu (SSH/TigerVNC/WinSCP), en de algemene "
          "Status & Details-schermen. Sinds 13 augustus 2026 NIET meer gedeeld "
          "met Beheer - dat heeft nu zijn eigen kleur (ACCENT_PIBEHEER hieronder).",
-         _regenboog("licht", "blauw"), _regenboog("donker", "blauw")),
+         _master("licht", "cyaan"), _master("donker", "cyaan")),
         ("ACCENT_PIBACKUP", "Backup Beheer",
          "De hoofdmenuknop zelf EN het hele venster erachter: Synchronisatie, "
          "PC Image Backup, Archief Backup Bewaking, Systeem-image maken, "
          "Backup-HDD herstellen.",
-         _regenboog("licht", "groen"), _regenboog("donker", "groen")),
+         _master("licht", "azuur"), _master("donker", "azuur")),
         ("ACCENT_PIADDONS", "Addons Beheer",
          "De hoofdmenuknop zelf EN het hele venster erachter: Nextcloud, "
          "Pi-hole, ZeroTier, Vaultwarden.",
-         _regenboog("licht", "amber"), _regenboog("donker", "amber")),
+         _master("licht", "amber"), _master("donker", "amber")),
         ("ACCENT_PIBEHEER", "Beheer",
          "NIEUW (13 augustus 2026). De hoofdmenuknop 'Beheer' EN de 3 "
          "schermen erachter: Installatie & Herstel, Controles (en "
@@ -134,12 +141,12 @@ GROEPEN = [
          "knoppen/schermen krijgt automatisch een eigen, iets lichtere tint "
          "van DEZE kleur - dat stel je hier niet apart in, dat wordt bij het "
          "opstarten zelf berekend (zie tint() in pinas_theme.py).",
-         _regenboog("licht", "roze"), _regenboog("donker", "roze")),
+         _master("licht", "roze"), _master("donker", "roze")),
         ("ACCENT_PICONTROL", "Venster-branding (Pi NAS Menu)",
          "Alleen de titelbalk van het Pi NAS Menu-hoofdvenster zelf - bewust "
          "NIET gebruikt voor gewone knoppen (dat gaf eerder 3x identiek "
          "paars naast elkaar).",
-         _regenboog("licht", "paars"), _regenboog("donker", "paars")),
+         _master("licht", "indigo"), _master("donker", "indigo")),
     ]),
     ("Vensters & tekst", [
         ("BG", "Achtergrond",
@@ -165,29 +172,39 @@ GROEPEN = [
          ["#9aa8b5", "#8fa0ad", "#a5b2be", "#85949f", "#b0bcc7", "#7c8c99"]),
     ]),
     ("Status & waarschuwing", [
-        ("OK_C", "In orde (groen)",
+        # 15-16 augustus 2026: dit veld stond hiervoor vast op groentinten
+        # ("blijft bewust in de groene familie") - Frans: "zou mooi zijn als
+        # er ook uit een andere kleur dan groen gekozen kan worden, deze is
+        # steeds niet zo contrastrijk". Terecht: uitgerekend bleken ALLE
+        # oude groentinten in het LICHTE thema onder de 3:1-ondergrens te
+        # zitten tegen het paneel waar de statustekst op staat. Nu net als
+        # de identiteitsvelden hierboven het gedeelde 15-kleurenpalet (elke
+        # kleur is al gecontroleerd op contrast tegen zowel BG als PANEL),
+        # in het donkere thema aangevuld met wit (Frans: "ik zag nergens
+        # geel of wit" - wit werkt alleen in het donkere thema goed genoeg,
+        # zie toelichting bij MASTER_LICHT/MASTER_DONKER hierboven).
+        ("OK_C", "In orde (groen, of kies zelf)",
          "Statusteksten/-bolletjes die 'in orde' betekenen (groene vinkjes, "
-         "'Alles OK'). Blijft bewust in de groene familie - anders is de "
-         "betekenis 'groen = goed' meteen kwijt.",
-         ["#16a34a", "#0d8a4f", "#4d9c3f", "#0f9d80", "#22a55e", "#178f6b"],
-         ["#22c55e", "#17a34a", "#4ade80", "#14b89a", "#34d372", "#1fae7a"]),
+         "'Alles OK', 'Pi bereikbaar'). Groen staat vooraan als voor de hand "
+         "liggende keuze, maar je kunt hier net als bij de andere velden ook "
+         "een heel andere kleur pakken als groen voor jou niet contrastrijk "
+         "genoeg oogt.",
+         _master("licht", "bosgroen"), _master("donker", "bosgroen", plus_wit=True)),
         ("ERR_C", "Fout (rood)",
          "Statusteksten/-bolletjes die een fout betekenen (rode kruisjes, "
-         "foutmeldingen). Blijft bewust in de rode familie - zelfde reden "
-         "als bij 'in orde'.",
-         ["#dc2626", "#b91c1c", "#e11d48", "#c2410c", "#9f1239", "#ef4444"],
-         ["#ef4444", "#dc2626", "#f43f5e", "#f0653a", "#be123c", "#f87171"]),
+         "foutmeldingen).",
+         _master("licht", "rood"), _master("donker", "rood", plus_wit=True)),
         ("WARN", "Waarschuwing / herstel (amber)",
          "Waarschuwings-/herstelknoppen - bijv. LanMan-fix, de 'Schijven "
          "verbinden'-banner.",
-         _regenboog("licht", "amber"), _regenboog("donker", "amber")),
+         _master("licht", "amber"), _master("donker", "amber", plus_wit=True)),
         ("YELLOW", "Wisselend (geel)",
          "Losse waarschuwingstekst, bijv. 'Verbinding wisselend'.",
-         _regenboog("licht", "amber"), _regenboog("donker", "amber")),
+         _master("licht", "amber"), _master("donker", "amber", plus_wit=True)),
         ("DESTRUCTIEF", "Risicovol (terracotta)",
          "Risicovolle acties - Pi NAS herstarten, Systeem-image maken, "
          "Backup-HDD controleren/herstellen.",
-         _regenboog("licht", "rood"), _regenboog("donker", "rood")),
+         _master("licht", "terracotta"), _master("donker", "terracotta")),
     ]),
 ]
 
@@ -206,6 +223,13 @@ def _alle_velden():
     for _, velden in GROEPEN:
         for v in velden:
             yield v
+
+
+# Snelle opzoektabel key -> (label, beschrijving, presets_licht, presets_donker),
+# gebruikt door de klikbare mini-preview (zie _open_kleurkeuze() in main())
+# om bij een klik meteen de juiste vervolg-keuzelijst te tonen.
+VELD_BIJ_KEY = {key: (label, beschrijving, pl, pd)
+                for key, label, beschrijving, pl, pd in _alle_velden()}
 
 
 def _huidige_waarden(thema):
@@ -358,19 +382,87 @@ def main():
         vlak.bind("<Button-1>", lambda e: on_click())
         return kader
 
+    # ── Klikbare mini-preview + vervolg-keuzelijst (16 augustus 2026) ─────
+    # Frans, na het kleurenoverzicht: "kunnen we niets maken dat kleuren
+    # laat kiezen op basis van deze html pagina, in een soort vervolg
+    # keuze lijst, maar dan met 15 frisse kleuren". Elk klikbaar onderdeel
+    # hieronder komt EXACT overeen met de 15 kleurvelden uit GROEPEN - een
+    # klik opent een klein venster naast de muis met de 15(+wit)-kleuren
+    # voor precies dat veld; een keuze past meteen toe en sluit het
+    # venstertje. De grote veldenlijst hieronder blijft ook gewoon werken -
+    # dit is een snellere, contextuele route ernaast, geen vervanging.
+    def _open_kleurkeuze(key, x=None, y=None):
+        thema = huidig_tab["naam"]
+        if key not in VELD_BIJ_KEY:
+            return
+        label, beschrijving, presets_licht, presets_donker = VELD_BIJ_KEY[key]
+        presets = presets_licht if thema == "licht" else presets_donker
+        huidige_waarde = state[thema].get(key)
+        toon_stalen = list(presets)
+        if huidige_waarde not in toon_stalen:
+            toon_stalen = [huidige_waarde] + toon_stalen
+
+        popup = tk.Toplevel(win)
+        popup.title(f"{label} - {thema}")
+        popup.configure(bg=PANEL)
+        popup.transient(win)
+        popup.resizable(False, False)
+        breedte, hoogte = 300, 90 + 40 * (-(-len(toon_stalen) // 5))
+        if x is None or y is None:
+            x, y = win.winfo_pointerx(), win.winfo_pointery()
+        x = max(0, min(x, popup.winfo_screenwidth() - breedte - 20))
+        y = max(0, min(y, popup.winfo_screenheight() - hoogte - 40))
+        popup.geometry(f"{breedte}x{hoogte}+{x}+{y}")
+
+        tk.Label(popup, text=f"{label}  ({key})", font=("Segoe UI", 10, "bold"),
+                  bg=PANEL, fg=FG, anchor="w", wraplength=breedte - 20,
+                  justify="left").pack(fill="x", padx=10, pady=(10, 2))
+        tk.Label(popup, text=beschrijving, font=("Segoe UI", 8), bg=PANEL, fg=DIM,
+                  anchor="w", wraplength=breedte - 20, justify="left"
+                  ).pack(fill="x", padx=10, pady=(0, 6))
+
+        for start in range(0, len(toon_stalen), 5):
+            rij = tk.Frame(popup, bg=PANEL)
+            rij.pack(padx=10)
+            for hex_kleur in toon_stalen[start:start + 5]:
+                def _kies(h=hex_kleur):
+                    state[thema][key] = h
+                    popup.destroy()
+                    bouw_inhoud()
+                _maak_swatch(rij, hex_kleur, hex_kleur == huidige_waarde, _kies)
+
+        RoundedButton(popup, text="Sluiten", command=popup.destroy,
+                      bg=PANEL2, fg=FG, font=("Segoe UI", 8)).pack(pady=(6, 10))
+        popup.bind("<Escape>", lambda e: popup.destroy())
+        popup.after(50, popup.focus_set)
+
+    def _klikbaar(widget, key):
+        """Maakt een preview-onderdeel klikbaar: wijst de muiscursor aan en
+        opent bij een klik de vervolg-keuzelijst van 'key'."""
+        widget.configure(cursor="hand2")
+        widget.bind("<Button-1>", lambda e: _open_kleurkeuze(key, e.x_root, e.y_root))
+        return widget
+
     def _teken_preview(parent, waarden):
         """Levend voorbeeld met de op dit moment (nog niet opgeslagen) gekozen
-        kleuren - zodat je meteen ziet wat een klik doet."""
+        kleuren - klik op een titelbalk, knop, statustekst of achtergrond om
+        die kleur direct te wijzigen (zie _open_kleurkeuze hierboven)."""
         kader = tk.Frame(parent, bg=waarden["PANEL"], bd=0)
-        kader.pack(fill="x", pady=(0, 14))
+        kader.pack(fill="x", pady=(0, 4))
+        _klikbaar(kader, "PANEL")
         binnen = tk.Frame(kader, bg=waarden["PANEL"])
         binnen.pack(fill="x", padx=12, pady=12)
+        _klikbaar(binnen, "PANEL")
 
         titelbalk = tk.Frame(binnen, bg=waarden["ACCENT_PICONTROL"])
         titelbalk.pack(fill="x")
-        tk.Label(titelbalk, text="Pi NAS Menu (voorbeeld titelbalk)",
-                  font=("Segoe UI", 9, "bold"), bg=waarden["ACCENT_PICONTROL"],
-                  fg="#ffffff").pack(anchor="w", padx=8, pady=4)
+        _klikbaar(titelbalk, "ACCENT_PICONTROL")
+        titel_lbl = tk.Label(
+            titelbalk, text="Pi NAS Menu (voorbeeld titelbalk)",
+            font=("Segoe UI", 9, "bold"), bg=waarden["ACCENT_PICONTROL"],
+            fg=leesbare_tekstkleur(waarden["ACCENT_PICONTROL"]))
+        titel_lbl.pack(anchor="w", padx=8, pady=4)
+        _klikbaar(titel_lbl, "ACCENT_PICONTROL")
 
         knoppenrij = tk.Frame(binnen, bg=waarden["PANEL"])
         knoppenrij.pack(fill="x", pady=(8, 4))
@@ -379,22 +471,44 @@ def main():
                             ("Addons Beheer", "ACCENT_PIADDONS"),
                             ("Beheer", "ACCENT_PIBEHEER"),
                             ("Pi NAS herstarten", "DESTRUCTIEF")]:
-            tk.Label(knoppenrij, text=tekst, font=("Segoe UI", 8, "bold"),
-                      bg=waarden[key], fg="#ffffff", padx=8, pady=4
-                      ).pack(side="left", padx=(0, 6))
+            # Destructieve knoppen krijgen in de echte suite een VASTE
+            # tekstkleur (maak_knop(), geen leesbare_tekstkleur) - de
+            # preview volgt exact diezelfde regel.
+            fg = VAST_DESTRUCTIEF_TEKST if key == "DESTRUCTIEF" else leesbare_tekstkleur(waarden[key])
+            lbl = tk.Label(knoppenrij, text=tekst, font=("Segoe UI", 8, "bold"),
+                            bg=waarden[key], fg=fg, padx=8, pady=4)
+            lbl.pack(side="left", padx=(0, 6))
+            _klikbaar(lbl, key)
+        annuleer = tk.Label(knoppenrij, text="Annuleren", font=("Segoe UI", 8, "bold"),
+                              bg=waarden["PANEL2"], fg=waarden["FG"], padx=8, pady=4)
+        annuleer.pack(side="left", padx=(0, 6))
+        _klikbaar(annuleer, "PANEL2")
 
         statusrij = tk.Frame(binnen, bg=waarden["PANEL"])
         statusrij.pack(fill="x", pady=(6, 0))
         for tekst, key in [("● in orde", "OK_C"), ("● fout", "ERR_C"),
                            ("● waarschuwing", "WARN"), ("● wisselend", "YELLOW")]:
-            tk.Label(statusrij, text=tekst, font=("Segoe UI", 9),
-                      bg=waarden["PANEL"], fg=waarden[key]).pack(side="left", padx=(0, 14))
+            lbl = tk.Label(statusrij, text=tekst, font=("Segoe UI", 9),
+                            bg=waarden["PANEL"], fg=waarden[key])
+            lbl.pack(side="left", padx=(0, 14))
+            _klikbaar(lbl, key)
 
         tekstvb = tk.Frame(binnen, bg=waarden["BG"])
         tekstvb.pack(fill="x", pady=(8, 0))
-        tk.Label(tekstvb, text="Voorbeeldtekst op de achtergrondkleur",
-                  font=("Segoe UI", 9), bg=waarden["BG"], fg=waarden["FG"]
-                  ).pack(anchor="w", padx=8, pady=6)
+        _klikbaar(tekstvb, "BG")
+        hoofdtekst = tk.Label(tekstvb, text="Voorbeeldtekst op de achtergrondkleur",
+                                font=("Segoe UI", 9), bg=waarden["BG"], fg=waarden["FG"])
+        hoofdtekst.pack(anchor="w", padx=8, pady=(6, 0))
+        _klikbaar(hoofdtekst, "FG")
+        dimtekst = tk.Label(tekstvb, text="Gedimde hulptekst eronder",
+                              font=("Segoe UI", 8), bg=waarden["BG"], fg=waarden["DIM"])
+        dimtekst.pack(anchor="w", padx=8, pady=(0, 6))
+        _klikbaar(dimtekst, "DIM")
+
+        tk.Label(parent, text="Tip: klik op de titelbalk, een knop, statustekst of "
+                  "achtergrond hierboven om die kleur direct te wijzigen.",
+                  font=("Segoe UI", 8), bg=BG, fg=DIM, wraplength=800,
+                  justify="left").pack(anchor="w", pady=(0, 12))
 
     def bouw_inhoud():
         for w in inner.winfo_children():
