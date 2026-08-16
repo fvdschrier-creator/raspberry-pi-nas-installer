@@ -62,6 +62,35 @@ try:
 except ImportError:
     PI_BESTANDEN = frozenset()
 
+# 16 augustus 2026 (bugfix, Frans meldde dit via een screenshot - "Pi
+# opruimen" gaf 18 "onbekende" items, waarvan er 7 gewoon actief in
+# gebruik zijnde addon-scripts bleken: pinas_dashboard.sh,
+# pinas_nextcloud.sh, pinas_pihole.sh, pinas_printer.sh,
+# pinas_vaultwarden.sh, pinas_vaultwarden_verwijderen.sh,
+# pinas_zerotier.sh). Oorzaak: PI_BESTANDEN (uit nas_upload.py) is de
+# lijst van bestanden die "Scripts uploaden naar Pi" wegzet, maar addon-
+# scripts worden apart, per addon, vanuit Addons\ geupload door
+# Addons Beheer (zie _draai_script_op_pi() in pinas_addons_beheer.pyw,
+# dat elk .sh-bestand uit Addons\ 1-op-1 als /home/pi/<bestandsnaam>
+# neerzet) - die route stond hier nergens geregistreerd. In plaats van
+# zelf een tweede, losse kopie van "welke addon-scripts bestaan er" bij
+# te houden (dezelfde valkuil als eerder bij ADDON_SCRIPT, zie
+# pinas_addon_scripts.py) wordt hier gewoon elk .sh-bestand dat lokaal
+# in Addons\ staat als "hoort er te mogen zijn" behandeld - blijft
+# vanzelf kloppen als er een addon bijkomt.
+try:
+    ADDON_PI_BESTANDEN = frozenset(
+        f for f in os.listdir(os.path.join(NAS_ROOT, "Addons")) if f.endswith(".sh"))
+except OSError:
+    ADDON_PI_BESTANDEN = frozenset()
+
+# Overige bestanden/mappen die door iets anders dan de suite zelf op de
+# Pi worden gezet, maar wel degelijk verwacht/in gebruik zijn:
+# - filebrowser.db: database van FileBrowser, een los te installeren
+#   dienst via de PiServer-installer (nas_installer.py), niet via
+#   Addons Beheer - staat daarom niet in PI_BESTANDEN of Addons\.
+PI_OVERIGE_BEKEND = {"filebrowser.db"}
+
 _cfg = configparser.ConfigParser()
 _cfg_pad = os.path.join(NAS_ROOT, "Beheer", "picontrol.cfg")
 if os.path.exists(_cfg_pad):
@@ -73,9 +102,12 @@ PI_USER = "pi"
 # normale Linux-thuismap, nooit als "onbekend" melden. Verborgen
 # bestanden/mappen (beginnen met ".") worden apart al genegeerd (zie
 # _controleer() - "du -a" laat ze wel zien, maar we filteren ze eruit).
+# "logs": de eigen, zelf-opruimende maplog van pinas_logging.py (zie
+# GEDEELD_BESTANDEN hierboven) - verwijdert zelf bestanden ouder dan 30
+# dagen, hoort dus niet als opruim-kandidaat getoond te worden.
 GENEGEERD_NAMEN = {
     "Desktop", "Documents", "Downloads", "Music", "Pictures",
-    "Public", "Templates", "Videos", "bin",
+    "Public", "Templates", "Videos", "bin", "logs",
 }
 
 SSH_OPT = ["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=8"]
@@ -106,17 +138,22 @@ def _controleer():
         if naam:
             aanwezig[naam] = grootte
 
+    bekend = PI_BESTANDEN | ADDON_PI_BESTANDEN | PI_OVERIGE_BEKEND
     onbekend = [(naam, grootte) for naam, grootte in aanwezig.items()
-                if naam not in PI_BESTANDEN and naam not in GENEGEERD_NAMEN]
+                if naam not in bekend and naam not in GENEGEERD_NAMEN]
     ontbrekend = [naam for naam in sorted(PI_BESTANDEN, key=str.lower) if naam not in aanwezig]
     return onbekend, ontbrekend
 
 
 PI_OPRUIMEN_HELP = [
     ("Pi opruimen", "Vergelijkt /home/pi/ op de Pi met de bestanden die de suite daar hoort "
-     "te zetten (zie Onderhoud -> Geavanceerd -> Scripts uploaden). Standaard Linux-mappen "
-     "(Desktop, Documents, enzovoort) en verborgen bestanden worden genegeerd - alles wat "
-     "overblijft is onverklaard, vaak resten van een oude, afgebroken actie."),
+     "te zetten: de vaste kernbestanden (Onderhoud -> Geavanceerd -> Scripts uploaden), elk "
+     "addon-script uit Addons\\ (Nextcloud, Pi-hole, ZeroTier, Vaultwarden, Printserver, "
+     "Dashboard, incl. hun 'verwijderen'/'wachtwoord resetten'-varianten) en een paar bekende "
+     "bestanden van los geinstalleerde diensten (bijv. filebrowser.db). Standaard Linux-mappen "
+     "(Desktop, Documents, enzovoort), de zelf-opruimende logmap en verborgen bestanden worden "
+     "genegeerd - alles wat overblijft is onverklaard, vaak resten van een oude, afgebroken of "
+     "inmiddels vervangen actie."),
     ("Verwijderen", "Verwijdert de getoonde onbekende bestanden/mappen definitief van de Pi "
      "via SSH (rm -rf) - vraagt eerst 1x bevestiging met de volledige lijst zichtbaar. Dit "
      "kan niet ongedaan worden gemaakt."),
