@@ -24,6 +24,23 @@ import sys
 import tempfile
 import zipfile
 
+# 15 augustus 2026: dezelfde verplichte geheimen-controle als
+# maak_publieke_versie.py (_GEHEIM_PATRONEN/_controleer_geheimen_of_stop
+# daar) - ontstaan nadat bleek dat deze module een echt lek had (zie
+# _anonimiseer() hieronder: ".pyw" ontbrak in de extensielijst, waardoor
+# Frans' echte Pi-IP-adres in elk .pyw-bestand bleef staan). Hier los
+# gehouden i.p.v. cross-importeren uit maak_publieke_versie.py, zodat
+# beide scripts onafhankelijk blijven werken.
+_GEHEIM_PATRONEN = (
+    ("privé-IP-adres", re.compile(r"192\.168\.\d+\.\d+")),
+    ("'UW_WACHTWOORD'-placeholder (had UW_WACHTWOORD moeten worden)", re.compile(r"UW_WACHTWOORD")),
+    ("gebruikersnaam 'GEBRUIKER...' (had GEBRUIKER moeten worden)", re.compile(r"GEBRUIKER(?!hrier)[a-z]*")),
+    ("backup-HDD UUID", re.compile(r"UW_BACKUP_HDD_UUID(-6221-4452-b9df-a0ab36913586)?")),
+    ("ZeroTier netwerk-ID", re.compile(r"UW_ZEROTIER_NETWERK_ID")),
+    ("GitHub Personal Access Token (klassiek)", re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}")),
+    ("GitHub Personal Access Token (fijnmazig)", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
+)
+
 # 14 augustus 2026: bestandenlijsten komen nu uit het centrale register
 # i.p.v. een eigen, los van maak_publieke_versie.py uit elkaar gegroeide
 # lijst - zie Gedeeld\pinas_bestanden_register.py voor waarom (loste een
@@ -53,8 +70,19 @@ def _anonimiseer(werkmap, wachtwoord):
     """Zelfde vervangingen als de oude PowerShell-anonimisering: IP,
     wachtwoord, 'UW_WACHTWOORD'-placeholder, gebruikersnaam, ZeroTier netwerk-ID.
     Schrijft UTF-8 ZONDER BOM (anders herkent cmd.exe '@echo off' niet meer
-    in de .bat-bestanden die nog in het pakket zitten)."""
-    extensies = {".bat", ".py", ".sh", ".json", ".md", ".ini", ".cfg"}
+    in de .bat-bestanden die nog in het pakket zitten).
+
+    15 augustus 2026: ".pyw" ontbrak hier in de extensielijst (wel al
+    aanwezig in maak_publieke_versie.py, dat gebruikt dezelfde lijst met
+    ".pyw" er wel bij) - hierdoor bleef Frans' echte Pi-IP-adres
+    (UW_PI_IP_ADRES, de fallback-waarde in elk *_ip = _cfg.get(...,
+    fallback=...) regel) onveranderd staan in ELK .pyw-bestand van de
+    Starter Kit, terwijl de publieke GitHub-versie dat al die tijd wel
+    correct anonimiseerde. Ontdekt bij een geheimen-controle na het
+    bouwen (dezelfde controle die maak_publieke_versie.py al verplicht
+    stelt, hier alsnog handmatig gedaan omdat deze functie die controle
+    zelf niet had)."""
+    extensies = {".bat", ".py", ".pyw", ".sh", ".json", ".md", ".ini", ".cfg"}
     for dirpad, _dirs, bestanden in os.walk(werkmap):
         for naam in bestanden:
             if os.path.splitext(naam)[1].lower() not in extensies:
@@ -75,10 +103,44 @@ def _anonimiseer(werkmap, wachtwoord):
             tekst = tekst.replace("UW_WACHTWOORD", "UW_WACHTWOORD")
             tekst = re.sub(r"GEBRUIKER(?!hrier)[a-z]*", "GEBRUIKER", tekst)
             tekst = tekst.replace("UW_ZEROTIER_NETWERK_ID", "UW_ZEROTIER_NETWERK_ID")
+            # 15 augustus 2026: ontbrak hier volledig (wel al aanwezig in
+            # maak_publieke_versie.py) - de geheimen-controle hieronder ving
+            # dit meteen op in PiServer/seagate_web.py en
+            # Gedeeld/herstel_backup_hdd.sh.
+            tekst = tekst.replace("UW_BACKUP_HDD_UUID", "UW_BACKUP_HDD_UUID")
+            tekst = tekst.replace("UW_BACKUP_HDD_UUID", "UW_BACKUP_HDD_UUID")
 
             with open(pad, "w", encoding="utf-8", newline="") as f:
                 f.write(tekst)
             print(f"   Schoon: {naam}")
+
+
+def _controleer_geen_geheimen(werkmap, wachtwoord):
+    """Doorzoekt de AL geanonimiseerde werkmap nogmaals op alles wat
+    _anonimiseer() had moeten weghalen (plus GitHub-tokens) - zelfde opzet
+    als maak_publieke_versie.py's _controleer_geen_geheimen(). Geeft een
+    lijst (relpad, omschrijving, voorbeeldregel) terug - leeg = schoon."""
+    extensies = {".bat", ".py", ".pyw", ".sh", ".json", ".md", ".ini", ".cfg"}
+    treffers = []
+    for dirpad, _dirs, bestanden in os.walk(werkmap):
+        for naam in bestanden:
+            if os.path.splitext(naam)[1].lower() not in extensies:
+                continue
+            pad = os.path.join(dirpad, naam)
+            try:
+                with open(pad, "rb") as f:
+                    tekst = f.read().decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            for omschrijving, patroon in _GEHEIM_PATRONEN:
+                match = patroon.search(tekst)
+                if match:
+                    relpad = os.path.relpath(pad, werkmap)
+                    treffers.append((relpad, omschrijving, match.group(0)))
+            if wachtwoord and wachtwoord in tekst:
+                relpad = os.path.relpath(pad, werkmap)
+                treffers.append((relpad, "het Samba-wachtwoord zelf", "(verborgen)"))
+    return treffers
 
 
 def main():
@@ -209,6 +271,20 @@ def main():
     print()
     print("  [Stap 2] Anonimiseren...")
     _anonimiseer(werkmap, huidig_ww)
+
+    # -- Controle op resterende geheimen (verplicht, zelfde als maak_publieke_versie.py) --
+    print()
+    print("  [Controle op resterende geheimen - verplicht na het anonimiseren]")
+    treffers = _controleer_geen_geheimen(werkmap, huidig_ww)
+    if treffers:
+        print(f"  FOUT: {len(treffers)} verdachte treffer(s) gevonden NA anonimiseren:")
+        for relpad, omschrijving, voorbeeld in treffers:
+            print(f"    X  {relpad}: {omschrijving} ({voorbeeld!r})")
+        print()
+        print(f"  De werkmap staat nog in {werkmap} voor onderzoek,")
+        print("  maar de ZIP is NIET aangemaakt - los eerst _anonimiseer() op.")
+        return 1
+    print("  OK - geen resterende geheimen gevonden.")
 
     # -- ZIP aanmaken --------------------------------------------------------------
     print()

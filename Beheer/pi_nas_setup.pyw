@@ -195,7 +195,7 @@ class SetupApp(tk.Tk):
                 command=self._terug)
         self.btn_terug.pack(side="left", padx=16)
         self.btn_verder = tk.Button(ftr, text="Verder  ▶",
-                font=("Segoe UI", 10, "bold"), bg=ACCENT_PIBEHEER, fg="#ffffff", relief="flat",
+                font=("Segoe UI", 10, "bold"), bg=ACCENT_PIBEHEER, fg=leesbare_tekstkleur(ACCENT_PIBEHEER), relief="flat",
                 cursor="hand2", padx=14, pady=6, borderwidth=0,
                 command=self._verder)
         self.btn_verder.pack(side="right", padx=16)
@@ -336,8 +336,11 @@ class SetupApp(tk.Tk):
         # Knoppen
         btn_frame = tk.Frame(self.inhoud, bg=BG)
         btn_frame.pack(fill="x", pady=4)
+        # 15 augustus 2026: bg was hardcoded "#0c4a6e" (losse blauwtint,
+        # geen thema-kleur) - nu ACCENT_PIBEHEER zoals de rest van dit scherm
+        # (kopbalk en de "Verder"-knop verderop).
         tk.Button(btn_frame, text="🖥  Pi Imager starten",
-                  font=("Segoe UI", 10, "bold"), bg="#0c4a6e", fg="#ffffff",
+                  font=("Segoe UI", 10, "bold"), bg=ACCENT_PIBEHEER, fg=leesbare_tekstkleur(ACCENT_PIBEHEER),
                   relief="flat", cursor="hand2", padx=14, pady=8, borderwidth=0,
                   command=self._start_imager).pack(side="left")
 
@@ -351,7 +354,7 @@ class SetupApp(tk.Tk):
         self.ping_lbl.pack(fill="x")
 
         tk.Button(self.inhoud, text="📡  Wachten op Pi (automatische pingloop)",
-                  font=("Segoe UI", 10), bg=ACCENT_PIBEHEER, fg="#ffffff",
+                  font=("Segoe UI", 10), bg=ACCENT_PIBEHEER, fg=leesbare_tekstkleur(ACCENT_PIBEHEER),
                   relief="flat", cursor="hand2", padx=14, pady=8, borderwidth=0,
                   command=self._start_pingloop).pack(fill="x", pady=(8,0))
 

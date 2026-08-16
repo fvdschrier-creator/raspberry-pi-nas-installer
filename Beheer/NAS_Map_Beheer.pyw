@@ -28,7 +28,7 @@ _gedeeld_nmb = os.path.join(_nas_root(), "Gedeeld")
 if os.path.isdir(_gedeeld_nmb) and _gedeeld_nmb not in sys.path:
     sys.path.insert(0, _gedeeld_nmb)
 try:
-    from pinas_theme import BG,PANEL,PANEL2,FG,DIM,OK_C,ERR_C,WARN as WARN_C,BLUE,GREEN_C,RED_C,ACCENT_PINAS,ACCENT_PIBEHEER_2
+    from pinas_theme import BG,PANEL,PANEL2,FG,DIM,OK_C,ERR_C,WARN as WARN_C,BLUE,GREEN_C,RED_C,ACCENT_PINAS,ACCENT_PIBEHEER_2,leesbare_tekstkleur
 except ImportError:
     BG="#1e2d3d"; PANEL="#2a3f55"; PANEL2="#344d63"
     FG="#e2eaf2"; DIM="#8ba3be"
@@ -337,7 +337,7 @@ def main():
         hdr = gui.Frame(win, bg=ACCENT_PIBEHEER_2, pady=14)
         hdr.pack(fill="x")
         gui.Label(hdr, text="Structuurcheck & Opruimen",
-                  font=("Segoe UI",16,"bold"), bg=ACCENT_PIBEHEER_2, fg="#ffffff").pack()
+                  font=("Segoe UI",16,"bold"), bg=ACCENT_PIBEHEER_2, fg=leesbare_tekstkleur(ACCENT_PIBEHEER_2)).pack()
         gui.Label(hdr, text=f"Map: {root_dir}",
                   font=("Segoe UI",9), bg=ACCENT_PIBEHEER_2, fg="#9fc2e0").pack()
 

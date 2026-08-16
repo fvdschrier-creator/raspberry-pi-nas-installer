@@ -83,17 +83,31 @@ def _lees_thema():
 # letterlijk van kleur zodra je van thema wisselde. Rechtgetrokken: PINAS
 # gebruikt nu dezelfde teal als de (voorheen ongebruikte) TEAL-alias,
 # PIBACKUP het blauw dat eerst per ongeluk bij PINAS stond.
+# 15 augustus 2026 ("Optie B"): ACCENT_PINAS en ACCENT_PIADDONS (en hun
+# aliassen TEAL/BLUE/ACCENT) waren in het donkere thema te fel/licht om
+# nog voldoende contrast te geven tegen de standaard witte knoptekst
+# (respectievelijk 2.49:1 en 2.26:1 - ruim onder zelfs de losse 3:1
+# ondergrens voor UI-componenten). Eerder al besproken: die kleuren
+# gewoon donkerder maken (Optie A) zou het "frisse" verzadigde effect
+# juist weer dempen - precies de klacht van Frans ("de kleuren ogen niet
+# fris, allemaal wat afgevlakte kleuren"). In plaats daarvan (Optie B):
+# de kleur zelf mag fris/verzadigd blijven (zelfs iets feller dan
+# hiervoor), en de KNOPTEKST wisselt automatisch naar een donkere tint
+# uit dezelfde kleurfamilie zodra wit niet meer genoeg contrast geeft -
+# zie leesbare_tekstkleur() hieronder, die dit voor elke kleur in de
+# suite automatisch bepaalt (dus ook blijft werken als deze kleuren later
+# via de kleurenkiezer worden gewijzigd).
 # ---------------------------------------------------------------------------
 _DONKER = dict(
     BG="#232a33", PANEL="#2b333d", PANEL2="#33404c",
     FG="#eef2f6", DIM="#9aa8b5",
     OK_C="#22c55e", ERR_C="#ef4444", WARN="#f59e0b", YELLOW="#fbbf24",
     DESTRUCTIEF="#e2875e",
-    ACCENT_PINAS="#14b8a6", ACCENT_PIBACKUP="#3185e9",
-    ACCENT_PIADDONS="#e79e15", ACCENT_PICONTROL="#9480e0",
+    ACCENT_PINAS="#09d7bf", ACCENT_PIBACKUP="#3185e9",
+    ACCENT_PIADDONS="#f9a60b", ACCENT_PICONTROL="#9480e0",
     ACCENT_PIBEHEER="#e0668a",
-    BLUE="#14b8a6", GREEN_C="#3185e9", GREEN="#3185e9", RED_C="#ef4444",
-    RED="#ef4444", TEAL="#14b8a6", MAGENTA="#9480e0", ACCENT="#14b8a6",
+    BLUE="#09d7bf", GREEN_C="#3185e9", GREEN="#3185e9", RED_C="#ef4444",
+    RED="#ef4444", TEAL="#09d7bf", MAGENTA="#9480e0", ACCENT="#09d7bf",
 )
 
 _LICHT = dict(
@@ -110,6 +124,65 @@ _LICHT = dict(
 
 _thema = _lees_thema()
 _palet = _DONKER if _thema == "donker" else _LICHT
+
+
+def _relatieve_luminantie(hex_c):
+    """WCAG relatieve luminantie van een hex-kleur (0.0-1.0) - basis voor
+    contrast(). Zelfde formule als gebruikt bij het samenstellen van de
+    kleurenkiezer-stalen (13-15 augustus 2026)."""
+    h = hex_c.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+
+    def _kanaal(c):
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = _kanaal(r), _kanaal(g), _kanaal(b)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast(hex_a, hex_b):
+    """WCAG-contrastverhouding tussen twee hex-kleuren (1.0-21.0)."""
+    la, lb = _relatieve_luminantie(hex_a), _relatieve_luminantie(hex_b)
+    lichter, donkerder = max(la, lb), min(la, lb)
+    return (lichter + 0.05) / (donkerder + 0.05)
+
+
+def leesbare_tekstkleur(bg_hex, donker_hex=None, minimum=3.0):
+    """Kiest een leesbare tekstkleur voor een knop/label met bg_hex als
+    achtergrond ("Optie B", 15 augustus 2026): wit zolang dat voldoende
+    contrast geeft, anders een donkere tint UIT DEZELFDE KLEURFAMILIE
+    (dus geen kaal zwart) - zodat een accentkleur zelf fris/verzadigd kan
+    blijven zonder de tekst onleesbaar te maken. Werkt voor elke kleur in
+    de suite, dus ook nog correct als een accentkleur later via de
+    kleurenkiezer wordt gewijzigd - er hoeft dan nergens los tekstkleur-
+    aangepast te worden.
+
+    donker_hex: vaste donkere tekstkleur voor kleuren die daar al bewust
+    een eigen keuze voor hebben (bijv. DESTRUCTIEF, dat al "#3d2604"
+    gebruikte voordat deze functie bestond) - wordt dan gebruikt i.p.v.
+    een automatisch berekende donkere familietint.
+    minimum: gewenste contrastdrempel. Standaard 3.0:1 - de drempel voor
+    "grote tekst"/UI-componenten (WCAG), en ook de drempel die de rest
+    van de suite dit weekend al aanhield bij het beoordelen van de
+    kleurenkiezer-stalen. Bewust NIET 4.5:1 (AA voor gewone lopende
+    tekst): dat zou ook de al goedwerkende lichte-thema-knoppen onnodig
+    van witte naar donkere tekst laten omslaan. Geef hier 4.5 expliciet
+    mee voor tekst die niet vetgedrukt knoplabel-formaat is."""
+    if contrast(bg_hex, "#ffffff") >= minimum:
+        return "#ffffff"
+    if donker_hex:
+        return donker_hex
+    import colorsys
+    h = bg_hex.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+    hue, _, sat = colorsys.rgb_to_hls(r, g, b)
+    sat = min(sat, 0.55)
+    for lichtheid in range(28, -1, -1):
+        r2, g2, b2 = colorsys.hls_to_rgb(hue, lichtheid / 100.0, sat)
+        kandidaat = f"#{round(r2*255):02x}{round(g2*255):02x}{round(b2*255):02x}"
+        if contrast(bg_hex, kandidaat) >= minimum:
+            return kandidaat
+    return "#1a1a1a"
 
 
 def tint(hex_c, amt=24):

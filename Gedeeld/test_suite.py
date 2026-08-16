@@ -45,12 +45,19 @@ except Exception:
     YELLOW = "#f59e0b"
     ACCENT = "#60a5fa"
 
-# ── Kleuren ──────────────────────────────────────────────────────────────────
-OK_TAG   = OK_C   if _THEMA else "#4ade80"
-ERR_TAG  = ERR_C  if _THEMA else "#f87171"
-WARN_TAG = YELLOW if _THEMA else "#f59e0b"
-INFO_TAG = ACCENT if _THEMA else "#60a5fa"
-DIM_TAG  = DIM    if _THEMA else "#6c7086"
+    def leesbare_tekstkleur(bg_hex, donker_hex=None, minimum=3.0):
+        return "#ffffff"
+
+# 15 augustus 2026: het venster zelf (header/knoppenbalk/statusbalk) volgt
+# gewoon het licht/donker-thema zoals de rest van de suite. De resultatenlijst
+# hieronder is BEWUST een vaste donkere "terminal"-stijl, ongeacht het thema -
+# zelfde reden als bijv. VS Code's Output-paneel of een Windows Terminal-
+# venster binnen een verder lichte app: een vast donker paneel geeft de
+# meeste ruimte/contrast voor gekleurde logregels (OK/FOUT/WAARSCHUWING/
+# INFO naast elkaar), en dat zou bij een lichte paneelkleur juist minder
+# leesbaar worden (de fris-groene/rode/gele tinten hierbeneden zijn specifiek
+# gekozen om tegen een donkere achtergrond te lezen, niet tegen licht-thema's
+# PANEL). Zie _tekst hieronder in _bouw_ui().
 
 # ── Config lezen ──────────────────────────────────────────────────────────────
 def _lees_config():
@@ -942,8 +949,12 @@ class TestSuiteVenster(tk.Toplevel):
         # Knoppenbalk
         btn_bar = tk.Frame(self, bg=PANEL, pady=6)
         btn_bar.pack(fill="x")
+        # 15 augustus 2026: bg was hardcoded "#16a34a" (toevallig exact het
+        # licht-thema-groen, dus in donker thema stond dit knopje er fout
+        # bij) - nu OK_C uit het thema zelf, met leesbare_tekstkleur() voor
+        # de tekst (werkt in beide thema's).
         self._btn_start = tk.Button(btn_bar, text="▶  Alles testen",
-                  font=("Segoe UI", 10, "bold"), bg="#16a34a", fg=FG,
+                  font=("Segoe UI", 10, "bold"), bg=OK_C, fg=leesbare_tekstkleur(OK_C),
                   relief="flat", cursor="hand2", padx=16, pady=6,
                   borderwidth=0, command=self._start_tests)
         self._btn_start.pack(side="left", padx=8)
@@ -953,8 +964,12 @@ class TestSuiteVenster(tk.Toplevel):
                   relief="flat", cursor="hand2", padx=12, pady=6,
                   borderwidth=0, command=self._reset).pack(side="left", padx=4)
 
+        # 15 augustus 2026: bg was hardcoded "#0c4a6e" (een losse blauwtint
+        # die nergens in het thema voorkomt) - CSV exporteren is een
+        # secundaire actie naast "Alles testen", dus nu dezelfde neutrale
+        # PANEL2-stijl als "Opnieuw" hierboven i.p.v. een eigen kleur.
         tk.Button(btn_bar, text="📊  Exporteer CSV",
-                  font=("Segoe UI", 9), bg="#0c4a6e", fg=FG,
+                  font=("Segoe UI", 9), bg=PANEL2, fg=FG,
                   relief="flat", cursor="hand2", padx=12, pady=6,
                   borderwidth=0, command=self._exporteer_csv).pack(side="right", padx=8)
 
@@ -976,10 +991,15 @@ class TestSuiteVenster(tk.Toplevel):
         lijst_frame = tk.Frame(self, bg=BG)
         lijst_frame.pack(fill="both", expand=True, padx=10, pady=4)
 
-        self._tekst = tk.Text(lijst_frame, bg="#0d1117", fg=FG,
+        # Bewust vast donker (terminal-stijl), ongeacht licht/donker-thema -
+        # zie de toelichting bovenaan het bestand. fg=FG blijft wel
+        # thema-tekstkleur voor niet-getagde regels; dat is licht-thema's
+        # donkere FG, wat tegen dit donkere paneel te weinig contrast geeft
+        # - daarom hier bewust een vaste lichte kleur i.p.v. FG.
+        self._tekst = tk.Text(lijst_frame, bg="#0d1117", fg="#e6edf3",
                               font=("Courier New", 9), wrap="none",
                               relief="flat", state="disabled",
-                              insertbackground=FG)
+                              insertbackground="#e6edf3")
         sb_v = tk.Scrollbar(lijst_frame, command=self._tekst.yview)
         sb_h = tk.Scrollbar(lijst_frame, orient="horizontal",
                             command=self._tekst.xview)

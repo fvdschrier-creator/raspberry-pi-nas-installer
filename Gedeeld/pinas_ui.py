@@ -26,7 +26,8 @@ _gedeeld = _os.path.dirname(_os.path.abspath(__file__))
 if _gedeeld not in _sys.path:
     _sys.path.insert(0, _gedeeld)
 
-from pinas_theme import BG, PANEL, PANEL2, FG, DIM, OK_C, ERR_C, WARN, ACCENT, DESTRUCTIEF
+from pinas_theme import (BG, PANEL, PANEL2, FG, DIM, OK_C, ERR_C, WARN,
+                          ACCENT, DESTRUCTIEF, leesbare_tekstkleur)
 
 
 # ---------------------------------------------------------------------------
@@ -158,8 +159,13 @@ def maak_knop(parent, tekst, actie, stijl="primair", bold=False, kleur=None):
     blijft als de knop waarmee je het opende op het hoofdmenu - i.p.v. dat
     alles automatisch terugvalt op hetzelfde blauw.
     """
+    primair_bg = kleur or ACCENT
     kleuren = {
-        "primair": (kleur or ACCENT, "#ffffff"),
+        # 15 augustus 2026 ("Optie B"): witte knoptekst niet meer hardcoded -
+        # leesbare_tekstkleur() kiest automatisch een donkere tekst uit
+        # dezelfde kleurfamilie zodra een accentkleur (zoals het frissere
+        # donkere-thema-teal/amber) onvoldoende contrast geeft tegen wit.
+        "primair": (primair_bg, leesbare_tekstkleur(primair_bg)),
         "secundair": (PANEL2, FG),
         "destructief": (DESTRUCTIEF, "#3d2604"),
     }

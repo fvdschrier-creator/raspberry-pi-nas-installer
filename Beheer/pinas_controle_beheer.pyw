@@ -43,7 +43,8 @@ _gedeeld = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Gedee
 if os.path.isdir(_gedeeld) and _gedeeld not in sys.path:
     sys.path.insert(0, os.path.abspath(_gedeeld))
 
-from pinas_theme import BG, PANEL, PANEL2, FG, DIM, OK_C, ERR_C, ACCENT_PIBEHEER_2
+from pinas_theme import (BG, PANEL, PANEL2, FG, DIM, OK_C, ERR_C,
+                          ACCENT_PIBEHEER_2, leesbare_tekstkleur)
 from pinas_ui import maak_header, maak_sectie, maak_knop
 import pinas_launcher
 import pinas_schijven
@@ -206,7 +207,7 @@ def _open_diagnose(root_win):
     hdr = tk.Frame(dwin, bg=ACCENT_PIBEHEER_2, pady=10)
     hdr.pack(fill="x")
     tk.Label(hdr, text="Pi NAS Diagnose",
-              font=("Segoe UI", 13, "bold"), bg=ACCENT_PIBEHEER_2, fg="#ffffff").pack(side="left", padx=14)
+              font=("Segoe UI", 13, "bold"), bg=ACCENT_PIBEHEER_2, fg=leesbare_tekstkleur(ACCENT_PIBEHEER_2)).pack(side="left", padx=14)
 
     btn_bar = tk.Frame(dwin, bg=PANEL, pady=6)
     btn_bar.pack(fill="x")
@@ -332,11 +333,14 @@ def _open_diagnose(root_win):
         threading.Thread(target=run, daemon=True).start()
 
     tk.Button(btn_bar, text="PC diagnose", font=("Segoe UI", 9, "bold"),
-              bg=ACCENT_PIBEHEER_2, fg="#ffffff", relief="flat", cursor="hand2",
+              bg=ACCENT_PIBEHEER_2, fg=leesbare_tekstkleur(ACCENT_PIBEHEER_2), relief="flat", cursor="hand2",
               padx=12, pady=5, borderwidth=0,
               command=_run_diagnose_pc).pack(side="left", padx=8)
+    # 15 augustus 2026: bg was hardcoded "#065f46" (losse groentint, geen
+    # thema-kleur) - nu dezelfde ACCENT_PIBEHEER_2 als "PC diagnose"
+    # hiernaast, dit zijn 2 gelijkwaardige acties in hetzelfde dialoogje.
     tk.Button(btn_bar, text="Pi diagnose (SSH)", font=("Segoe UI", 9, "bold"),
-              bg="#065f46", fg="#ffffff", relief="flat", cursor="hand2",
+              bg=ACCENT_PIBEHEER_2, fg=leesbare_tekstkleur(ACCENT_PIBEHEER_2), relief="flat", cursor="hand2",
               padx=12, pady=5, borderwidth=0,
               command=_run_diagnose_pi).pack(side="left", padx=4)
     tk.Button(btn_bar, text="Wissen", font=("Segoe UI", 9),
@@ -369,7 +373,7 @@ def _open_logs(root_win):
     hdr = tk.Frame(lwin, bg=ACCENT_PIBEHEER_2, pady=10)
     hdr.pack(fill="x")
     tk.Label(hdr, text="Logbestanden",
-              font=("Segoe UI", 13, "bold"), bg=ACCENT_PIBEHEER_2, fg="#ffffff").pack(side="left", padx=14)
+              font=("Segoe UI", 13, "bold"), bg=ACCENT_PIBEHEER_2, fg=leesbare_tekstkleur(ACCENT_PIBEHEER_2)).pack(side="left", padx=14)
 
     body = tk.Frame(lwin, bg=BG, padx=16, pady=12)
     body.pack(fill="both", expand=True)
@@ -414,8 +418,11 @@ def _open_logs(root_win):
                   font=("Segoe UI", 8), bg=PANEL, fg=DIM, anchor="w").pack(fill="x")
 
         if bestaat:
+            # 15 augustus 2026: bg was hardcoded "#1d4ed8" (losse blauwtint,
+            # geen thema-kleur) - dit is een kleine actie per logregel, dus
+            # nu neutraal PANEL2/FG zoals andere secundaire knopjes in de suite.
             tk.Button(rij, text="Open",
-                      font=("Segoe UI", 9, "bold"), bg="#1d4ed8", fg="#ffffff",
+                      font=("Segoe UI", 9, "bold"), bg=PANEL2, fg=FG,
                       relief="flat", cursor="hand2", padx=10, pady=4,
                       borderwidth=0,
                       command=lambda p=pad: subprocess.Popen(
@@ -444,13 +451,21 @@ def start():
     # de algemene standaard - matcht nu de "Controles"-knop op het hoofdmenu.
     maak_header(win, "Controles", help_hoofdstukken=HELP_HOOFDSTUKKEN, kleur=ACCENT_PIBEHEER_2)
 
+    # 15 augustus 2026: de 5 knoppen hieronder stonden voorheen 4x als
+    # identiek gevulde "primair"-knop (allemaal ACCENT_PIBEHEER_2) plus 1x
+    # neutraal - dus 4 even felle knoppen zonder enige hierarchie ("maak_knop
+    # ... primair - hoofdactie van het scherm", pinas_ui.py). Dit scherm is
+    # een menu van 5 gelijkwaardige functies, geen wizard met 1 hoofdactie -
+    # daarom nu allemaal "secundair" (neutrale PANEL2), zelfde rustige
+    # aanpak als eerder al bij Onderhoud is toegepast. De kleur van het
+    # Beheer-domein blijft zichtbaar via de kopbalk hierboven.
     sectie0 = maak_sectie(win)
     achtergrond0 = sectie0.cget("bg")
     tk.Label(sectie0, text="Structuurcheck & Opruimen", font=("Segoe UI", 10, "bold"),
               bg=achtergrond0, fg=FG, anchor="w").pack(fill="x")
     tk.Label(sectie0, text="Verwachte bestanden controleren en verouderde bestanden opruimen",
               font=("Segoe UI", 8), bg=achtergrond0, fg=DIM, anchor="w").pack(fill="x", pady=(0, 8))
-    maak_knop(sectie0, "Structuurcheck & Opruimen openen", _open_structuurcheck, stijl="primair", kleur=ACCENT_PIBEHEER_2)
+    maak_knop(sectie0, "Structuurcheck & Opruimen openen", _open_structuurcheck, stijl="secundair")
 
     # 13 augustus 2026: deze sectie zelf was per ongeluk nooit toegevoegd -
     # de knop stond wel al in HELP_HOOFDSTUKKEN en _open_pi_opruimen() was
@@ -462,7 +477,7 @@ def start():
               bg=achtergrond_pi, fg=FG, anchor="w").pack(fill="x")
     tk.Label(sectie_pi, text="Onbekende bestanden op de Pi zelf (/home/pi) opsporen en verwijderen",
               font=("Segoe UI", 8), bg=achtergrond_pi, fg=DIM, anchor="w").pack(fill="x", pady=(0, 8))
-    maak_knop(sectie_pi, "Pi opruimen openen", _open_pi_opruimen, stijl="primair", kleur=ACCENT_PIBEHEER_2)
+    maak_knop(sectie_pi, "Pi opruimen openen", _open_pi_opruimen, stijl="secundair")
 
     sectie = maak_sectie(win)
     achtergrond = sectie.cget("bg")
@@ -470,7 +485,7 @@ def start():
               bg=achtergrond, fg=FG, anchor="w").pack(fill="x")
     tk.Label(sectie, text="Kwaliteitschecks: bestanden, syntax, packages, schijven, registry, Pi services",
               font=("Segoe UI", 8), bg=achtergrond, fg=DIM, anchor="w").pack(fill="x", pady=(0, 8))
-    maak_knop(sectie, "Suite testen (test_suite.py)", _start_suite_test, stijl="primair", kleur=ACCENT_PIBEHEER_2)
+    maak_knop(sectie, "Suite testen (test_suite.py)", _start_suite_test, stijl="secundair")
 
     sectie2 = maak_sectie(win)
     achtergrond2 = sectie2.cget("bg")
@@ -478,7 +493,7 @@ def start():
               bg=achtergrond2, fg=FG, anchor="w").pack(fill="x")
     tk.Label(sectie2, text="PC-diagnose (lokaal) en Pi-diagnose (via SSH)",
               font=("Segoe UI", 8), bg=achtergrond2, fg=DIM, anchor="w").pack(fill="x", pady=(0, 8))
-    maak_knop(sectie2, "Diagnose uitvoeren", lambda: _open_diagnose(win), stijl="primair", kleur=ACCENT_PIBEHEER_2)
+    maak_knop(sectie2, "Diagnose uitvoeren", lambda: _open_diagnose(win), stijl="secundair")
 
     sectie3 = maak_sectie(win)
     achtergrond3 = sectie3.cget("bg")

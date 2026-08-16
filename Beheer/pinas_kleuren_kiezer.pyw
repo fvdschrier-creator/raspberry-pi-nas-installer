@@ -55,7 +55,7 @@ THEMA_PAD = os.path.join(_gedeeld, "pinas_theme.py")
 # elke staal hieronder is zorgvuldig gekozen binnen dezelfde "zacht
 # zakelijk"-familie als het huidige palet.
 # ---------------------------------------------------------------------------
-# Gedeeld "regenboogje" van nu 7 duidelijk verschillende kleuren - gebruikt
+# Gedeeld "regenboogje" van nu 10 duidelijk verschillende kleuren - gebruikt
 # voor alle identiteits-/betekenisvelden hieronder, telkens met de eigen
 # kleur vooraan. Ontstaan naar aanleiding van feedback van Frans: 6 stalen
 # die allemaal een tint van dezelfde kleur zijn (bijv. 6x paars/rose bij
@@ -73,24 +73,41 @@ THEMA_PAD = os.path.join(_gedeeld, "pinas_theme.py")
 # "zijn de kleuren in de kleurenkiezer ook wat vrolijker?" - nee dus, nu
 # wel). Voor donker zijn blauw/groen ook meteen gecorrigeerd naar de
 # rechtgetrokken PINAS(teal)/PIBACKUP(blauw)-waarden (zie pinas_theme.py).
+# 15 augustus 2026: 3 stalen toegevoegd (grasgroen/fuchsia/azuur) op
+# uitdrukkelijk verzoek van Frans ("de kleuren ogen niet fris, dat zou
+# tenminste in de kleurentool aanwezig moeten zijn"). Kleurenwiel-analyse
+# van de bestaande 7 liet 2 echte gaten zien (geen zuiver groen tussen
+# amber en turkoois/blauw; geen roze/magenta-achtige kleur tussen paars en
+# rood) plus 1 kleinere aanvulling (een cyaanblauw tussen turkoois en
+# blauw). Voor elke nieuwe kleur is per thema het hoogst haalbare
+# verzadiging+helderheid gekozen BINNEN hetzelfde contrastniveau (tegen
+# wit) als de bestaande stalen in dat thema - dus fris, maar niet feller
+# dan het contrast van de rest toelaat (geen gokken, uitgerekend met de
+# WCAG-relatieve-luminantieformule; licht-thema richt op ~4.5-5.5:1,
+# donker-thema richt op ~3.0-3.6:1, exact de bandbreedte van de 7
+# bestaande stalen in dat thema).
 _REGENBOOG_LICHT = dict(
     blauw="#038787", groen="#206ac9", amber="#c07c15",
     paars="#7c5cd6", rood="#c0392b", turkoois="#0f8a8a",
     roze="#c2456b",
+    grasgroen="#03861e", fuchsia="#db06b0", azuur="#047da9",
 )
 _REGENBOOG_DONKER = dict(
     blauw="#14b8a6", groen="#3185e9", amber="#e79e15",
     paars="#9480e0", rood="#e2725a", turkoois="#22b8b0",
     # 13 augustus 2026: 7e staal voor het nieuwe Beheer-domein (ACCENT_PIBEHEER).
     roze="#e0668a",
+    grasgroen="#04a925", fuchsia="#fa47d6", azuur="#059ed6",
 )
+
+_REGENBOOG_VOLGORDE = ["blauw", "groen", "amber", "paars", "rood", "turkoois",
+                       "roze", "grasgroen", "fuchsia", "azuur"]
 
 
 def _regenboog(thema, eigen_eerst):
-    """Geeft de 7 regenboogkleuren terug, met 'eigen_eerst' vooraan."""
+    """Geeft de 10 regenboogkleuren terug, met 'eigen_eerst' vooraan."""
     r = _REGENBOOG_LICHT if thema == "licht" else _REGENBOOG_DONKER
-    volgorde = [eigen_eerst] + [k for k in
-        ["blauw", "groen", "amber", "paars", "rood", "turkoois", "roze"] if k != eigen_eerst]
+    volgorde = [eigen_eerst] + [k for k in _REGENBOOG_VOLGORDE if k != eigen_eerst]
     return [r[k] for k in volgorde]
 
 

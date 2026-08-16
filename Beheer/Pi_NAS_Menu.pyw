@@ -622,7 +622,7 @@ def _toon_niet_geinstalleerd(v, vereiste, root):
     win.geometry(f"+{x}+{y}")
     tk.Frame(win, bg=ERR_C, pady=10).pack(fill="x")
     tk.Label(win.winfo_children()[-1], text=f"⚠  {v['naam']} niet gevonden",
-             font=("Segoe UI", 11, "bold"), bg=ERR_C, fg="#ffffff").pack()
+             font=("Segoe UI", 11, "bold"), bg=ERR_C, fg=leesbare_tekstkleur(ERR_C)).pack()
     body = tk.Frame(win, bg=BG, padx=20, pady=14)
     body.pack(fill="both", expand=True)
     tk.Label(body, text=v["uitleg"], font=("Segoe UI", 9), bg=BG, fg=FG,
@@ -640,7 +640,7 @@ def _toon_niet_geinstalleerd(v, vereiste, root):
                         f"ssh pi@{PI_IP} \"{cmds}\"\r\npause\r\n")
             subprocess.Popen(["cmd", "/c", bat], creationflags=subprocess.CREATE_NEW_CONSOLE)
         tk.Button(body, text="🐳  Docker installeren via SSH", command=install_docker,
-                  bg=ACCENT_PINAS, fg="#ffffff", font=("Segoe UI", 10, "bold"), relief="flat",
+                  bg=ACCENT_PINAS, fg=leesbare_tekstkleur(ACCENT_PINAS), font=("Segoe UI", 10, "bold"), relief="flat",
                   cursor="hand2", pady=8, borderwidth=0).pack(fill="x", pady=(0,6))
     tk.Button(body, text="Sluiten", command=win.destroy,
               bg=PANEL2, fg=FG, font=("Segoe UI", 9), relief="flat",
@@ -901,7 +901,7 @@ class Menu(tk.Tk):
         f_sea = tk.Frame(body, bg=BG)
         f_sea.pack(fill="x", pady=4)
         self.btn_aan = tk.Button(f_sea, text="🔌  Aanzetten", command=self._seagate_aan,
-                                  bg=WARN, fg="#ffffff", font=("Segoe UI", 10),
+                                  bg=WARN, fg=leesbare_tekstkleur(WARN), font=("Segoe UI", 10),
                                   relief="flat", cursor="hand2", padx=10, pady=8,
                                   borderwidth=0, highlightthickness=0)
         self.btn_aan.pack(side="left", fill="x", expand=True, padx=(0,4))
@@ -959,7 +959,7 @@ class Menu(tk.Tk):
                   cursor="hand2", padx=14, pady=6,
                   borderwidth=0, highlightthickness=0).pack(side="left", padx=10)
         tk.Button(footer, text="📊  Status", command=self._open_status,
-                  bg=ACCENT_PINAS, fg="#ffffff", font=("Segoe UI", 9, "bold"), relief="flat",
+                  bg=ACCENT_PINAS, fg=leesbare_tekstkleur(ACCENT_PINAS), font=("Segoe UI", 9, "bold"), relief="flat",
                   cursor="hand2", padx=12, pady=4,
                   borderwidth=0, highlightthickness=0).pack(side="left", padx=4)
         # Setup status bolletje
@@ -1191,7 +1191,7 @@ class Menu(tk.Tk):
                 _upload_btn = tk.Button(self.status_samen_frame,
                           text="⬆  Upload naar Pi — scripts bijwerken",
                           font=("Segoe UI", 9, "bold"),
-                          bg=ACCENT_PINAS, fg="#ffffff",
+                          bg=ACCENT_PINAS, fg=leesbare_tekstkleur(ACCENT_PINAS),
                           relief="flat", cursor="hand2",
                           borderwidth=0, pady=5)
 
@@ -1225,7 +1225,7 @@ class Menu(tk.Tk):
                     self.status_samen_frame,
                     text="🔌  Schijven verbinden",
                     font=("Segoe UI", 9, "bold"),
-                    bg=WARN, fg="#ffffff",
+                    bg=WARN, fg=leesbare_tekstkleur(WARN),
                     relief="flat", cursor="hand2",
                     borderwidth=0, pady=5,
                     command=self._verbind_schijven)
@@ -1574,7 +1574,7 @@ class Menu(tk.Tk):
         hdr = tk.Frame(wiz, bg=ACCENT_PICONTROL, pady=12)
         hdr.pack(fill="x")
         lbl_stap  = tk.Label(hdr, text="Stap 1 van 4",
-                             font=("Segoe UI", 10, "bold"), bg=ACCENT_PICONTROL, fg="#ffffff")
+                             font=("Segoe UI", 10, "bold"), bg=ACCENT_PICONTROL, fg=leesbare_tekstkleur(ACCENT_PICONTROL))
         lbl_stap.pack()
         lbl_titel = tk.Label(hdr, text="",
                              font=("Segoe UI", 9), bg=ACCENT_PICONTROL, fg=ACCENT_LICHT)
@@ -1599,7 +1599,7 @@ class Menu(tk.Tk):
                              command=lambda: [stop_ping.set(), wiz.destroy()])
         btn_stop.pack(side="left", padx=4)
         btn_next = tk.Button(nav, text="Volgende →",
-                             bg=BLUE, fg="#ffffff", font=("Segoe UI", 10, "bold"),
+                             bg=BLUE, fg=leesbare_tekstkleur(BLUE), font=("Segoe UI", 10, "bold"),
                              relief="flat", cursor="hand2", pady=7,
                              borderwidth=0)
         btn_next.pack(side="right", padx=10)
@@ -1663,7 +1663,7 @@ class Menu(tk.Tk):
 
             tk.Button(content, text="▶  Pi Imager starten",
                       command=start_imager,
-                      bg=ACCENT_PINAS, fg="#ffffff", font=("Segoe UI", 10, "bold"),
+                      bg=ACCENT_PINAS, fg=leesbare_tekstkleur(ACCENT_PINAS), font=("Segoe UI", 10, "bold"),
                       relief="flat", cursor="hand2", pady=8,
                       borderwidth=0).pack(fill="x", pady=(0,10))
 
@@ -1809,7 +1809,7 @@ class Menu(tk.Tk):
     def _rbtn(self, parent, tekst, cmd, kleur=None, bold=False):
         """Afgeronde knop voor setup/help vensters."""
         k = kleur or PANEL2
-        fg = FG if k in (PANEL, PANEL2) else "#ffffff"
+        fg = FG if k in (PANEL, PANEL2) else leesbare_tekstkleur(k)
         f = ("Segoe UI", 9, "bold") if bold else ("Segoe UI", 9)
         b = RoundedButton(parent, text=tekst, command=cmd, bg=k, fg=fg, font=f)
         return b
@@ -1893,7 +1893,7 @@ class Menu(tk.Tk):
             f = tk.Frame(frame, bg=kleur, pady=7, padx=12)
             f.pack(fill="x", pady=(10,4))
             tk.Label(f, text=tekst, font=("Segoe UI", 10, "bold"),
-                     bg=kleur, fg="#ffffff").pack(anchor="w")
+                     bg=kleur, fg=leesbare_tekstkleur(kleur)).pack(anchor="w")
 
         self._beheer_marks = {}
 
@@ -2140,7 +2140,10 @@ class Menu(tk.Tk):
             rij.pack(fill="x", pady=2)
             # 13 augustus 2026: fg meegeven o.b.v. kleur i.p.v. altijd wit -
             # een neutrale PANEL2-knop met witte tekst is onleesbaar.
-            fg = FG if kleur in (PANEL, PANEL2) else "#ffffff"
+            # 15 augustus 2026: en voor een gekleurde knop niet meer kaal
+            # wit - leesbare_tekstkleur() kiest zelf donkere familietekst
+            # als de accentkleur daar te licht/verzadigd voor is.
+            fg = FG if kleur in (PANEL, PANEL2) else leesbare_tekstkleur(kleur)
             hoofd = RoundedButton(rij, text=label, command=bouw_cmd,
                                    bg=kleur, fg=fg)
             hoofd.pack(side="left", fill="x", expand=True, padx=(0,6))
@@ -2550,7 +2553,7 @@ class Menu(tk.Tk):
             fout_lbl.config(text="Standaard links hersteld — klik Opslaan om te bevestigen.")
 
         tk.Button(knop_frame, text="💾  Opslaan", font=("Segoe UI", 10, "bold"),
-                  bg=ACCENT_PINAS, fg="#ffffff", relief="flat", padx=16, pady=6,
+                  bg=ACCENT_PINAS, fg=leesbare_tekstkleur(ACCENT_PINAS), relief="flat", padx=16, pady=6,
                   cursor="hand2", command=opslaan).pack(side="left", padx=6)
         tk.Button(knop_frame, text="↩  Standaard herstellen", font=("Segoe UI", 9),
                   bg=PANEL2, fg=FG, relief="flat", padx=12, pady=6,
@@ -2642,7 +2645,7 @@ class Menu(tk.Tk):
         knop_frame = tk.Frame(win, bg=BG)
         knop_frame.pack(pady=12)
         tk.Button(knop_frame, text="Opslaan", font=("Segoe UI", 10, "bold"),
-                  bg=ACCENT_PINAS, fg="#ffffff", relief="flat", padx=16, pady=6,
+                  bg=ACCENT_PINAS, fg=leesbare_tekstkleur(ACCENT_PINAS), relief="flat", padx=16, pady=6,
                   cursor="hand2", command=opslaan).pack(side="left", padx=6)
         tk.Button(knop_frame, text="Later instellen", font=("Segoe UI", 10),
                   bg=PANEL2, fg=DIM, relief="flat", padx=16, pady=6,
@@ -3244,22 +3247,22 @@ class Menu(tk.Tk):
             tk.Label(waarschuw,
                      text="⚠  Add-on(s) verouderd op de Pi - lokaal bestand is gewijzigd, "
                           "maar nog niet geupload/geinstalleerd:",
-                     font=("Segoe UI", 9, "bold"), bg=WARN, fg="#ffffff",
+                     font=("Segoe UI", 9, "bold"), bg=WARN, fg=leesbare_tekstkleur(WARN),
                      anchor="w", justify="left", wraplength=520).pack(fill="x")
             tk.Label(waarschuw, text="  " + ", ".join(verouderd),
-                     font=("Segoe UI", 9, "bold"), bg=WARN, fg="#ffffff",
+                     font=("Segoe UI", 9, "bold"), bg=WARN, fg=leesbare_tekstkleur(WARN),
                      anchor="w").pack(fill="x")
             tk.Label(waarschuw,
                      text="Open Addons Beheer en klik daar op 'Installeren' bij elk "
                           "hierboven genoemd item.",
-                     font=("Segoe UI", 8), bg=WARN, fg="#ffffff",
+                     font=("Segoe UI", 8), bg=WARN, fg=leesbare_tekstkleur(WARN),
                      anchor="w").pack(fill="x", pady=(2, 0))
 
         def sectie_kop(tekst, kleur=ACCENT_PINAS):
             f = tk.Frame(frame, bg=kleur, pady=6, padx=12)
             f.pack(fill="x", pady=(10,4))
             tk.Label(f, text=tekst, font=("Segoe UI", 10, "bold"),
-                     bg=kleur, fg="#ffffff").pack(anchor="w")
+                     bg=kleur, fg=leesbare_tekstkleur(kleur)).pack(anchor="w")
 
         def status_rij(parent, naam, ok, waarde="", deels=False, na=False):
             # na ("niet van toepassing") - neutraal grijs, voor optionele
@@ -3346,13 +3349,13 @@ class Menu(tk.Tk):
         status_rij(frame, "SSH-verbinding met de Pi", ssh_ok)
         if not ssh_ok:
             tk.Button(frame, text="🔑  SSH sleutel herstellen",
-                      font=("Segoe UI", 9, "bold"), bg=WARN, fg="#ffffff",
+                      font=("Segoe UI", 9, "bold"), bg=WARN, fg=leesbare_tekstkleur(WARN),
                       relief="flat", cursor="hand2", borderwidth=0, pady=5,
                       command=zorg_voor_ppk).pack(fill="x", pady=(4,2))
         hdd_bewust_uit = getattr(self, '_extern_hdd_aan', True) is False
         if not y_ok or (not z_ok and not hdd_bewust_uit) or (_heeft_h and not h_ok):
             tk.Button(frame, text="🔌  Schijven verbinden",
-                      font=("Segoe UI", 9, "bold"), bg=WARN, fg="#ffffff",
+                      font=("Segoe UI", 9, "bold"), bg=WARN, fg=leesbare_tekstkleur(WARN),
                       relief="flat", cursor="hand2", borderwidth=0, pady=5,
                       command=self._verbind_schijven).pack(fill="x", pady=(4,2))
 
@@ -4170,8 +4173,11 @@ class Menu(tk.Tk):
     def _btn(self, parent, tekst, cmd, kleur):
         # Knoppen op een neutrale paneelkleur (PANEL/PANEL2) gebruiken de
         # thema-tekstkleur; knoppen met een duidelijke accentkleur (blauw/
-        # groen/oranje/etc.) blijven altijd wit voor leesbaarheid in elk thema.
-        fg = FG if kleur in (PANEL, PANEL2) else "#ffffff"
+        # groen/oranje/etc.) krijgen witte tekst, TENZIJ die accentkleur
+        # daar zelf te licht/verzadigd voor is - dan kiest
+        # leesbare_tekstkleur() een donkere tint uit dezelfde kleurfamilie
+        # (15 augustus 2026, "Optie B").
+        fg = FG if kleur in (PANEL, PANEL2) else leesbare_tekstkleur(kleur)
         btn = RoundedButton(parent, text=tekst, command=cmd, bg=kleur, fg=fg)
         return btn
 
@@ -4184,7 +4190,7 @@ class RoundedButton(tk.Canvas):
     def __init__(self, parent, text, command, bg, fg=None, font=None,
                  radius=8, pady=8, padx=12, width=0, **kw):
         self._bg     = bg
-        self._fg     = fg or "#ffffff"   # standaard wit — knop heeft altijd een gekleurde achtergrond
+        self._fg     = fg or leesbare_tekstkleur(bg)   # standaard wit tenzij bg te licht is (Optie B)
         self._font   = font or ("Segoe UI", 10)
         self._radius = radius
         self._pady   = pady
