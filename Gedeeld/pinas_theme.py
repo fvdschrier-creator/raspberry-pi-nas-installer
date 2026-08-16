@@ -113,13 +113,13 @@ _DONKER = dict(
 _LICHT = dict(
     BG="#e9edf2", PANEL="#dae2ea", PANEL2="#bed0dd",
     FG="#333c47", DIM="#6d7d8c",
-    OK_C="#16a34a", ERR_C="#dc2626", WARN="#d97706", YELLOW="#c98a2a",
-    DESTRUCTIEF="#d9704a",
+    OK_C="#16a34a", ERR_C="#dc2626", WARN="#d97706", YELLOW="#86630b",
+    DESTRUCTIEF="#b6440f",
     ACCENT_PINAS="#038787", ACCENT_PIBACKUP="#206ac9",
-    ACCENT_PIADDONS="#c07c15", ACCENT_PICONTROL="#7c5cd6",
+    ACCENT_PIADDONS="#86630b", ACCENT_PICONTROL="#1068c6",
     ACCENT_PIBEHEER="#c0392b",
     BLUE="#038787", GREEN_C="#206ac9", GREEN="#206ac9", RED_C="#dc2626",
-    RED="#dc2626", TEAL="#0d9488", MAGENTA="#7c5cd6", ACCENT="#038787",
+    RED="#dc2626", TEAL="#0d9488", MAGENTA="#1068c6", ACCENT="#038787",
 )
 
 _thema = _lees_thema()
