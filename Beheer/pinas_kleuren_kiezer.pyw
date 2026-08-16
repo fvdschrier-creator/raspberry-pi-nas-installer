@@ -310,6 +310,16 @@ def main():
         b.pack(side="left", padx=(0, 6))
         tab_btns[naam] = b
 
+    # ── Vast voorbeeldpaneel (15 augustus 2026) ─────────────────────────
+    # Stond eerst bovenaan IN de scrollbare veldenlijst (inner, hieronder) -
+    # dus zodra je naar een veld verderop in de lijst scrolt, scrolt het
+    # levende voorbeeld gewoon mee weg. Frans: "kun je dit in zijn geheel
+    # vastzetten, is handiger bij het scrollen". Nu een eigen vast frame,
+    # gepakt VOOR het scrollbare canvas (sf) - blijft dus altijd zichtbaar,
+    # ongeacht hoever je in de veldenlijst naar beneden scrolt.
+    preview_kader = tk.Frame(win, bg=BG)
+    preview_kader.pack(fill="x", padx=16, pady=(10, 0))
+
     # ── Scrollbaar canvas voor de veldenlijst ───────────────────────────
     sf = tk.Frame(win, bg=BG)
     sf.pack(fill="both", expand=True, padx=12, pady=(8, 4))
@@ -389,10 +399,14 @@ def main():
     def bouw_inhoud():
         for w in inner.winfo_children():
             w.destroy()
+        for w in preview_kader.winfo_children():
+            w.destroy()
         thema = huidig_tab["naam"]
         waarden = state[thema]
 
-        _teken_preview(inner, waarden)
+        # Vast voorbeeldpaneel (zie preview_kader hierboven) - niet meer in
+        # inner, dus blijft staan ongeacht scrollpositie.
+        _teken_preview(preview_kader, waarden)
 
         for groepnaam, velden in GROEPEN:
             tk.Label(inner, text=groepnaam, font=("Segoe UI", 10, "bold"),
