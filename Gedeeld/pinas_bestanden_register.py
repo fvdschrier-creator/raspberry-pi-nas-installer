@@ -129,6 +129,8 @@ BESTANDEN = [
     ("Beheer", "NAS_Map_Beheer.bat", "Map beheer launcher", True, True),
     ("Beheer", "pinas_controle_beheer.pyw", "Controles - Suite testen, Diagnose, Logs", True, True),
     ("Beheer", "pinas_kleuren_kiezer.pyw", "Kleuren kiezen - thema aanpassen via kleurstalen", True, True),
+    ("Beheer", "pinas_kleurenoverzicht.pyw",
+     "Kleurenoverzicht - HTML-overzicht per venster, live uit pinas_theme.py", True, True),
     ("Beheer", "pinas_pi_opruimen.pyw",
      "Pi opruimen - onbekende bestanden in /home/pi opsporen en verwijderen", True, True),
 

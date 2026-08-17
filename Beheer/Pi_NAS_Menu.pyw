@@ -2208,6 +2208,7 @@ class Menu(tk.Tk):
         thema_tekst = f"🎨  Thema wisselen  (nu: {huidig}) — herstart vereist"
         self._thema_knop = self._rbtn(frame, thema_tekst, self._wissel_thema, PANEL2)
         self._rbtn(frame, "🌈  Kleuren kiezen (aanpassen)", self._open_kleuren_kiezer, PANEL2)
+        self._rbtn(frame, "📋  Kleurenoverzicht (per venster)", self._open_kleurenoverzicht, PANEL2)
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(10,6))
         tk.Label(frame, text="Beveiliging", font=("Segoe UI", 8, "bold"),
                  bg=BG, fg=DIM).pack(anchor="w")
@@ -2224,6 +2225,18 @@ class Menu(tk.Tk):
         if not ok:
             messagebox.showerror("Niet gevonden",
                 "pinas_kleuren_kiezer.pyw niet gevonden in C:\\PiNAS\\Beheer\\\n\n"
+                f"Technische details: {fout}")
+
+    def _open_kleurenoverzicht(self):
+        """Opent Kleurenoverzicht - genereert en toont een HTML-pagina met
+        per venster de titelbalk-, tekst- en knopkleuren, voor beide
+        thema's. Leest de kleurwaarden live uit pinas_theme.py, dus blijft
+        (anders dan een eenmalige export) vanzelf up-to-date."""
+        ok, fout = pinas_launcher.open_programma(
+            "pinas_kleurenoverzicht.pyw", roots=[_nas_root()], submappen=["Beheer"])
+        if not ok:
+            messagebox.showerror("Niet gevonden",
+                "pinas_kleurenoverzicht.pyw niet gevonden in C:\\PiNAS\\Beheer\\\n\n"
                 f"Technische details: {fout}")
 
     def _wissel_thema(self):

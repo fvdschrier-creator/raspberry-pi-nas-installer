@@ -1901,6 +1901,7 @@ def bouw_handleiding():
         ["NAS_Map_Beheer.bat", "Start NAS_Map_Beheer.pyw."],
         ["pinas_controle_beheer.pyw", "Verzamelt Structuurcheck & Opruimen, Pi opruimen, Suite testen, PC/Pi Diagnose en Logbestanden-bekijken op één plek (Controles)."],
         ["pinas_kleuren_kiezer.pyw", "Hiermee pas je het kleurenschema (thema) van de hele suite aan via kleurstalen."],
+        ["pinas_kleurenoverzicht.pyw", "Genereert en opent een HTML-overzicht van elke titelbalk/tekst/knopkleur per venster, voor licht en donker - leest de kleurwaarden live uit pinas_theme.py."],
         ["pinas_pi_opruimen.pyw", "Pi opruimen: vergelijkt /home/pi op de Pi (via SSH) met de bestanden die de suite daar hoort te zetten en helpt onbekende bestanden verwijderen."],
     ], kol_breedte_bestanden))
     story.append(Spacer(1, 0.3*cm))
