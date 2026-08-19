@@ -232,21 +232,37 @@ auto_install() {
         echo -e "  ${YELLOW}⚠  Geen UUID — schijf mogelijk niet herkend${R}"
     fi
 
-    # Automount voor de backup-HDD (hangt op een smart plug): een udev-regel
-    # mount de schijf automatisch zodra hij verschijnt, zodat opstarten en
-    # aan/uitzetten niet meer van een handmatige mount-knop afhangen.
-    if [ "$MOUNT" = "/mnt/backup" ] && [ -n "$UUID" ]; then
-        sudo tee /etc/systemd/system/mnt-backup-automount.service > /dev/null << EOF
+    # Automount: een udev-regel mount de schijf automatisch zodra hij
+    # verschijnt, zodat opstarten en aan/uitzetten niet meer van een
+    # handmatige mount-knop afhangen. Was eerst alleen voor Backup (hangt
+    # op een smart plug, dus wordt geregeld aan/uitgezet), maar geldt sinds
+    # 19 augustus 2026 voor ELKE schijf die via deze wizard gekoppeld
+    # wordt: Frans' Opslag-SSD viel tijdens gebruik weg (loszittende USB-
+    # verbinding) en kwam er na het terugstoppen van de kabel niet vanzelf
+    # weer bij - /etc/fstab wordt namelijk alleen bij het OPSTARTEN gelezen,
+    # niet wanneer een schijf later terugkomt terwijl de Pi al aanstaat.
+    # Bestandsnamen voor Backup bewust ongewijzigd gelaten (geen wees-
+    # bestanden op al geinstalleerde Pi's na een herstel-run).
+    if [ -n "$UUID" ]; then
+        MOUNTNAAM=$(basename "$MOUNT")
+        if [ "$MOUNT" = "/mnt/backup" ]; then
+            SERVICE_NAAM="mnt-backup-automount"
+            RULE_NAAM="99-backup-hdd-automount"
+        else
+            SERVICE_NAAM="mnt-${MOUNTNAAM}-automount"
+            RULE_NAAM="99-${MOUNTNAAM}-automount"
+        fi
+        sudo tee /etc/systemd/system/${SERVICE_NAAM}.service > /dev/null << EOF
 [Unit]
-Description=Backup-HDD automatisch mounten zodra aanwezig
+Description=${MOUNTNAAM}-schijf automatisch mounten zodra aanwezig
 [Service]
 Type=oneshot
 ExecStart=/bin/bash -c 'mountpoint -q $MOUNT || mount $MOUNT'
 EOF
-        echo "ACTION==\"add\", SUBSYSTEM==\"block\", ENV{ID_FS_UUID}==\"$UUID\", RUN+=\"/bin/systemctl --no-block start mnt-backup-automount.service\"" | sudo tee /etc/udev/rules.d/99-backup-hdd-automount.rules > /dev/null
+        echo "ACTION==\"add\", SUBSYSTEM==\"block\", ENV{ID_FS_UUID}==\"$UUID\", RUN+=\"/bin/systemctl --no-block start ${SERVICE_NAAM}.service\"" | sudo tee /etc/udev/rules.d/${RULE_NAAM}.rules > /dev/null
         sudo systemctl daemon-reload
         sudo udevadm control --reload
-        echo -e "  ${GREEN}✔  Automount voor backup-HDD ingesteld${R}"
+        echo -e "  ${GREEN}✔  Automount voor $MOUNTNAAM ingesteld${R}"
     fi
 
     # Systemd rechten service
