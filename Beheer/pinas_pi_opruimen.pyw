@@ -18,6 +18,18 @@ zetten", niet hier dupliceren. Standaard Linux/desktop-mappen en dotfiles
 (Desktop, Documents, .bashrc, .ssh, enzovoort) worden genegeerd - alleen
 echt onverklaarde bestanden/mappen worden als opruim-kandidaat getoond,
 met hun grootte, zodat je zelf kunt inschatten of het de moeite waard is.
+
+22 augustus 2026 (Frans, na een screenshot met 9 "onbekende" items waarvan
+hij bij een aantal niet zeker was of ze wel weg mochten - "het mag niets
+weggooien wat niet weg mag"): "Onbekende items verwijderen" verwijderde tot
+nu toe altijd ALLES uit de lijst in 1x, geen individuele keuze - bij twijfel
+over ook maar 1 item kon de knop dus niet veilig gebruikt worden voor de
+rest. Elk item heeft nu een eigen vinkje (zelfde patroon als Structuurcheck/
+Opruimen in NAS_Map_Beheer.pyw), STANDAARD UIT - bewust anders dan daar,
+want die lijst is een curated, vooraf bekende set (ONNODIGE_BESTANDEN),
+terwijl deze lijst per definitie "alles wat de suite niet herkent" is en dus
+ook iets kan bevatten dat wél nodig is. Alleen aangevinkte items worden
+verwijderd, zowel in de bevestiging als in het daadwerkelijke rm-commando.
 """
 import configparser
 import os
@@ -89,7 +101,13 @@ except OSError:
 # - filebrowser.db: database van FileBrowser, een los te installeren
 #   dienst via de PiServer-installer (nas_installer.py), niet via
 #   Addons Beheer - staat daarom niet in PI_BESTANDEN of Addons\.
-PI_OVERIGE_BEKEND = {"filebrowser.db"}
+# - pinas_manifest.txt: 22 augustus 2026, door nas_upload.py weggeschreven
+#   (whitelist voor nas_installer.py/_cli.py's "Scripts bijwerken vanuit
+#   SD-kaart" - zie de fix daar) - geen bestand dat de suite zelf ooit
+#   naar hier upload, dus stond hier nog niet. Zonder deze regel zou
+#   "Onbekende items verwijderen" het manifest zelf meepakken en
+#   daarmee precies de fix van vandaag weer ongedaan maken.
+PI_OVERIGE_BEKEND = {"filebrowser.db", "pinas_manifest.txt"}
 
 _cfg = configparser.ConfigParser()
 _cfg_pad = os.path.join(NAS_ROOT, "Beheer", "picontrol.cfg")
@@ -154,8 +172,9 @@ PI_OPRUIMEN_HELP = [
      "(Desktop, Documents, enzovoort), de zelf-opruimende logmap en verborgen bestanden worden "
      "genegeerd - alles wat overblijft is onverklaard, vaak resten van een oude, afgebroken of "
      "inmiddels vervangen actie."),
-    ("Verwijderen", "Verwijdert de getoonde onbekende bestanden/mappen definitief van de Pi "
-     "via SSH (rm -rf) - vraagt eerst 1x bevestiging met de volledige lijst zichtbaar. Dit "
+    ("Verwijderen", "Elk onbekend item heeft een eigen vinkje, standaard UIT - vink aan wat "
+     "je echt kwijt wilt. Verwijdert alleen de aangevinkte bestanden/mappen definitief van de "
+     "Pi via SSH (rm -rf), na 1x bevestiging met alleen de aangevinkte items zichtbaar. Dit "
      "kan niet ongedaan worden gemaakt."),
 ]
 
@@ -182,26 +201,68 @@ def main():
     lijst_frame.pack(fill="both", expand=True, padx=16, pady=8)
     scrollbar = tk.Scrollbar(lijst_frame)
     scrollbar.pack(side="right", fill="y")
-    tekstvak = tk.Text(lijst_frame, font=("Consolas", 9), bg=PANEL2, fg=FG,
-                        relief="flat", wrap="word", yscrollcommand=scrollbar.set)
-    tekstvak.pack(fill="both", expand=True)
-    scrollbar.config(command=tekstvak.yview)
-    tekstvak.tag_configure("warn", foreground=WARN)
-    tekstvak.tag_configure("ok", foreground=OK_C)
-    tekstvak.tag_configure("dim", foreground=DIM)
-    tekstvak.config(state="disabled")
+    cv = tk.Canvas(lijst_frame, bg=PANEL2, highlightthickness=0,
+                    yscrollcommand=scrollbar.set)
+    cv.pack(side="left", fill="both", expand=True)
+    scrollbar.config(command=cv.yview)
+    inner = tk.Frame(cv, bg=PANEL2)
+    cv.create_window((0, 0), window=inner, anchor="nw")
+    inner.bind("<Configure>", lambda e: cv.configure(scrollregion=cv.bbox("all")))
 
     knoppen = tk.Frame(win, bg=BG)
     knoppen.pack(fill="x", padx=16, pady=12)
 
     _staat = {"onbekend": [], "bezig": False}
+    onbekend_vars = {}  # naam -> (BooleanVar, grootte)
 
-    def _toon(regels):
-        tekstvak.config(state="normal")
-        tekstvak.delete("1.0", "end")
-        for tekst, tag in regels:
-            tekstvak.insert("end", tekst, tag)
-        tekstvak.config(state="disabled")
+    def _leeg(tekst, tag=None):
+        for w in inner.winfo_children():
+            w.destroy()
+        kleur = {"warn": WARN, "ok": OK_C, "dim": DIM}.get(tag, FG)
+        tk.Label(inner, text=tekst, font=("Segoe UI", 9), bg=PANEL2, fg=kleur,
+                 anchor="w", justify="left").pack(anchor="w", padx=8, pady=8)
+
+    # 22 augustus 2026: elk onbekend item krijgt een eigen vinkje (STANDAARD
+    # UIT - zie de docstring bovenaan dit bestand voor waarom dat hier
+    # bewust anders is dan bij Structuurcheck/Opruimen). Alleen aangevinkte
+    # items komen in de bevestiging EN in het daadwerkelijke rm-commando
+    # terecht - "het mag niets weggooien wat niet weg mag" (Frans).
+    def _bouw_lijst(onbekend, ontbrekend):
+        for w in inner.winfo_children():
+            w.destroy()
+        onbekend_vars.clear()
+
+        if onbekend:
+            tk.Label(inner, text=f"ONBEKEND ({len(onbekend)}) - vink aan wat je wilt "
+                                  f"verwijderen (standaard niets aangevinkt):",
+                      font=("Segoe UI", 9, "bold"), bg=PANEL2, fg=WARN,
+                      anchor="w").pack(anchor="w", padx=8, pady=(8, 4))
+            for naam, grootte in sorted(onbekend, key=lambda x: x[0].lower()):
+                var = tk.BooleanVar(master=win, value=False)
+                onbekend_vars[naam] = (var, grootte)
+                rij = tk.Frame(inner, bg=PANEL2)
+                rij.pack(fill="x", padx=8, pady=1)
+                tk.Checkbutton(rij, text=naam, variable=var, font=("Segoe UI", 9),
+                                bg=PANEL2, fg=FG, selectcolor=PANEL,
+                                activebackground=PANEL2, anchor="w").pack(side="left")
+                tk.Label(rij, text=grootte, font=("Segoe UI", 8), bg=PANEL2, fg=DIM,
+                          width=8, anchor="e").pack(side="right")
+        else:
+            tk.Label(inner, text="Geen onbekende bestanden/mappen gevonden.",
+                      font=("Segoe UI", 9), bg=PANEL2, fg=OK_C,
+                      anchor="w").pack(anchor="w", padx=8, pady=8)
+
+        if ontbrekend:
+            tk.Frame(inner, bg=PANEL, height=1).pack(fill="x", padx=8, pady=(10, 4))
+            tk.Label(inner, text=f"ONTBREEKT ({len(ontbrekend)}) - hoort er wel te staan:",
+                      font=("Segoe UI", 9, "bold"), bg=PANEL2, fg=WARN,
+                      anchor="w").pack(anchor="w", padx=8, pady=(4, 2))
+            for naam in ontbrekend:
+                tk.Label(inner, text=f"  {naam}", font=("Segoe UI", 9), bg=PANEL2, fg=FG,
+                          anchor="w").pack(anchor="w", padx=8)
+            tk.Label(inner, text="  Tip: Onderhoud -> Geavanceerd -> Scripts uploaden naar Pi.",
+                      font=("Segoe UI", 8), bg=PANEL2, fg=DIM,
+                      anchor="w").pack(anchor="w", padx=8, pady=(2, 8))
 
     def _controleren_klik():
         if _staat["bezig"]:
@@ -210,7 +271,7 @@ def main():
         status_label.config(text="Bezig met controleren via SSH...", fg=DIM)
         verwijder_knop.config(state="disabled")
         controleer_knop.config(state="disabled")
-        _toon([("Even geduld...\n", "dim")])
+        _leeg("Even geduld...", "dim")
 
         def _werk():
             try:
@@ -220,20 +281,7 @@ def main():
                     _staat["onbekend"] = onbekend
                     _staat["bezig"] = False
                     controleer_knop.config(state="normal")
-                    regels = []
-                    if onbekend:
-                        regels.append((f"ONBEKEND ({len(onbekend)}) - kandidaat om op te ruimen:\n", "warn"))
-                        for naam, grootte in sorted(onbekend, key=lambda x: x[0].lower()):
-                            regels.append((f"  {grootte:>7}  {naam}\n", None))
-                        regels.append(("\n", None))
-                    else:
-                        regels.append(("Geen onbekende bestanden/mappen gevonden.\n\n", "ok"))
-                    if ontbrekend:
-                        regels.append((f"ONTBREEKT ({len(ontbrekend)}) - hoort er wel te staan:\n", "warn"))
-                        for naam in ontbrekend:
-                            regels.append((f"  {naam}\n", None))
-                        regels.append(("\n  Tip: Onderhoud -> Geavanceerd -> Scripts uploaden naar Pi.\n", "dim"))
-                    _toon(regels)
+                    _bouw_lijst(onbekend, ontbrekend)
                     if onbekend:
                         status_label.config(text=f"{len(onbekend)} onbekend item(s) gevonden.", fg=WARN)
                         verwijder_knop.config(state="normal")
@@ -246,22 +294,27 @@ def main():
                     _staat["bezig"] = False
                     controleer_knop.config(state="normal")
                     status_label.config(text=f"Controle mislukt: {e}", fg=ERR_C)
-                    _toon([(f"Kon niet verbinden met de Pi:\n\n{e}", "warn")])
+                    _leeg(f"Kon niet verbinden met de Pi:\n\n{e}", "warn")
                 win.after(0, _mislukt)
 
         threading.Thread(target=_werk, daemon=True).start()
 
     def _verwijderen_klik():
-        onbekend = _staat["onbekend"]
-        if not onbekend:
+        geselecteerd = [(naam, grootte) for naam, (var, grootte) in onbekend_vars.items()
+                         if var.get()]
+        if not geselecteerd:
+            messagebox.showinfo("Opruimen",
+                f"Niets aangevinkt (van de {len(onbekend_vars)} onbekende item(s)).\n\n"
+                "Zet eerst een vinkje bij wat je wilt verwijderen.")
             return
-        namen = "\n".join(f"  - {n} ({g})" for n, g in onbekend)
+        namen = "\n".join(f"  - {n} ({g})" for n, g in geselecteerd)
         if not messagebox.askyesno(
                 "Verwijderen bevestigen",
-                f"{len(onbekend)} item(s) definitief verwijderen van de Pi?\n\n{namen}\n\n"
+                f"{len(geselecteerd)} van de {len(onbekend_vars)} onbekende item(s) definitief "
+                f"verwijderen van de Pi?\n\n{namen}\n\n"
                 "Dit kan niet ongedaan worden gemaakt."):
             return
-        paden = " ".join(f"'/home/pi/{n}'" for n, _g in onbekend)
+        paden = " ".join(f"'/home/pi/{n}'" for n, _g in geselecteerd)
         # 13 augustus 2026 (bugfix, Frans meldde dit via een screenshot):
         # zonder sudo faalde dit stil-gedeeltelijk op alles wat een
         # root-eigen achtergronddienst (bijv. de seagate-/smart_plug-
@@ -278,7 +331,7 @@ def main():
             messagebox.showerror("Opruimen mislukt", str(e))
             return
         if r.returncode == 0 and "OK" in r.stdout:
-            messagebox.showinfo("Opruimen - klaar", f"{len(onbekend)} item(s) verwijderd.")
+            messagebox.showinfo("Opruimen - klaar", f"{len(geselecteerd)} item(s) verwijderd.")
             _controleren_klik()
         else:
             messagebox.showerror("Opruimen mislukt", r.stderr.strip() or "Onbekende fout")
@@ -287,13 +340,13 @@ def main():
         controleer_knop = maak_knop(knoppen, "Controleren", _controleren_klik,
                                      stijl="primair", kleur=ACCENT_PIBEHEER_2)
         controleer_knop.pack(side="left", padx=(0, 8))
-        verwijder_knop = maak_knop(knoppen, "Onbekende items verwijderen",
+        verwijder_knop = maak_knop(knoppen, "Aangevinkte items verwijderen",
                                     _verwijderen_klik, stijl="destructief")
         verwijder_knop.pack(side="left")
     else:
         controleer_knop = tk.Button(knoppen, text="Controleren", command=_controleren_klik)
         controleer_knop.pack(side="left", padx=(0, 8))
-        verwijder_knop = tk.Button(knoppen, text="Onbekende items verwijderen", command=_verwijderen_klik)
+        verwijder_knop = tk.Button(knoppen, text="Aangevinkte items verwijderen", command=_verwijderen_klik)
         verwijder_knop.pack(side="left")
     verwijder_knop.config(state="disabled")
 

@@ -979,6 +979,20 @@ class Menu(tk.Tk):
         self.after(3000, self._start_sync_check)
 
     # ── Status samenvatting (compact, hoofdvenster) ───────────────────────────
+    def _schijf_gecombineerd(self, windows_ok, pi_mount_ok):
+        """20 augustus 2026 (schijf-consolidatieproject, Frans: 'geen losse
+        functies voor dezelfde vraag in de suite') - de ENE plek die bepaalt
+        of een schijf (Opslag/Backup/Spiegel Backup) echt OK is. Combineert
+        de Windows-kant ('net use', kan blijven zeggen dat het goed zit
+        omdat het alleen de bestaande mapping-registratie leest) met de
+        echte Pi-side mount+I/O-test uit pinas_pi_status.py (kan een
+        spookmount ontmaskeren die 'net use' niet ziet). Is de Pi niet
+        bereikbaar (pi_mount_ok is None), dan weten we niet meer dan de
+        Windows-kant en valt dit daarop terug - géén gok naar rood."""
+        if pi_mount_ok is None:
+            return windows_ok
+        return windows_ok and pi_mount_ok
+
     def _bouw_pc_status(self):
         """Bouwt/werkt de compacte statussamenvatting in het hoofdvenster bij.
 
@@ -1009,13 +1023,17 @@ class Menu(tk.Tk):
                         checks.get('y', False), checks.get('z', False)]
             pc_ok = all(pc_items)
             pc_deels = any(pc_items) and not pc_ok
-            y_ok = checks.get('y', False)
-            z_ok = checks.get('z', False)
+            # 20 augustus 2026: niet meer rechtstreeks checks.get('y'/'z'/'h')
+            # gebruiken (dat is alleen de Windows-kant) - via de centrale
+            # combinatiefunctie, zodat dit scherm en het uitgebreide
+            # Statusvenster hieronder altijd hetzelfde antwoord geven.
+            y_ok = self._schijf_gecombineerd(checks.get('y', False), self._opslag_mount_ok)
+            z_ok = self._schijf_gecombineerd(checks.get('z', False), self._backup_mount_ok)
             # Spiegel Backup (H:) is optioneel (niet elke installatie heeft
             # 'm) en telt BEWUST niet mee in pc_ok/pc_items - een tijdelijk
             # ontkoppelde spiegel-van-de-backup mag de hoofdstatus niet rood
             # laten lijken, dat is minder kritiek dan Opslag/Backup zelf.
-            h_ok = checks.get('h', False)
+            h_ok = self._schijf_gecombineerd(checks.get('h', False), self._spiegel_mount_ok)
         schijf_ok = y_ok and z_ok
 
         # Pi status (gebruik laatste bekende staat)
@@ -1442,6 +1460,9 @@ class Menu(tk.Tk):
         self._printer_status = "onbekend"
         self._dashboard_status = "onbekend"
         self._addon_verouderd = []
+        self._opslag_mount_ok = None
+        self._backup_mount_ok = None
+        self._spiegel_mount_ok = None
 
     def _bouw_pi_status(self, statussen):
         # Sla Pi status op voor samenvatting in hoofdvenster
@@ -1472,6 +1493,14 @@ class Menu(tk.Tk):
                         "filebrowser": r["filebrowser"], "cockpit": r["cockpit"],
                         "seagate-web": r["seagate-web"],
                         "backup_mount": r["backup_mount"],
+                        # 20 augustus 2026: Opslag/Spiegel Backup kregen dezelfde
+                        # echte mountcheck als Backup hierboven - dit is nu de
+                        # ENE Pi-side waarheid die _bouw_pc_status/_vul_status_venster
+                        # gebruiken i.p.v. alleen op de Windows-kant net-use-check
+                        # te vertrouwen (die kan "OK" blijven zeggen terwijl de Pi
+                        # de schijf allang niet meer gemount heeft).
+                        "opslag_mount": r["opslag_mount"],
+                        "spiegel_mount": r["spiegel_mount"],
                     }
                     for k in ("nextcloud", "pihole", "zerotier", "vaultwarden",
                               "printer", "dashboard"):
@@ -1498,9 +1527,18 @@ class Menu(tk.Tk):
                         ("cockpit",     "Cockpit"),
                         ("seagate-web", "Externe HDD svc"),
                         ("backup_mount","Backup-schijf gemount"),
+                        ("opslag_mount","Opslag-schijf gemount"),
+                        ("spiegel_mount","Spiegel Backup gemount"),
                     ]:
                         resultaten.append((naam, svc_map.get(svc_key, False)))
                 # Geen bruikbare SSH-output -> resultaten blijft leeg = 'onbekend'
+                # 20 augustus 2026: de echte Pi-side mount-waarheid apart onthouden
+                # (tri-state: True/False/None='onbekend, Pi niet bereikbaar') - dit
+                # is de ENE bron die _bouw_pc_status/_vul_status_venster gebruiken
+                # om samen met de Windows net-use-check de schijfstatus te bepalen.
+                self._opslag_mount_ok = svc_map.get("opslag_mount") if svc_map else None
+                self._backup_mount_ok = svc_map.get("backup_mount") if svc_map else None
+                self._spiegel_mount_ok = svc_map.get("spiegel_mount") if svc_map else None
             except Exception:
                 resultaten = []   # SSH mislukt: status ONBEKEND, niet "alles uit"
                 addon_hashes = {}
@@ -1509,6 +1547,9 @@ class Menu(tk.Tk):
                 vw_status = "onbekend"
                 printer_status = "onbekend"
                 dashboard_status = "onbekend"
+                self._opslag_mount_ok = None
+                self._backup_mount_ok = None
+                self._spiegel_mount_ok = None
 
             # Welke add-ons zijn geinstalleerd EN wijken af van het lokale
             # bestand? Alleen dan is een waarschuwing zinvol - een add-on
@@ -3346,8 +3387,14 @@ class Menu(tk.Tk):
         _naam_backup = "Backup"
         _letter_opslag = _opslag_letter()
         _letter_backup = _backup_letter()
-        y_ok = check_share(_naam_opslag, _letter_opslag, PI_IP)
-        z_ok = check_share(_naam_backup, _letter_backup, PI_IP)
+        # 20 augustus 2026: geen eigen check_share()-aanroep meer hier - dat
+        # gaf dit scherm een eigen, op-dat-moment-andere meting dan het
+        # compacte statusblok (de directe oorzaak van de gemelde
+        # inconsistentie). Nu dezelfde gecombineerde (Windows + echte
+        # Pi-mount) waarde uit de achtergrondcache als _bouw_pc_status.
+        _pc_checks = getattr(self, '_pc_checks', None) or {}
+        y_ok = self._schijf_gecombineerd(_pc_checks.get('y', False), self._opslag_mount_ok)
+        z_ok = self._schijf_gecombineerd(_pc_checks.get('z', False), self._backup_mount_ok)
         status_rij(frame, f"Opslag ({_letter_opslag}:, SSD)",  y_ok)
         status_rij(frame, f"Backup ({_letter_backup}:, HDD)",  z_ok)
         # Spiegel Backup (H:) is optioneel - alleen tonen op installaties
@@ -3356,7 +3403,7 @@ class Menu(tk.Tk):
         h_ok = False
         if _heeft_h:
             _letter_spiegel = _spiegel_letter()
-            h_ok = check_share("SpiegelBackup", _letter_spiegel, PI_IP)
+            h_ok = self._schijf_gecombineerd(_pc_checks.get('h', False), self._spiegel_mount_ok)
             status_rij(frame, f"Spiegel Backup ({_letter_spiegel}:, HDD)", h_ok)
         ssh_ok = check_ssh()
         status_rij(frame, "SSH-verbinding met de Pi", ssh_ok)
@@ -3606,7 +3653,8 @@ class Menu(tk.Tk):
         pi_statussen = getattr(self, '_pi_statussen', [])
         # Externe HDD svc: intern-only, geen eigen ZeroTier-toegangspad
         # (zelfde vaste uitzondering als elders in de suite).
-        _geen_zt = {"Externe HDD svc", "Backup-schijf gemount"}
+        _geen_zt = {"Externe HDD svc", "Backup-schijf gemount",
+                    "Opslag-schijf gemount", "Spiegel Backup gemount"}
         if pi_statussen:
             for naam, ok in pi_statussen:
                 dienst_rij(frame, naam, ok, zt_relevant=(naam not in _geen_zt))

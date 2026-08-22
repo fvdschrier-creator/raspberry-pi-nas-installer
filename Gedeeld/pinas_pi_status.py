@@ -74,6 +74,19 @@ _SSH_COMMANDO = (
     "if mountpoint -q /mnt/backup 2>/dev/null && timeout 3 ls /mnt/backup >/dev/null 2>&1; then "
     "echo backup_mount:active; "
     "else echo backup_mount:inactive; fi; "
+    # 20 augustus 2026 (Frans: "geen losse functies voor dezelfde vraag in
+    # de suite" - Opslag en Spiegel Backup hadden GEEN eigen echte
+    # mountcheck, alleen de Windows-kant net-use-check die kan liegen
+    # als de Pi de schijf niet meer echt gemount heeft). Zelfde
+    # spookmount-veilige test als backup_mount hierboven, nu ook voor
+    # Opslag en Spiegel Backup - dit zijn nu de enige 3 plekken in de
+    # hele suite die "is deze schijf echt gemount" beantwoorden.
+    "if mountpoint -q /mnt/opslag 2>/dev/null && timeout 3 ls /mnt/opslag >/dev/null 2>&1; then "
+    "echo opslag_mount:active; "
+    "else echo opslag_mount:inactive; fi; "
+    "if mountpoint -q /mnt/spiegelbackup 2>/dev/null && timeout 3 ls /mnt/spiegelbackup >/dev/null 2>&1; then "
+    "echo spiegel_mount:active; "
+    "else echo spiegel_mount:inactive; fi; "
     # Pi-hole - via 'systemctl cat' (bestaat de unit uberhaupt), niet
     # 'command -v': dat faalde eerder ten onrechte in een niet-
     # interactieve SSH-sessie omdat /usr/sbin niet in het PATH van een
@@ -114,7 +127,8 @@ _SSH_COMMANDO = (
 
 # Diensten met een simpele aan/uit-status (True/False) i.p.v. 3 standen.
 _BOOLEAN_DIENSTEN = ("smbd", "nextcloud", "filebrowser", "cockpit",
-                      "seagate-web", "backup_mount")
+                      "seagate-web", "backup_mount", "opslag_mount",
+                      "spiegel_mount")
 
 # Diensten met 3-standen-status ("active"/"stopped"/"absent").
 _DRIESTANDEN_DIENSTEN = ("pihole", "zerotier", "vaultwarden",

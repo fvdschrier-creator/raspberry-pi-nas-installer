@@ -454,7 +454,16 @@ def _vaultwarden_status():
 
 
 def _schijf(pad):
+    # 20 augustus 2026 (schijf-consolidatieproject): zelfde spookmount-veilige
+    # test als pinas_pi_status.py's backup_mount/opslag_mount/spiegel_mount -
+    # os.path.ismount() alleen kan "gemount" blijven zeggen als de schijf
+    # buiten een nette umount om is weggevallen (bijv. smart plug die de
+    # stroom eraf haalt). Een echte I/O-poging ontmaskert dat sneller.
     if not os.path.ismount(pad):
+        return None
+    try:
+        os.listdir(pad)
+    except Exception:
         return None
     regels = _run(["df", "-h", pad]).splitlines()
     if len(regels) < 2:
@@ -575,7 +584,15 @@ def verzamel_status(host):
     return {
         "diensten": diensten,
         "model": model, "ram": ram, "sd_grootte": sd_grootte, "temp": temp, "uptime": uptime,
-        "schijven": {"Opslag (SSD)": _schijf("/mnt/opslag"), "Backup (HDD)": _schijf("/mnt/backup")},
+        # 20 augustus 2026: Spiegel Backup ontbrak hier terwijl hij wel in
+        # Pi_NAS_Menu.pyw en pinas_pi_status.py wordt getoond - toegevoegd
+        # voor consistentie. LET OP (Frans, controleer dit): pad hieronder
+        # is een aanname (/mnt/spiegelbackup), zelfde aanname als in
+        # pinas_pi_status.py - bevestig het echte mountpad op de Pi (bijv.
+        # via 'mount' of fstab) voordat dit als definitief geldt.
+        "schijven": {"Opslag (SSD)": _schijf("/mnt/opslag"),
+                     "Backup (HDD)": _schijf("/mnt/backup"),
+                     "Spiegel Backup (HDD)": _schijf("/mnt/spiegelbackup")},
         # (12 augustus 2026) Overgenomen van pinas_status_pagina.sh: ZeroTier-
         # adres voor de Bereikbaarheid-kaart, Vaultwarden-certificaatstatus
         # voor de downloadkaart, en CUPS-printernamen voor het AirPrint-

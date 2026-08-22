@@ -1810,11 +1810,52 @@ WantedBy=multi-user.target
     # ══════════════════════════════════════════════════════════════════════════
     # SCRIPTS BIJWERKEN
     # ══════════════════════════════════════════════════════════════════════════
+    # 22 augustus 2026 (Frans, na een "Pi opruimen"-screenshot met 9
+    # "onbekende" items): deze pagina kopieerde voorheen BLIND elk .py/.sh-
+    # bestand dat op /boot/firmware/ staat naar /home/pi/ - geen toets tegen
+    # welke bestanden de suite daar eigenlijk verwacht (PI_BESTANDEN in
+    # nas_upload.py). Omdat
+    # nas_upload.py's "Kopieren naar SD-kaart"-stap altijd alles spiegelt wat
+    # op dat moment in /home/pi staat - dus ook oude rommel die daar per
+    # ongeluk staat - bleef zo'n bestand voor altijd terugkomen: "Pi
+    # opruimen" ruimt het op in /home/pi, maar de eerstvolgende "Scripts
+    # bijwerken" hier zette het gewoon terug vanaf /boot/firmware/.
+    #
+    # Fix: nas_upload.py schrijft nu /boot/firmware/pinas_manifest.txt weg
+    # (1 bestandsnaam per regel, gebaseerd op diezelfde PI_BESTANDEN plus
+    # elk .sh-bestand dat lokaal in Addons\ staat - geen nieuwe, losse
+    # lijst). Staat dat manifest er, dan
+    # wordt hier alleen nog gekopieerd wat erin staat; bestanden op
+    # /boot/firmware/ die er niet in staan worden genegeerd EN in de
+    # preview/log gemeld, zodat verouderde bestanden meteen zichtbaar
+    # worden i.p.v. pas achteraf via "Pi opruimen". Ontbreekt het manifest
+    # (bijv. een oudere SD-kaart-image van voor deze fix), dan valt dit
+    # terug op het oude gedrag (alles kopieren) met een duidelijke
+    # waarschuwing - een verse of oudere installatie blokkeert dus nooit.
+    def _scripts_manifest(self):
+        """None = geen manifest gevonden (oud gedrag: alles kopieren).
+        Anders: set met bestandsnamen die op de Pi horen."""
+        import os
+        pad = "/boot/firmware/pinas_manifest.txt"
+        if not os.path.exists(pad):
+            return None
+        try:
+            with open(pad, encoding="utf-8") as f:
+                namen = {r.strip() for r in f if r.strip()}
+            return namen or None
+        except Exception:
+            return None
+
     def _pg_scripts(self):
         self._head("⬆  Scripts bijwerken vanuit SD-kaart",FG)
         p=self._panel()
         tk.Label(p,text="Kopieert nieuwe scripts van /boot/firmware/ naar /home/pi/",
                  font=("Segoe UI",9),bg=PANEL,fg=FG).pack(anchor="w",pady=(0,6))
+        bekend=self._scripts_manifest()
+        if bekend is None:
+            tk.Label(p,text="⚠ Manifest ontbreekt (pinas_manifest.txt) - alles wordt "
+                            "gekopieerd. Draai 'Scripts uploaden naar Pi' vanaf Windows.",
+                     font=("Segoe UI",9),bg=PANEL,fg=WARN).pack(anchor="w",pady=(0,6))
         # Toon beschikbare scripts
         scripts=sh("ls /boot/firmware/*.py /boot/firmware/*.sh 2>/dev/null")
         if scripts:
@@ -1822,9 +1863,12 @@ WantedBy=multi-user.target
                 import os as _os
                 base=_os.path.basename(s)
                 dest=f"/home/pi/{base}"
-                diff=sh(f"diff -q {s} {dest} 2>/dev/null")
-                status="⚠ nieuwer" if diff or not _os.path.exists(dest) else "✔ up-to-date"
-                color=WARN if "nieuwer" in status else GREEN
+                if bekend is not None and base not in bekend:
+                    status,color="? onbekend",WARN
+                else:
+                    diff=sh(f"diff -q {s} {dest} 2>/dev/null")
+                    status="⚠ nieuwer" if diff or not _os.path.exists(dest) else "✔ up-to-date"
+                    color=WARN if "nieuwer" in status else GREEN
                 r=tk.Frame(p,bg=PANEL); r.pack(anchor="w",fill="x",pady=1)
                 tk.Label(r,text=base,font=("Segoe UI",9),bg=PANEL,fg=FG,width=32,anchor="w").pack(side="left")
                 tk.Label(r,text=status,font=("Segoe UI",9),bg=PANEL,fg=color).pack(side="left")
@@ -1838,12 +1882,22 @@ WantedBy=multi-user.target
 
     def _scripts_update(self):
         self.scr_out.delete("1.0",tk.END)
+        bekend=self._scripts_manifest()
         def bg():
             import glob,os,shutil
+            if bekend is None:
+                msg=("⚠  Manifest ontbreekt - kopieert voorlopig ALLES (oud gedrag). "
+                     "Draai 'Scripts uploaden naar Pi' vanaf Windows om dit bestand aan "
+                     "te maken en toekomstige runs betrouwbaar te maken.\n")
+                self.after(0,lambda m=msg:(self.scr_out.insert(tk.END,m,"warn"),self.scr_out.see(tk.END)))
             copied=0
+            genegeerd=[]
             for f in glob.glob("/boot/firmware/*.py")+glob.glob("/boot/firmware/*.sh"):
                 base=os.path.basename(f)
                 if base=="install.sh": continue
+                if bekend is not None and base not in bekend:
+                    genegeerd.append(base)
+                    continue
                 dest=f"/home/pi/{base}"
                 try:
                     shutil.copy2(f,dest)
@@ -1854,6 +1908,11 @@ WantedBy=multi-user.target
                 except Exception as e:
                     msg=f"✗  Fout: {base}: {e}\n"
                     self.after(0,lambda m=msg:(self.scr_out.insert(tk.END,m,"warn"),self.scr_out.see(tk.END)))
+            if genegeerd:
+                msg=(f"…  {len(genegeerd)} bestand(en) genegeerd (niet in het manifest, "
+                     f"waarschijnlijk verouderd - via 'Pi opruimen' te verwijderen): "
+                     f"{', '.join(genegeerd)}\n")
+                self.after(0,lambda m=msg:(self.scr_out.insert(tk.END,m,"warn"),self.scr_out.see(tk.END)))
             # Ook naar bootfs kopiëren
             for f in glob.glob("/home/pi/*.py")+glob.glob("/home/pi/*.sh"):
                 base=os.path.basename(f)
@@ -2001,7 +2060,7 @@ WantedBy=multi-user.target
             ("🔬 Diagnose","Systeem status: IP, temperatuur, RAM, schijven, services, lsblk, df, fstab."),
             ("📋 Systeem info","Overzicht van alle verbindingsgegevens: Samba-pad, Nextcloud, FileBrowser, Cockpit."),
             ("🔑 SSH-sleutel","SSH inschakelen, sleutel controleren, wachtwoordlogin uitschakelen."),
-            ("⬆ Scripts bijwerken","Kopieert nieuwe scripts van /boot/firmware/ naar /home/pi/ én bootfs."),
+            ("⬆ Scripts bijwerken","Kopieert nieuwe scripts van /boot/firmware/ naar /home/pi/ én bootfs. Alleen bestanden uit pinas_manifest.txt (22 augustus 2026) - verouderde bestanden worden genegeerd en gemeld i.p.v. blind gekopieerd."),
             ("🗑 Deïnstalleren","Verwijder afzonderlijke componenten of alles. Pi OS blijft intact, data bewaard."),
             ("🛠 Beheer","Standaard NAS-structuur aanmaken (Opslag/Fotos/Bestanden/Music) · Eigen map/share toevoegen · Nextcloud opslag koppelen · Gebruikers beheren · Schijfruimte overzicht."),
         ]

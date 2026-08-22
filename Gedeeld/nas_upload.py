@@ -45,6 +45,40 @@ def _nas_root():
     return os.path.dirname(_script_dir())
 
 
+NAS_ROOT = _nas_root()
+
+# 22 augustus 2026 (Frans, na een screenshot van "Pi opruimen" met 9
+# "onbekende" items - waarvan er 3 (de oude status_pagina-scripts)
+# terecht waren, maar het onderliggende probleem zat dieper: nas_installer.py
+# en nas_installer_cli.py's "Scripts bijwerken vanuit SD-kaart" kopieerden
+# BLIND elk .py/.sh-bestand dat op /boot/firmware/ staat naar /home/pi/
+# terug - zonder enige toets tegen PI_BESTANDEN of de addon-scripts. Omdat
+# de bootfs-spiegeling verderop altijd alles kopieert wat op dat moment in
+# /home/pi staat, inclusief oude rommel die daar per ongeluk stond, bleef
+# zo'n bestand voor altijd rondspoken: "Pi opruimen" ruimt het op in
+# /home/pi, maar de volgende keer dat iemand op de Pi zelf "Scripts
+# bijwerken" draait, komt het terug van /boot/firmware/.
+#
+# Fix: dit script schrijft nu ook een simpel manifest (1 bestandsnaam per
+# regel) naar de Pi EN naar /boot/firmware/ - PI_BESTANDEN plus, net als
+# pinas_pi_opruimen.pyw al doet (16 augustus 2026-bugfix aldaar), elk
+# .sh-bestand dat lokaal in Addons\ staat. Bewust NIET ADDON_SCRIPT uit
+# pinas_addon_scripts.py gebruikt - die bevat alleen de 6 primaire
+# addon-namen, niet hun _verwijderen/_wachtwoord_resetten-varianten, en
+# zou dus precies dezelfde valse "onbekend"-meldingen opleveren die deze
+# fix juist moet oplossen. nas_installer.py/_cli.py toetsen "Scripts
+# bijwerken" voortaan tegen dit manifest i.p.v. blind alles te kopieren -
+# zie de gelijknamige fix in die 2 bestanden.
+try:
+    ADDON_PI_BESTANDEN = frozenset(
+        f for f in os.listdir(os.path.join(NAS_ROOT, "Addons")) if f.endswith(".sh"))
+except OSError:
+    ADDON_PI_BESTANDEN = frozenset()
+
+MANIFEST_BESTAND = "pinas_manifest.txt"
+PI_MANIFEST = PI_BESTANDEN | ADDON_PI_BESTANDEN
+
+
 def _pi_ip():
     cfg = configparser.ConfigParser()
     pad = os.path.join(_nas_root(), "Beheer", "picontrol.cfg")
@@ -102,6 +136,25 @@ def main():
         basis = ["ssh"] + (["-t"] if tty else []) + SSH_OPT + [f"{PI_USER}@{pi_ip}", cmd]
         return subprocess.run(basis)
 
+    # 22 augustus 2026: manifest wegschrijven VOOR de bootfs-spiegeling
+    # hieronder, zodat het manifest zelf meteen meekopieert naar
+    # /boot/firmware/ (nodig voor een verse SD-kaart, waar nas_installer's
+    # "Scripts bijwerken" nog niets in /home/pi heeft staan om uit te lezen).
+    print()
+    print("  Manifest bijwerken (welke scripts horen op de Pi)...")
+    manifest_inhoud = "\n".join(sorted(PI_MANIFEST, key=str.lower)) + "\n"
+    manifest_cmd = (
+        f"cat > {PI_DIR}/{MANIFEST_BESTAND} << 'PINAS_MANIFEST_EOF'\n"
+        f"{manifest_inhoud}"
+        "PINAS_MANIFEST_EOF\n"
+        f"chmod 644 {PI_DIR}/{MANIFEST_BESTAND} && echo Manifest OK"
+    )
+    r_manifest = ssh(manifest_cmd)
+    if r_manifest.returncode != 0:
+        print("  FOUT: manifest kon niet worden weggeschreven naar de Pi")
+    else:
+        print(f"  OK: {MANIFEST_BESTAND} ({len(PI_MANIFEST)} bestandsnamen)")
+
     print()
     print("  Rechten instellen op de Pi...")
     ssh(f"sudo chown pi:pi {PI_DIR}/*.py {PI_DIR}/*.sh 2>/dev/null; "
@@ -109,7 +162,7 @@ def main():
 
     print()
     print("  Kopieren naar SD-kaart (/boot/firmware/)...")
-    ssh(f"for f in {PI_DIR}/*.py {PI_DIR}/*.sh; do sudo cp $f /boot/firmware/ 2>/dev/null; done; echo Bootfs OK")
+    ssh(f"for f in {PI_DIR}/*.py {PI_DIR}/*.sh {PI_DIR}/{MANIFEST_BESTAND}; do sudo cp $f /boot/firmware/ 2>/dev/null; done; echo Bootfs OK")
 
     print()
     print("  install.sh instellen in .bashrc...")

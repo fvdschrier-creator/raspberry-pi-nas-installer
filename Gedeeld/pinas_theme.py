@@ -232,3 +232,22 @@ _palet["ACCENT_PIBEHEER_3"] = kleurvariant(_palet["ACCENT_PIBEHEER"], _beheer_de
 globals().update(_palet)
 
 HUIDIG_THEMA = _thema
+
+# ---------------------------------------------------------------------------
+# BASISKLEUREN (20 augustus 2026, op Frans's verzoek) - de 8 standaard
+# Tkinter-kleurnamen, vast en thema-ONAFHANKELIJK (in tegenstelling tot alles
+# hierboven, dat per licht/donker thema wisselt). LET OP, dit blijft gelden:
+# voor gewone knoppen/secties in de suite gebruik je nog steeds een van de 5
+# ACCENT_*-kleuren (of OK_C/ERR_C/WARN/DESTRUCTIEF) - die zijn WCAG-contrast-
+# gecalibreerd en horen bij het "zacht zakelijk"-palet. Deze basiskleuren
+# zijn er puur als vaste referentiewaarden voor een concrete latere behoefte
+# (bijv. een los diagram/label buiten de gewone UI-stijl om) - niet bedoeld
+# om in de plaats van de accentkleuren te gebruiken.
+BASIS_WIT = "#ffffff"
+BASIS_ZWART = "#000000"
+BASIS_ROOD = "#ff0000"
+BASIS_GROEN = "#008000"
+BASIS_BLAUW = "#0000ff"
+BASIS_GEEL = "#ffff00"
+BASIS_CYAAN = "#00ffff"
+BASIS_MAGENTA = "#ff00ff"

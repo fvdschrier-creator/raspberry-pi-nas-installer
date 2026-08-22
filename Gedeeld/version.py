@@ -20,5 +20,5 @@ GITHUB_VERSIE
     bij elke lokale wijziging.
 """
 
-BIJGEWERKT = "13 augustus 2026"
-GITHUB_VERSIE = "1.1.0"
+BIJGEWERKT = "22 augustus 2026"
+GITHUB_VERSIE = "1.2.0"

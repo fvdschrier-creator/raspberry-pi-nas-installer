@@ -1137,12 +1137,49 @@ WantedBy=multi-user.target
 # ════════════════════════════════════════════════════════════════════════════
 # SCRIPTS BIJWERKEN VANUIT BOOTFS
 # ════════════════════════════════════════════════════════════════════════════
+# 22 augustus 2026 (Frans, na een "Pi opruimen"-screenshot met 9 "onbekende"
+# items): deze functie kopieerde voorheen BLIND elk .py/.sh-bestand dat op
+# /boot/firmware/ staat naar /home/pi/ - geen enkele toets tegen welke
+# bestanden de suite daar eigenlijk verwacht (PI_BESTANDEN in nas_upload.py).
+# Omdat nas_upload.py's eigen
+# "Kopieren naar SD-kaart"-stap altijd alles spiegelt wat op dat moment in
+# /home/pi staat - inclusief oude rommel die daar per ongeluk staat - bleef
+# zo'n bestand voor altijd terugkomen: "Pi opruimen" ruimt het op in
+# /home/pi, maar de eerstvolgende "Scripts bijwerken" (hier) zette het
+# gewoon terug vanaf /boot/firmware/.
+#
+# Fix: nas_upload.py schrijft nu /boot/firmware/pinas_manifest.txt weg (1
+# bestandsnaam per regel, gebaseerd op diezelfde PI_BESTANDEN plus elk
+# .sh-bestand dat lokaal in Addons\ staat - geen nieuwe, losse lijst).
+# Staat dat manifest er, dan wordt ALLEEN nog
+# gekopieerd wat erin staat; bestanden op /boot/firmware/ die er niet in
+# staan worden genegeerd EN gemeld, zodat verouderde bestanden hier meteen
+# zichtbaar worden i.p.v. pas achteraf via "Pi opruimen". Ontbreekt het
+# manifest (bijv. een oudere SD-kaart-image van voor deze fix), dan valt
+# dit terug op het oude gedrag (alles kopieren) met een duidelijke
+# waarschuwing - zodat een verse/oudere installatie nooit blokkeert.
 def update_scripts():
     clr(); hdr("Scripts bijwerken vanuit SD-kaart", CYAN)
     info("Kopieert nieuwe of gewijzigde scripts van /boot/firmware/ naar /home/pi/")
     print()
 
     bootfs="/boot/firmware"
+    manifest_pad=f"{bootfs}/pinas_manifest.txt"
+    bekend=None
+    if os.path.exists(manifest_pad):
+        try:
+            with open(manifest_pad, encoding="utf-8") as f:
+                bekend={r.strip() for r in f if r.strip()}
+        except Exception:
+            bekend=None
+        if not bekend:
+            bekend=None
+    if bekend is None:
+        warn("Manifest ontbreekt (/boot/firmware/pinas_manifest.txt) - kopieert voorlopig")
+        warn("ALLES (oud gedrag). Draai 'Scripts uploaden naar Pi' vanaf Windows om dit")
+        warn("bestand aan te maken en toekomstige runs betrouwbaar te maken.")
+        print()
+
     gevonden=[]
     for ext in ("*.py","*.sh"):
         import glob
@@ -1152,9 +1189,12 @@ def update_scripts():
         warn("Geen .py of .sh bestanden gevonden in /boot/firmware/")
         pause(); return
 
-    copied=0; skipped=0
+    copied=0; skipped=0; genegeerd=[]
     for src_path in sorted(gevonden):
         base=os.path.basename(src_path)
+        if bekend is not None and base not in bekend:
+            genegeerd.append(base)
+            continue
         dest=f"/home/pi/{base}"
         if not os.path.exists(dest):
             sh(f"sudo cp '{src_path}' '{dest}' && sudo chown pi:pi '{dest}'")
@@ -1167,6 +1207,13 @@ def update_scripts():
         else:
             dim(f"Ongewijzigd:       {base}")
             skipped+=1
+
+    if genegeerd:
+        print()
+        warn(f"{len(genegeerd)} bestand(en) op /boot/firmware/ genegeerd (niet in het "
+             f"manifest, waarschijnlijk verouderd - via 'Pi opruimen' te verwijderen):")
+        for base in genegeerd:
+            dim(f"  - {base}")
 
     print()
     if copied>0:
@@ -2167,6 +2214,8 @@ def show_help():
         ("11  🔄  Systeem bijwerken", ["apt update + upgrade"]),
         ("12  ⬆   Scripts bijwerken",
          ["Kopieert nieuwe scripts van /boot/firmware/ naar /home/pi/",
+          "Alleen bestanden uit pinas_manifest.txt (22 augustus 2026) - verouderde "
+          "bestanden worden genegeerd en gemeld, niet blind gekopieerd",
           "Bootfs wordt ook bijgewerkt zodat auto-update correct werkt"]),
         ("13  🔬  Diagnose",
          ["lsblk, df, fstab, mounts, temperatuur, Samba-status"]),
