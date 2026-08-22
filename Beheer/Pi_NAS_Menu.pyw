@@ -2,7 +2,7 @@
 # Pi NAS Menu - datum uit Gedeeld/version.py (BIJGEWERKT)
 # Twee lagen: Dagelijks beheer + Setup wizard
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 import subprocess, os, sys, base64, tempfile, threading, configparser, time, shutil, hashlib
 import urllib.request
 
@@ -2156,6 +2156,97 @@ class Menu(tk.Tk):
             subprocess.Popen(["cmd", "/c", "start", "cmd", "/k", bat_pad],
                               cwd=os.path.dirname(pad))
 
+        def _powershell_actie(bestand, submappen=("Gedeeld","Beheer","PiServer","")):
+            """22 augustus 2026: PowerShell-tegenhanger van _python_actie
+            hierboven - zelfde reden (geen geneste aanhalingstekens via
+            shell=True), maar met powershell.exe -ExecutionPolicy Bypass
+            i.p.v. python.exe."""
+            pad = _distributie_zoekpad(bestand, submappen)
+            if not pad:
+                messagebox.showerror("Niet gevonden", f"{bestand} niet gevonden.")
+                return
+            bat_naam = f"pinas_actie_{os.path.splitext(bestand)[0]}.bat"
+            bat_pad = os.path.join(tempfile.gettempdir(), bat_naam)
+            regels = [
+                "@echo off",
+                f'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{pad}"',
+                "if errorlevel 1 (",
+                "    echo.",
+                "    echo ==============================",
+                "    echo  Mislukt - zie foutmelding hierboven",
+                "    echo ==============================",
+                ") else (",
+                "    echo.",
+                "    echo ==============================",
+                "    echo  Gereed!",
+                "    echo ==============================",
+                ")",
+                "pause",
+            ]
+            with open(bat_pad, "w", encoding="utf-8") as f:
+                f.write("\r\n".join(regels) + "\r\n")
+            subprocess.Popen(["cmd", "/c", "start", "cmd", "/k", bat_pad],
+                              cwd=os.path.dirname(pad))
+
+        def _publiceer_naar_github():
+            """22 augustus 2026 (Frans: handmatig pushen via PowerShell ging
+            foutgevoelig - vergeten git-identiteit, verkeerde map): herbouwt
+            Publicatie\\NAS_Public en pusht naar de publieke GitHub-repo via
+            Gedeeld\\publiceer_naar_github.ps1. Een echte publicatie-actie,
+            zichtbaar voor iedereen op GitHub - dus eerst een expliciete
+            bevestiging, net als bij Pi NAS herstarten verderop. Deze knop
+            en de twee eronder verschijnen bewust ALLEEN als dat script
+            echt bestaat (zie de aanroep verderop) - dat script bevat geen
+            hardgecodeerde identiteit, maar is wel jouw eigen, persoonlijke
+            publicatie-workflow en hoort dus niet als dode/verwarrende knop
+            in ieders installatie te staan (zie pinas_bestanden_register.py:
+            github=False, starterkit=False voor dat bestand)."""
+            akkoord = messagebox.askyesno(
+                "Publiceren naar GitHub",
+                "Dit herbouwt de publieke versie (Publicatie\\NAS_Public) en "
+                "pusht die naar de publieke GitHub-repository - zichtbaar voor "
+                "iedereen.\n\n"
+                "Committen gebeurt met je EIGEN git-identiteit. Nog niet "
+                "ingesteld? Gebruik dan eerst 'Git-identiteit wijzigen' "
+                "hieronder.\n\n"
+                "Doorgaan?")
+            if not akkoord:
+                return
+            _powershell_actie("publiceer_naar_github.ps1", submappen=("Gedeeld",))
+
+        def _git_identiteit_wijzigen():
+            """22 augustus 2026: zet git's globale user.name/user.email -
+            nodig voor publiceer_naar_github.ps1 (dat weigert bewust te
+            raden wie je bent, zie de docstring daar). Geen wachtwoord/
+            token, alleen naam + e-mailadres - dat staat toch al openbaar
+            in elke commit op GitHub."""
+            naam = simpledialog.askstring(
+                "Git-identiteit", "Jouw naam (voor commits):", parent=win)
+            if not naam:
+                return
+            mail = simpledialog.askstring(
+                "Git-identiteit", "Jouw e-mailadres (voor commits):", parent=win)
+            if not mail:
+                return
+            try:
+                subprocess.run(["git", "config", "--global", "user.name", naam], check=True)
+                subprocess.run(["git", "config", "--global", "user.email", mail], check=True)
+                messagebox.showinfo("Git-identiteit",
+                    f"Ingesteld: {naam} <{mail}>\n\n"
+                    "Geldt voortaan voor al je git-commits op deze pc.")
+            except Exception as e:
+                messagebox.showerror("Mislukt", f"Kon git-identiteit niet instellen:\n{e}")
+
+        def _open_credential_manager():
+            """22 augustus 2026: opent Windows' eigen Credential Manager,
+            zodat je een opgeslagen GitHub-login kunt verwijderen/wijzigen
+            zonder zelf te hoeven zoeken via het Start-menu."""
+            try:
+                subprocess.Popen(["control.exe", "/name", "Microsoft.CredentialManager"])
+            except Exception as e:
+                messagebox.showerror("Kon niet openen",
+                    f"Credential Manager kon niet worden geopend:\n{e}")
+
         def _open_publicatie_bestand(bestand):
             """16 juli 2026: opent een gebouwd document met het standaard-
             Windows-programma (PDF-lezer / Word / browser) - zodat je na het
@@ -2222,6 +2313,20 @@ class Menu(tk.Tk):
                    lambda: _python_actie("maak_starterkit.py"), PANEL2)
         self._rbtn(frame, "🌐  Publieke versie maken voor GitHub (maak_publieke_versie.py)",
                    lambda: _python_actie("maak_publieke_versie.py"), PANEL2)
+
+        # 22 augustus 2026: alleen tonen als Frans' eigen, persoonlijke
+        # publiceer_naar_github.ps1 er echt staat - op andermans
+        # installatie (Starter Kit/GitHub, waar dat bestand bewust NIET
+        # in zit, zie pinas_bestanden_register.py) verschijnt dit rijtje
+        # dus gewoon niet i.p.v. een dode knop te tonen. Zelfde
+        # config-driven filosofie als _heeft_spiegel_backup() elders.
+        if _distributie_zoekpad("publiceer_naar_github.ps1", ("Gedeeld",)):
+            self._rbtn(frame, "🚀  Publiceren naar GitHub (herbouwen + pushen)",
+                       lambda: _publiceer_naar_github(), WARN)
+            self._rbtn(frame, "🪪  Git-identiteit wijzigen (voor commits)",
+                       lambda: _git_identiteit_wijzigen(), PANEL2)
+            self._rbtn(frame, "🔐  Inloggegevens wijzigen (Credential Manager)",
+                       lambda: _open_credential_manager(), PANEL2)
 
         # ── Geavanceerd ──────────────────────────────────────────────────────
         tk.Frame(frame, bg=PANEL2, height=1).pack(fill="x", pady=(14,6))
@@ -3083,7 +3188,12 @@ class Menu(tk.Tk):
                                    "IP/wachtwoorden) in 1 ZIP-bestand voor een NIEUWE pc - doet zelf niets "
                                    "op een Pi of pc. Op de nieuwe plek gebruik je daarna 'Installatie & "
                                    "Herstel' om het pakket daadwerkelijk in te vullen en te installeren. "
-                                   "'Publieke versie maken' is hetzelfde, maar voor GitHub.")
+                                   "'Publieke versie maken' is hetzelfde, maar voor GitHub. Onderhoud je "
+                                   "zelf een eigen fork/repository, dan kun je daar met een eigen "
+                                   "publiceer_naar_github.ps1-script (niet standaard aanwezig, zelf toe te "
+                                   "voegen) ook meteen laten pushen - inclusief knoppen om je git-identiteit "
+                                   "(naam/e-mail) en opgeslagen GitHub-login te wijzigen. Verschijnt alleen "
+                                   "als dat script aanwezig is.")
         item("Geavanceerd",       "Pi OS bijwerken, Python bijwerken, Pi NAS herstarten, LanMan-fix, Scripts "
                                   "uploaden naar Pi en Download links beheren.")
         item("Pi OS bijwerken",    "Onder Geavanceerd. Voert apt update + apt upgrade uit op de Pi via SSH. "

@@ -48,7 +48,26 @@ _GEHEIM_PATRONEN = (
 # Kit-installatie meteen crashte).
 import pinas_bestanden_register as _reg
 
-NAS_ROOT = r"C:\PiNAS"
+
+# 22 augustus 2026 (Frans: rare geneste "C:\PiNAS"-map in Gedeeld gevonden -
+# resultaat van deze bug): NAS_ROOT was hardgecodeerd naar r"C:\PiNAS",
+# terwijl maak_publieke_versie.py (het zusterscript) zichzelf al sinds
+# 12 augustus zelfstandig lokaliseert via __file__ en dus overal werkt -
+# ook in een gemounte/verplaatste omgeving. Draaide dit script buiten een
+# echte C:\PiNAS (bijv. via de FUSE-mount), dan werd "C:\PiNAS" op Linux
+# gewoon als LETTERLIJKE bestandsnaam behandeld (geen geldig Windows-pad
+# meer) en ontstond een geneste map met die naam vol kapotte uitvoer.
+# Zelfde zelflocaliserende patroon overgenomen - werkt nu net als het
+# zusterscript overal, ongeacht waar de suite daadwerkelijk staat.
+def _script_dir():
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def _nas_root():
+    return os.path.dirname(_script_dir())
+
+
+NAS_ROOT = _nas_root()
 
 
 def _output_map():

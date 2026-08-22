@@ -880,7 +880,7 @@ def bouw_handleiding():
             ["Pi services",       "Samba, FileBrowser, Cockpit en Externe HDD service installeren of herstellen op de Pi. Status per service wordt live gecheckt. Bij een NIEUWE installatie doet Installatie & Herstel dit al automatisch - deze knop is voor een latere reparatie."],
             ["Windows onderdelen","PuTTY, TigerVNC, WinSCP (optioneel), Sync & Backup en Netwerkschijven (Opslag/Backup) - elk los aan te vinken en te installeren/herstellen."],
             ["Publicatie",        "Suite handleiding en Topografie herbouwen - elk met een 'Open'-knop ernaast om het resultaat meteen te bekijken. Het functieoverzicht staat sinds 10 augustus 2026 als losse pagina in de presentatie (PiNAS_Suite_Presentatie.pptx), niet meer als apart bestand."],
-            ["Distributie",       "Starter Kit ZIP bouwen: verpakt de suite geanonimiseerd (zonder IP/wachtwoorden) in 1 ZIP voor een nieuwe pc; publieke versie maken voor GitHub."],
+            ["Distributie",       "Starter Kit ZIP bouwen: verpakt de suite geanonimiseerd (zonder IP/wachtwoorden) in 1 ZIP voor een nieuwe pc; publieke versie maken voor GitHub. Onderhoud je zelf een eigen fork, dan kun je optioneel ook meteen laten pushen (zie 3.5.1)."],
             ["Geavanceerd",       "Pi OS bijwerken (apt update + upgrade), Python bijwerken naar de laatste versie, Pi NAS herstarten (sudo reboot), LanMan-fix (alleen bij 'Toegang geweigerd' / Systeemfout 5), Scripts uploaden naar Pi, Download links beheren."],
             ["Weergave",          "Thema wisselen (licht/donker)"],
             ["Beveiliging",       "NAS wachtwoord instellen — wijzigt Samba wachtwoord op Pi én in Windows Credential Manager tegelijk. Wachtwoord wordt opgehaald via Credential Manager (primair) of bestandsfallback"],
@@ -938,6 +938,39 @@ def bouw_handleiding():
          "meer nodig (was alleen voor de oude, inmiddels vervangen Functieoverzicht-build).",
          "Wordt net als PuTTY/TigerVNC eerst gezocht in Installatie\\; ontbreekt het "
          "installatiebestand daar, dan wordt het gedownload."],
+        kleur=ACCENT))
+    story.append(Spacer(1, 0.3*cm))
+
+    story.append(Paragraph("3.5.1 Eigen fork publiceren op GitHub (optioneel)", s["h2"]))
+    story.append(Paragraph(
+        "Onderhoud je zelf een eigen fork/kopie van deze suite op GitHub, dan kun je onder "
+        "Onderhoud -> Distributie optioneel drie extra knoppen krijgen om dat publiceren te "
+        "vereenvoudigen. Ze verschijnen ALLEEN als je zelf een Gedeeld\\publiceer_naar_github.ps1 "
+        "-script hebt toegevoegd (niet standaard aanwezig, geen onderdeel van een gewone "
+        "installatie) - op een verse Starter Kit- of GitHub-installatie zie je dit rijtje dus "
+        "gewoon niet.", s["body"]))
+    story.append(Spacer(1, 0.15*cm))
+    story.append(data_tabel(s,
+        ["Knop", "Wat het doet"],
+        [
+            ["Publiceren naar GitHub", "Herbouwt de publieke versie en pusht die naar je eigen "
+             "repository, na een expliciete bevestiging (dit is zichtbaar voor iedereen)."],
+            ["Git-identiteit wijzigen", "Stelt je naam/e-mailadres in voor commits (git config "
+             "--global). Geen wachtwoord of token - dat staat toch al openbaar bij elke commit."],
+            ["Inloggegevens wijzigen", "Opent Windows' eigen Credential Manager, waar de "
+             "opgeslagen GitHub-login staat (via Git Credential Manager) - handig om te wijzigen "
+             "of te verwijderen."],
+        ],
+        [4.5*cm, BREEDTE - 4.5*cm]))
+    story.append(Spacer(1, 0.2*cm))
+    story.append(info_box(s, "Je GitHub-repository inrichten",
+        ["Profiel aanvullen: GitHub -> je profielfoto rechtsboven -> Your profile -> Edit profile "
+         "- een naam en korte bio geven je project meer geloofwaardigheid.",
+         "Topics toevoegen: open je repository -> tandwieltje naast 'About' -> vul relevante "
+         "topics in (bijv. raspberry-pi, nas, homelab, self-hosted) - zo vinden mensen je project "
+         "terug via GitHub's zoekfunctie.",
+         "Beide zijn eenmalig, duren samen ongeveer 10 minuten, en zijn puur cosmetisch - de suite "
+         "zelf werkt net zo goed zonder."],
         kleur=ACCENT))
     story.append(Spacer(1, 0.3*cm))
 
@@ -1964,7 +1997,6 @@ def bouw_handleiding():
         ["PiNAS_Suite_Presentatie.pptx", "Presentatie voor bekendheid/publiciteit - installatie tot gebruik, inclusief een compact functieoverzicht als losse pagina (10 augustus 2026, verving PiNAS_Functieoverzicht.pdf)."],
         ["PiNAS_Suite_Presentatie_Preview.pdf", "PDF-export van de presentatie, alleen voor GitHub's ingebouwde viewer - géén los eindproduct om te lezen, wordt gemaakt via 'Presentatie exporteren als PDF' in PowerPoint."],
         ["PiNAS_Suite_Architectuur.png", "Architectuurplaatje (5 lagen) voor de GitHub README."],
-        ["Publicatie_Gids.md / .pdf", "Uitleg over hoe je een nieuwe versie publiceert (Starter Kit of publieke GitHub-versie)."],
     ], kol_breedte_bestanden))
     story.append(Spacer(1, 0.3*cm))
 

@@ -175,6 +175,12 @@ BESTANDEN = [
      "Opruimlijst voor pinas_opruimen.pyw (FUSE kon niet verwijderen)", False, False),
     ("Gedeeld", "maak_publieke_versie.py", "Publieke versie maker", True, False),
     ("Gedeeld", "maak_starterkit.py", "Starter Kit maker", True, False),
+    # Bevat Frans' eigen git-identiteit (naam/e-mailadres) hardgecodeerd -
+    # bewust NOOIT publiceren, zelfde reden als picontrol.cfg hierboven:
+    # persoonlijke configuratie, geen suite-onderdeel dat een verse
+    # installatie nodig heeft (22 augustus 2026).
+    ("Gedeeld", "publiceer_naar_github.ps1",
+     "Herbouwt NAS_Public en pusht naar de publieke GitHub-repo (Frans' eigen workflow)", False, False),
     ("Gedeeld", "pinas_bestanden_register.py",
      "DE centrale bestandenlijst - bron voor Structuurcheck, publieke build en Starter Kit", True, True),
     # Gaat in de publieke versie naar Installatie\ (niet Gedeeld\) - blijft
@@ -193,8 +199,11 @@ BESTANDEN = [
     # -- Publicatie ---------------------------------------------------------------
     ("Publicatie", "PiNAS_Suite_Handleiding.pdf", "Suite handleiding", True, True),
     ("Publicatie", "build_suite_handleiding.py", "Suite handleiding builder", True, True),
-    ("Publicatie", "Publicatie_Gids.md", "Publicatiegids", False, False),
-    ("Publicatie", "Publicatie_Gids.pdf", "Publicatiegids (PDF)", False, False),
+    # Publicatie_Gids.md/.pdf zijn 22 augustus 2026 vervallen - de
+    # GitHub-inrichtstappen (profiel/topics) staan nu kort in de Suite
+    # Handleiding zelf (build_suite_handleiding.py); de Reddit/Tweakers-
+    # marketingteksten waren eenmalig voor de v1.0.0-lancering en horen
+    # niet in een doorlopende gebruikershandleiding.
     ("Publicatie", "PiNAS_Topografie.html", "Suite-topografie (menu x mappen matrix)", False, False),
     ("Publicatie", "build_topografie.py", "Topografie builder (16 juli 2026)", False, False),
     # Marketing-/publiciteitsmateriaal - hoort bij de GitHub-repo (laat
